@@ -3,7 +3,8 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-<title>S-KEVIN: 10ft to 50ft Zone — Sonic-Style Orange Edition</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><circle cx='32' cy='32' r='26' fill='none' stroke='%23ff7700' stroke-width='10'/></svg>" />
+<title>S-KEVIN 3D: 10ft to 50ft Zone — High-Fidelity Sonic Edition</title>
 <style>
   * {
     box-sizing: border-box;
@@ -17,15 +18,26 @@
     width: 100%;
     height: 100%;
     overflow: hidden;
-    background: #003488;
+    background: #001a4d;
     font-family: 'Trebuchet MS', 'Segoe UI', Impact, system-ui, sans-serif;
     color: #ffffff;
   }
 
-  #gameCanvas {
-    display: block;
+  #webglContainer {
+    position: fixed;
+    inset: 0;
     width: 100vw;
     height: 100vh;
+    z-index: 1;
+  }
+
+  #fxCanvas {
+    position: fixed;
+    inset: 0;
+    width: 100vw;
+    height: 100vh;
+    pointer-events: none;
+    z-index: 6;
   }
 
   /* =======================================================================
@@ -42,9 +54,7 @@
     padding: 18px 24px;
   }
 
-  #hud.hidden {
-    display: none;
-  }
+  #hud.hidden { display: none; }
 
   .sonic-top-row {
     display: flex;
@@ -53,12 +63,11 @@
     gap: 16px;
   }
 
-  /* Iconic Top-Left SCORE / TIME / ORANGES Stack */
   .sonic-stats {
     display: flex;
     flex-direction: column;
     gap: 4px;
-    background: linear-gradient(90deg, rgba(0, 22, 68, 0.78), rgba(0, 22, 68, 0));
+    background: linear-gradient(90deg, rgba(0, 22, 68, 0.82), rgba(0, 22, 68, 0));
     padding: 10px 26px 10px 14px;
     border-left: 6px solid #ff7700;
     border-radius: 4px;
@@ -73,7 +82,7 @@
     font-size: 24px;
     letter-spacing: 1.5px;
     line-height: 1.12;
-    text-shadow: 3px 3px 0 #000000, -1px -1px 0 #000000, 1px -1px 0 #000000, -1px 1px 0 #000000;
+    text-shadow: 3px 3px 0 #000, -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000;
   }
 
   .sonic-label {
@@ -99,7 +108,6 @@
     text-align: right;
   }
 
-  /* Top-Center Zone & 10-50ft Rule Ribbon */
   .sonic-center-strip {
     display: flex;
     flex-direction: column;
@@ -108,14 +116,14 @@
   }
 
   .sonic-zone-tag {
-    background: linear-gradient(135deg, #0044cc 0%, #002277 62%, #ff6a00 62%, #ff9900 100%);
+    background: linear-gradient(135deg, #0044cc 0%, #002277 60%, #ff6a00 60%, #ff9900 100%);
     border: 3px solid #ffffff;
     box-shadow: 4px 4px 0 #000000;
     padding: 6px 20px;
     transform: skewX(-12deg);
     font-weight: 900;
     font-size: 14px;
-    letter-spacing: 1.2px;
+    letter-spacing: 1.1px;
     text-transform: uppercase;
     text-shadow: 2px 2px 0 #000;
   }
@@ -123,6 +131,39 @@
   .sonic-zone-tag span {
     display: inline-block;
     transform: skewX(12deg);
+  }
+
+  #bossBarWrap {
+    display: none;
+    background: rgba(20, 4, 28, 0.9);
+    border: 3px solid #ff2a2a;
+    box-shadow: 4px 4px 0 #000;
+    padding: 5px 16px;
+    transform: skewX(-10deg);
+    min-width: 280px;
+    text-align: center;
+  }
+
+  .boss-title {
+    font-size: 12px;
+    font-weight: 900;
+    color: #ffd800;
+    letter-spacing: 1px;
+    text-shadow: 2px 2px 0 #000;
+  }
+
+  .boss-hp-track {
+    height: 10px;
+    background: #1e293b;
+    border: 2px solid #fff;
+    margin-top: 4px;
+  }
+
+  .boss-hp-fill {
+    height: 100%;
+    width: 100%;
+    background: linear-gradient(90deg, #ef4444, #f97316, #ffd800);
+    transition: width 0.15s ease;
   }
 
   #superBanner {
@@ -156,16 +197,13 @@
     padding: 7px 12px;
     cursor: pointer;
     transform: skewX(-10deg);
-    transition: transform 0.1s, background 0.12s;
   }
 
   .sonic-mini-btn:hover {
     background: #ff6a00;
     color: #ffffff;
-    transform: skewX(-10deg) translateY(-2px);
   }
 
-  /* Bottom Row: Iconic Sonic Life Emblem + Pixie Boost + Controls */
   .sonic-bottom-row {
     display: flex;
     justify-content: space-between;
@@ -177,7 +215,7 @@
     display: flex;
     align-items: center;
     gap: 14px;
-    background: rgba(0, 20, 64, 0.86);
+    background: rgba(0, 20, 64, 0.88);
     border: 3px solid #ffffff;
     box-shadow: 4px 4px 0 #000000;
     padding: 8px 16px;
@@ -206,16 +244,8 @@
     text-shadow: 2px 2px 0 #000;
   }
 
-  .life-name {
-    font-size: 13px;
-    color: #ffd800;
-    letter-spacing: 1px;
-  }
-
-  .life-count {
-    font-size: 20px;
-    color: #ffffff;
-  }
+  .life-name { font-size: 13px; color: #ffd800; letter-spacing: 1px; }
+  .life-count { font-size: 20px; color: #ffffff; }
 
   .boost-gauge-wrap {
     transform: skewX(10deg);
@@ -248,7 +278,7 @@
   }
 
   .sonic-controls-hint {
-    background: rgba(0, 20, 64, 0.85);
+    background: rgba(0, 20, 64, 0.86);
     border: 2px solid #ffd800;
     box-shadow: 3px 3px 0 #000;
     padding: 7px 14px;
@@ -285,17 +315,9 @@
     text-shadow: 2px 2px 0 #000;
   }
 
-  #ponderBtn.cooldown {
-    background: #334155;
-    color: #94a3b8;
-  }
+  #ponderBtn.cooldown { background: #334155; color: #94a3b8; }
 
-  #touchControls {
-    display: none;
-    pointer-events: auto;
-    gap: 8px;
-  }
-
+  #touchControls { display: none; pointer-events: auto; gap: 8px; }
   @media (pointer: coarse), (max-width: 860px) {
     #touchControls { display: flex; }
     .sonic-controls-hint { display: none; }
@@ -312,9 +334,7 @@
     box-shadow: 3px 3px 0 #000;
   }
 
-  /* =======================================================================
-     ICONIC SONIC ACT TITLE CARD OVERLAY
-     ======================================================================= */
+  /* SONIC ACT TITLE CARD */
   #actCard {
     position: fixed;
     inset: 0;
@@ -326,14 +346,11 @@
     opacity: 0;
     transition: opacity 0.22s ease;
   }
-
-  #actCard.visible {
-    opacity: 1;
-  }
+  #actCard.visible { opacity: 1; }
 
   .act-card-inner {
     position: relative;
-    width: 520px;
+    width: 540px;
     max-width: 92vw;
     padding: 28px 32px;
     background: linear-gradient(125deg, #0044cc 0%, #0044cc 58%, #ff6a00 58%, #ff6a00 100%);
@@ -356,47 +373,41 @@
   }
 
   .act-zone-title {
-    font-size: 38px;
+    font-size: 36px;
     font-weight: 900;
     font-style: italic;
     text-transform: uppercase;
     color: #ffffff;
     text-shadow: 4px 4px 0 #000000;
-    line-height: 1.02;
   }
 
   .act-zone-sub {
     margin-top: 6px;
-    font-size: 15px;
+    font-size: 14px;
     font-weight: 900;
     color: #ffd800;
     text-shadow: 2px 2px 0 #000000;
-    letter-spacing: 1.5px;
+    letter-spacing: 1.4px;
   }
 
-  /* =======================================================================
-     SONIC START / PERK / GAME OVER MODALS
-     ======================================================================= */
+  /* MODALS */
   .overlay {
     position: fixed;
     inset: 0;
     z-index: 30;
-    background: radial-gradient(circle at 50% 35%, rgba(0, 68, 204, 0.55), rgba(0, 14, 48, 0.88));
+    background: radial-gradient(circle at 50% 35%, rgba(0, 68, 204, 0.45), rgba(0, 14, 48, 0.84));
     display: flex;
     align-items: center;
     justify-content: center;
     padding: 16px;
     overflow-y: auto;
   }
-
-  .overlay.hidden {
-    display: none !important;
-  }
+  .overlay.hidden { display: none !important; }
 
   .sonic-modal {
     width: 100%;
-    max-width: 750px;
-    background: linear-gradient(180deg, #0038a8 0%, #001d5e 100%);
+    max-width: 760px;
+    background: linear-gradient(180deg, rgba(0, 56, 168, 0.96) 0%, rgba(0, 29, 94, 0.98) 100%);
     border: 5px solid #ffffff;
     box-shadow: 12px 12px 0 #000000;
     border-radius: 8px;
@@ -406,52 +417,35 @@
     overflow: hidden;
   }
 
-  /* Checkered Sonic Footer Strip inside Modal */
   .checker-strip {
     height: 16px;
-    margin: -24px -28px 18px -28px;
+    margin: -24px -28px 16px -28px;
     background-image: repeating-linear-gradient(
-      90deg,
-      #ff6a00 0px,
-      #ff6a00 20px,
-      #ffd800 20px,
-      #ffd800 40px
+      90deg, #ff6a00 0px, #ff6a00 20px, #ffd800 20px, #ffd800 40px
     );
     border-bottom: 4px solid #000000;
   }
 
-  /* Winged Golden-Orange Sonic Ring Emblem */
   .sonic-emblem-wrap {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    position: relative;
-    margin-bottom: 8px;
+    margin-bottom: 6px;
   }
 
   .emblem-wing {
     background: linear-gradient(180deg, #ffd800, #ff7700);
     border: 3px solid #000;
-    height: 36px;
-    width: 74px;
+    height: 34px;
+    width: 72px;
     box-shadow: 3px 3px 0 #000;
   }
-
-  .emblem-wing.left {
-    transform: skewY(10deg);
-    border-radius: 8px 0 0 8px;
-    margin-right: -10px;
-  }
-
-  .emblem-wing.right {
-    transform: skewY(-10deg);
-    border-radius: 0 8px 8px 0;
-    margin-left: -10px;
-  }
+  .emblem-wing.left { transform: skewY(10deg); border-radius: 8px 0 0 8px; margin-right: -10px; }
+  .emblem-wing.right { transform: skewY(-10deg); border-radius: 0 8px 8px 0; margin-left: -10px; }
 
   .emblem-ring {
-    width: 92px;
-    height: 92px;
+    width: 88px;
+    height: 88px;
     border-radius: 50%;
     background: radial-gradient(circle, #0048d0 45%, #ff7700 47%, #ffd800 66%, #c2410c 100%);
     border: 4px solid #000;
@@ -459,12 +453,12 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 44px;
+    font-size: 42px;
     z-index: 2;
   }
 
   .sonic-logo {
-    font-size: clamp(34px, 6vw, 58px);
+    font-size: clamp(32px, 5.5vw, 54px);
     font-weight: 900;
     font-style: italic;
     letter-spacing: 1px;
@@ -473,10 +467,7 @@
     text-transform: uppercase;
     text-shadow: 4px 4px 0 #000000, -2px -2px 0 #ffffff;
   }
-
-  .sonic-logo span {
-    color: #ffd800;
-  }
+  .sonic-logo span { color: #ffd800; }
 
   .sonic-sub {
     margin-top: 8px;
@@ -491,12 +482,9 @@
     display: grid;
     grid-template-columns: repeat(3, 1fr);
     gap: 10px;
-    margin: 16px 0;
+    margin: 14px 0;
   }
-
-  @media (max-width: 620px) {
-    .rule-cards { grid-template-columns: 1fr; }
-  }
+  @media (max-width: 620px) { .rule-cards { grid-template-columns: 1fr; } }
 
   .rcard {
     background: #001848;
@@ -504,42 +492,27 @@
     box-shadow: 4px 4px 0 #000;
     padding: 10px;
   }
-
   .rcard.sweet {
     background: linear-gradient(180deg, #c2410c, #7c2d12);
     border-color: #ffd800;
   }
-
-  .rcard-h {
-    font-size: 18px;
-    font-weight: 900;
-    font-style: italic;
-    text-shadow: 2px 2px 0 #000;
-  }
-
-  .rcard-p {
-    font-size: 12px;
-    color: #f1f5f9;
-    margin-top: 4px;
-    line-height: 1.3;
-  }
+  .rcard-h { font-size: 17px; font-weight: 900; font-style: italic; text-shadow: 2px 2px 0 #000; }
+  .rcard-p { font-size: 12px; color: #f1f5f9; margin-top: 4px; line-height: 1.3; }
 
   .hmm-sonic-panel {
     background: #00143d;
     border: 3px solid #ffd800;
     box-shadow: 4px 4px 0 #000;
-    padding: 12px 14px;
-    margin-bottom: 18px;
+    padding: 11px 14px;
+    margin-bottom: 16px;
     text-align: left;
   }
-
   .hmm-sonic-label {
     font-size: 13px;
     font-weight: 900;
     color: #ffd800;
     display: block;
-    margin-bottom: 7px;
-    text-shadow: 1px 1px 0 #000;
+    margin-bottom: 6px;
   }
 
   #hmmInput {
@@ -547,7 +520,7 @@
     background: #000b24;
     border: 2px solid #ff7700;
     color: #ffffff;
-    padding: 8px 12px;
+    padding: 7px 12px;
     font-size: 14px;
     font-weight: 800;
     outline: none;
@@ -555,13 +528,7 @@
     -webkit-user-select: text;
   }
 
-  .chip-bar {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 6px;
-    margin-top: 8px;
-  }
-
+  .chip-bar { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 7px; }
   .s-chip {
     background: #0038a8;
     border: 2px solid #fff;
@@ -572,31 +539,23 @@
     cursor: pointer;
     box-shadow: 2px 2px 0 #000;
   }
-
-  .s-chip:hover {
-    background: #ff6a00;
-    color: #fff;
-  }
+  .s-chip:hover { background: #ff6a00; color: #fff; }
 
   .sonic-start-btn {
     background: linear-gradient(180deg, #ffd800 0%, #ff6a00 100%);
     color: #001233;
     border: 4px solid #ffffff;
     box-shadow: 6px 6px 0 #000000;
-    padding: 13px 38px;
-    font-size: 21px;
+    padding: 12px 36px;
+    font-size: 20px;
     font-style: italic;
     font-weight: 900;
     text-transform: uppercase;
     letter-spacing: 1px;
     cursor: pointer;
     transform: skewX(-10deg);
-    transition: transform 0.12s;
   }
-
-  .sonic-start-btn:hover {
-    transform: skewX(-10deg) translateY(-3px) scale(1.03);
-  }
+  .sonic-start-btn:hover { transform: skewX(-10deg) translateY(-2px) scale(1.03); }
 
   .perks-grid {
     display: grid;
@@ -604,10 +563,7 @@
     gap: 12px;
     margin-top: 16px;
   }
-
-  @media (max-width: 640px) {
-    .perks-grid { grid-template-columns: 1fr; }
-  }
+  @media (max-width: 640px) { .perks-grid { grid-template-columns: 1fr; } }
 
   .perk-card {
     background: #001848;
@@ -615,13 +571,8 @@
     box-shadow: 5px 5px 0 #000;
     padding: 14px 10px;
     cursor: pointer;
-    transition: transform 0.12s, background 0.12s;
   }
-
-  .perk-card:hover {
-    background: #c2410c;
-    transform: translateY(-4px);
-  }
+  .perk-card:hover { background: #c2410c; transform: translateY(-3px); }
 
   .go-grid {
     display: grid;
@@ -630,42 +581,34 @@
     margin: 16px 0;
     text-align: left;
   }
-
   .go-cell {
     background: #00143d;
     border: 2px solid #ffd800;
     padding: 10px 14px;
     box-shadow: 3px 3px 0 #000;
   }
-
-  .go-k {
-    font-size: 12px;
-    color: #93c5fd;
-    font-weight: 900;
-  }
-
-  .go-v {
-    font-size: 22px;
-    color: #ffd800;
-    font-weight: 900;
-    font-style: italic;
-  }
+  .go-k { font-size: 12px; color: #93c5fd; font-weight: 900; }
+  .go-v { font-size: 22px; color: #ffd800; font-weight: 900; font-style: italic; }
 </style>
+<script type="importmap">
+  { "imports": { "three": "./vendor/three/three.module.js" } }
+</script>
 </head>
 <body>
 
-<canvas id="gameCanvas"></canvas>
+<div id="webglContainer"></div>
+<canvas id="fxCanvas"></canvas>
 
 <!-- SONIC ACT TITLE CARD -->
 <div id="actCard">
   <div class="act-card-inner">
-    <div class="act-zone-title" id="actCardName">TANGERINE HILL</div>
-    <div class="act-zone-sub">10FT – 50FT HOLE ZONE</div>
+    <div class="act-zone-title" id="actCardName">TANGERINE HILL 3D</div>
+    <div class="act-zone-sub" id="actCardSub">LOOPS • PINBALL SHAFTS • 10–50FT SPRINGS</div>
     <div class="act-ribbon-yellow" id="actCardNum">ACT 1</div>
   </div>
 </div>
 
-<!-- CLASSIC SONIC STYLE HUD -->
+<!-- CLASSIC SONIC HUD -->
 <div id="hud" class="hidden">
   <div class="sonic-top-row">
     <div class="sonic-stats">
@@ -685,7 +628,11 @@
 
     <div class="sonic-center-strip">
       <div class="sonic-zone-tag">
-        <span id="zoneBannerText">TANGERINE HILL ACT 1 • HOLES: 0 (10–50FT ONLY!)</span>
+        <span id="zoneBannerText">TANGERINE HILL ACT 1 • 10–50FT HOLES: 0</span>
+      </div>
+      <div id="bossBarWrap">
+        <div class="boss-title">🪝 DR. HOOK-NIK HOVER-POD (SPIN-JUMP COCKPIT!)</div>
+        <div class="boss-hp-track"><div class="boss-hp-fill" id="bossHpFill"></div></div>
       </div>
       <div id="superBanner">⚡ SUPER ORANGE S-KEVIN! 2X SPEED &amp; INVINCIBLE! ⚡</div>
     </div>
@@ -700,19 +647,17 @@
     <div class="sonic-life-cluster">
       <div class="life-avatar">🧢</div>
       <div class="life-text">
-        <div class="life-name">S-KEVIN</div>
+        <div class="life-name">S-KEVIN 3D</div>
         <div class="life-count" id="livesVal">× 03</div>
       </div>
       <div class="boost-gauge-wrap">
         <div class="boost-title">✨ PIXIE SPIN-BOOST</div>
-        <div class="boost-track">
-          <div class="boost-fill" id="dustBar"></div>
-        </div>
+        <div class="boost-track"><div class="boost-fill" id="dustBar"></div></div>
       </div>
     </div>
 
     <div class="sonic-controls-hint">
-      <span><span class="kbadge">←/→</span> Dash</span>
+      <span><span class="kbadge">←/→</span> Dash &amp; Loops</span>
       <span><span class="kbadge">SPACE</span> Spin-Jump / Hold: Pan Fly</span>
       <span><span class="kbadge">↓</span> Spin-Smash</span>
       <span><span class="kbadge">H</span> "Hmm..." Sonar</span>
@@ -729,41 +674,39 @@
   </div>
 </div>
 
-<!-- SONIC-STYLE START OVERLAY -->
+<!-- SONIC START OVERLAY -->
 <div id="startOverlay" class="overlay">
   <div class="sonic-modal">
     <div class="checker-strip"></div>
-
     <div class="sonic-emblem-wrap">
       <div class="emblem-wing left"></div>
       <div class="emblem-ring">🍊</div>
       <div class="emblem-wing right"></div>
     </div>
-
-    <h1 class="sonic-logo">S-KEVIN<br><span>10 TO 50FT ZONE</span></h1>
+    <h1 class="sonic-logo">S-KEVIN 3D<br><span>10 TO 50FT ZONE</span></h1>
     <p class="sonic-sub">
-      Gotta jump fast! S-Kevin blasts across checkered Neverland hills in blazing orange Peter Pan gear,
-      collecting Citrus Rings &amp; diving strictly into <strong>10ft–50ft holes</strong>!
+      Full 3D PBR Sonic-meets-Neverland Edition! Blast around <strong>360° Loop-de-Loops</strong>, ride <strong>Orange Sky-Rails</strong>,
+      ricochet through <strong>Pinball, Updraft &amp; Helix Hole Shafts (10ft–50ft)</strong>, and battle <strong>Dr. Hook-nik</strong>!
     </p>
 
     <div class="rule-cards">
       <div class="rcard">
         <div class="rcard-h" style="color:#94a3b8;">✗ 1 – 9 FT</div>
-        <div class="rcard-p"><strong>Lame Pothole!</strong><br>Scatters your Oranges! Spin-jump right over it!</div>
+        <div class="rcard-p"><strong>Shallow Ditch!</strong><br>Scatters your Oranges! Take Upper Platforms or Spin-Jump over!</div>
       </div>
       <div class="rcard sweet">
         <div class="rcard-h" style="color:#ffd800;">★ 10 – 50 FT ★</div>
-        <div class="rcard-p"><strong>SONIC SPRING SHAFT!</strong><br>Dive in, grab Citrus Rings &amp; bounce off the Red Bumper Spring!</div>
+        <div class="rcard-p"><strong>4 VARIED 3D SHAFTS!</strong><br>Spring, Pinball Bumper, Thermal Geyser &amp; Helix Laser Shafts!</div>
       </div>
       <div class="rcard">
         <div class="rcard-h" style="color:#fb7185;">⚠ 51+ FT</div>
-        <div class="rcard-p"><strong>Illegal Abyss!</strong><br>Hold <strong>SPACE</strong> to Pixie-Fly back out before 50ft!</div>
+        <div class="rcard-p"><strong>Illegal Abyss!</strong><br>Hold <strong>SPACE</strong> to Pixie-Fly out before the 50ft Laser Ring!</div>
       </div>
     </div>
 
     <div class="hmm-sonic-panel">
       <label class="hmm-sonic-label" for="hmmInput">
-        🤔 S-Kevin loves Orange, Peter Pan, 10–50ft holes, and hmm... (customize his 4th Monitor Power-Up!):
+        🤔 S-Kevin loves Orange, Peter Pan, 10–50ft holes, and hmm... (4th Chaos Monitor Power-Up):
       </label>
       <input id="hmmInput" type="text" maxlength="28" value="Chili-Orange Dogs" placeholder="Type S-Kevin's 4th obsession..." />
       <div class="chip-bar">
@@ -774,16 +717,16 @@
       </div>
     </div>
 
-    <button class="sonic-start-btn" id="startBtn">⚡ PRESS START — ACT 1 ⚡</button>
+    <button class="sonic-start-btn" id="startBtn">⚡ LAUNCH 3D ZONE — ACT 1 ⚡</button>
   </div>
 </div>
 
-<!-- CHAOS ORANGE PERK MODAL -->
+<!-- PERK UPGRADE MODAL -->
 <div id="perkOverlay" class="overlay hidden">
   <div class="sonic-modal">
     <div class="checker-strip"></div>
-    <h2 class="sonic-logo" style="font-size:36px;">ACT CLEAR <span>BONUS!</span></h2>
-    <p class="sonic-sub">S-Kevin hits a Star-Post! Pick a Chaos Orange Upgrade:</p>
+    <h2 class="sonic-logo" style="font-size:36px;">STAR-POST <span>CHAOS PERK!</span></h2>
+    <p class="sonic-sub">Choose a 3D Zone Upgrade (`1`, `2`, or `3`):</p>
     <div class="perks-grid" id="perksGrid"></div>
   </div>
 </div>
@@ -793,8 +736,8 @@
   <div class="sonic-modal" style="max-width:440px;">
     <div class="checker-strip"></div>
     <h2 class="sonic-logo" style="font-size:38px;">PAUSED<br><span>"HMMMM..."</span></h2>
-    <p class="sonic-sub" style="margin:14px 0 20px;">Waiting impatiently with tapping orange boots...</p>
-    <button class="sonic-start-btn" id="resumeBtn">RESUME ZONE</button>
+    <p class="sonic-sub" style="margin:14px 0 20px;">S-Kevin is inspecting 3D cliff strata...</p>
+    <button class="sonic-start-btn" id="resumeBtn">RESUME 3D ZONE</button>
   </div>
 </div>
 
@@ -802,906 +745,1644 @@
 <div id="gameOverOverlay" class="overlay hidden">
   <div class="sonic-modal">
     <div class="checker-strip"></div>
-    <h2 class="sonic-logo" style="font-size:42px;">TIME / <span>GAME OVER</span></h2>
-    <p class="sonic-sub" id="goRankText">RANK S • CERTIFIED 50FT SPEED DEMON</p>
-
+    <h2 class="sonic-logo" style="font-size:42px;">ACT <span>COMPLETE / OVER</span></h2>
+    <p class="sonic-sub" id="goRankText">RANK S • MASTER OF THE 50FT 3D ZONE</p>
     <div class="go-grid">
-      <div class="go-cell">
-        <div class="go-k">FINAL SCORE</div>
-        <div class="go-v" id="goScore">0</div>
-      </div>
-      <div class="go-cell">
-        <div class="go-k">10–50FT HOLES CLEARED</div>
-        <div class="go-v" id="goHoles">0</div>
-      </div>
-      <div class="go-cell">
-        <div class="go-k">DEEPEST LEGAL SPRING</div>
-        <div class="go-v" id="goDeepest">0 FT</div>
-      </div>
-      <div class="go-cell">
-        <div class="go-k">BEST HIGH SCORE</div>
-        <div class="go-v" id="goBest">0</div>
-      </div>
+      <div class="go-cell"><div class="go-k">FINAL SCORE</div><div class="go-v" id="goScore">0</div></div>
+      <div class="go-cell"><div class="go-k">10–50FT SHAFTS CONQUERED</div><div class="go-v" id="goHoles">0</div></div>
+      <div class="go-cell"><div class="go-k">DEEPEST LEGAL DIVE</div><div class="go-v" id="goDeepest">0 FT</div></div>
+      <div class="go-cell"><div class="go-k">HIGH SCORE</div><div class="go-v" id="goBest">0</div></div>
     </div>
-
-    <button class="sonic-start-btn" id="restartBtn">⚡ TRY AGAIN [SPACE] ⚡</button>
+    <button class="sonic-start-btn" id="restartBtn">⚡ RUN AGAIN [SPACE] ⚡</button>
   </div>
 </div>
 
-<script>
-(() => {
-  'use strict';
+<script type="module">
+import * as THREE from 'three';
+import { EffectComposer } from './vendor/three/examples/jsm/postprocessing/EffectComposer.js';
+import { RenderPass } from './vendor/three/examples/jsm/postprocessing/RenderPass.js';
+import { UnrealBloomPass } from './vendor/three/examples/jsm/postprocessing/UnrealBloomPass.js';
+import { OutputPass } from './vendor/three/examples/jsm/postprocessing/OutputPass.js';
 
-  const PX_PER_FT = 22;
-  const MIN_LEGAL_FT = 10;
-  const MAX_LEGAL_FT = 50;
-  const GRAVITY = 1650;
+// ===========================================================================
+// WORLD CONSTANTS (1 Three.js unit = 14 logical pixels; 1 ft = 22 logical px)
+// ===========================================================================
+const SCALE = 1 / 18; // converts logical 2D gameplay coordinates cleanly into 3D space!
+const PX_PER_FT = 22;
+const MIN_LEGAL_FT = 10;
+const MAX_LEGAL_FT = 50;
+const GRAVITY = 1650;
 
-  const ACTS = [
-    { zone: 'TANGERINE HILL', act: 'ACT 1', sky1: '#0038a8', sky2: '#0077ff', sky3: '#38bdf8', water: '#0284c7', grassTop: '#22c55e', grassMid: '#ff7700' },
-    { zone: 'CITRUS CHEMICAL', act: 'ACT 2', sky1: '#1e1b4b', sky2: '#4338ca', sky3: '#f97316', water: '#ea580c', grassTop: '#fbbf24', grassMid: '#ea580c' },
-    { zone: 'APRICOT CASINO', act: 'ACT 3', sky1: '#3b0764', sky2: '#7e22ce', sky3: '#fb923c', water: '#d97706', grassTop: '#fde047', grassMid: '#f97316' },
-    { zone: 'STARLIGHT ORANGE', act: 'ACT 4', sky1: '#090d1f', sky2: '#0044aa', sky3: '#ff6a00', water: '#0369a1', grassTop: '#4ade80', grassMid: '#fb923c' }
-  ];
+const ACTS = [
+  { zone: 'TANGERINE HILL 3D', act: 'ACT 1', sub: '360° LOOPS • SPRING & PINBALL SHAFTS', skyHex: 0x0047b3, fogHex: 0x1e68d6, sunHex: 0xffedd5 },
+  { zone: 'CITRUS CASINO 3D',  act: 'ACT 2', sub: 'PINBALL BUMPERS • SKY-RAILS • DR. HOOK-NIK', skyHex: 0x261259, fogHex: 0x4c1d95, sunHex: 0xffb74d },
+  { zone: 'THERMAL GEYSER 3D', act: 'ACT 3', sub: 'UPDRAFT CAVERNS • HELIX LASERS • 50FT GRAILS', skyHex: 0x3b0c2c, fogHex: 0x7c2d12, sunHex: 0xff8a00 },
+  { zone: 'STARLIGHT PAN 3D',  act: 'ACT 4', sub: 'SUPERSONIC SECOND STAR • ENDLESS MASTERY', skyHex: 0x071330, fogHex: 0x0f3460, sunHex: 0xfde047 }
+];
 
-  // =========================================================================
-  // 16-BIT SEGA FM-INSPIRED WEB AUDIO SYNTHESIZER
-  // =========================================================================
-  class SonicAudio {
-    constructor() {
-      this.ctx = null;
-      this.muted = false;
-      this.musicTimer = 0;
-      this.step = 0;
+// ===========================================================================
+// 16-BIT SEGA FM-INSPIRED WEB AUDIO SYNTHESIZER
+// ===========================================================================
+class SonicAudio {
+  constructor() {
+    this.ctx = null;
+    this.muted = false;
+    this.musicTimer = 0;
+    this.step = 0;
+  }
+  init() {
+    if (!this.ctx) {
+      const AC = window.AudioContext || window.webkitAudioContext;
+      if (AC) this.ctx = new AC();
     }
-
-    init() {
-      if (!this.ctx) {
-        const AC = window.AudioContext || window.webkitAudioContext;
-        if (AC) this.ctx = new AC();
-      }
-      if (this.ctx && this.ctx.state === 'suspended') this.ctx.resume();
-    }
-
-    tone(freq, dur, type = 'square', vol = 0.12, slideTo = null, delay = 0) {
-      if (this.muted || !this.ctx) return;
-      const t0 = this.ctx.currentTime + delay;
-      const osc = this.ctx.createOscillator();
-      const gain = this.ctx.createGain();
-      osc.type = type;
-      osc.frequency.setValueAtTime(freq, t0);
-      if (slideTo) osc.frequency.exponentialRampToValueAtTime(Math.max(25, slideTo), t0 + dur);
-      gain.gain.setValueAtTime(0.0001, t0);
-      gain.gain.linearRampToValueAtTime(vol, t0 + 0.008);
-      gain.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
-      osc.connect(gain);
-      gain.connect(this.ctx.destination);
-      osc.start(t0);
-      osc.stop(t0 + dur + 0.02);
-    }
-
-    spinJump() {
-      this.tone(220, 0.17, 'square', 0.11, 680);
-    }
-
-    ringChime() {
-      // Classic bright 2-note Sonic ring sparkle!
-      this.tone(987.77, 0.07, 'sine', 0.14);      // B5
-      this.tone(1318.51, 0.18, 'sine', 0.14, null, 0.065); // E6
-    }
-
-    ringScatter() {
-      const notes = [1174, 987, 880, 784, 659, 587];
-      notes.forEach((n, i) => this.tone(n, 0.08, 'triangle', 0.11, n * 0.9, i * 0.045));
-    }
-
-    springBoing(isFifty = false) {
-      this.tone(190, 0.28, 'sawtooth', 0.15, isFifty ? 1180 : 880);
-      this.tone(380, 0.24, 'triangle', 0.14, isFifty ? 1560 : 1120, 0.04);
-      if (isFifty) {
-        [523.25, 659.25, 783.99, 1046.5].forEach((n, i) => this.tone(n, 0.18, 'square', 0.09, null, 0.18 + i * 0.06));
-      }
-    }
-
-    dashPad() {
-      this.tone(330, 0.18, 'sawtooth', 0.14, 1320);
-    }
-
-    hmmSonar() {
-      this.tone(180, 0.35, 'sawtooth', 0.09, 260);
-      this.tone(360, 0.35, 'triangle', 0.13, 520);
-    }
-
-    badBuzz() {
-      this.tone(150, 0.22, 'sawtooth', 0.15, 85);
-    }
-
-    updateMusic(dt, superMode) {
-      if (this.muted || !this.ctx) return;
-      const tempo = superMode ? 0.115 : 0.145;
-      this.musicTimer += dt;
-      if (this.musicTimer >= tempo) {
-        this.musicTimer -= tempo;
-        // Upbeat Green-Hill-inspired 16-bit synth bass + lead!
-        const lead = [
-          659.25, 587.33, 523.25, 587.33, 659.25, 659.25, 659.25, 0,
-          587.33, 587.33, 587.33, 0, 659.25, 783.99, 783.99, 0
-        ];
-        const bass = [130.81, 164.81, 196.00, 164.81, 146.83, 174.61, 220.00, 174.61];
-        const l = lead[this.step % lead.length];
-        const b = bass[this.step % bass.length];
-        if (l > 0) this.tone(l * (superMode ? 1.12 : 1), tempo * 0.7, 'square', 0.032);
-        this.tone(b, tempo * 0.85, 'triangle', 0.045);
-        this.step++;
-      }
+    if (this.ctx && this.ctx.state === 'suspended') this.ctx.resume();
+  }
+  tone(freq, dur, type = 'square', vol = 0.11, slideTo = null, delay = 0) {
+    if (this.muted || !this.ctx) return;
+    const t0 = this.ctx.currentTime + delay;
+    const osc = this.ctx.createOscillator();
+    const gain = this.ctx.createGain();
+    osc.type = type;
+    osc.frequency.setValueAtTime(freq, t0);
+    if (slideTo) osc.frequency.exponentialRampToValueAtTime(Math.max(25, slideTo), t0 + dur);
+    gain.gain.setValueAtTime(0.0001, t0);
+    gain.gain.linearRampToValueAtTime(vol, t0 + 0.008);
+    gain.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+    osc.connect(gain);
+    gain.connect(this.ctx.destination);
+    osc.start(t0);
+    osc.stop(t0 + dur + 0.02);
+  }
+  spinJump() { this.tone(230, 0.16, 'square', 0.10, 700); }
+  ringChime() {
+    this.tone(987.77, 0.065, 'sine', 0.13);
+    this.tone(1318.51, 0.17, 'sine', 0.13, null, 0.06);
+  }
+  ringScatter() {
+    [1174, 987, 880, 784, 659, 587].forEach((n, i) => this.tone(n, 0.08, 'triangle', 0.10, n * 0.9, i * 0.045));
+  }
+  pinballBumper() {
+    this.tone(520, 0.09, 'triangle', 0.16, 1040);
+    this.tone(1040, 0.14, 'sine', 0.13, 780, 0.05);
+  }
+  springBoing(isFifty = false) {
+    this.tone(190, 0.28, 'sawtooth', 0.14, isFifty ? 1200 : 880);
+    this.tone(380, 0.24, 'triangle', 0.13, isFifty ? 1560 : 1120, 0.04);
+  }
+  dashPad() { this.tone(340, 0.18, 'sawtooth', 0.13, 1380); }
+  railGrind() { this.tone(420 + Math.random() * 140, 0.04, 'sawtooth', 0.045); }
+  bossHit() {
+    this.tone(160, 0.22, 'sawtooth', 0.17, 70);
+    this.tone(440, 0.14, 'square', 0.12, 880, 0.06);
+  }
+  hmmSonar() {
+    this.tone(180, 0.35, 'sawtooth', 0.08, 260);
+    this.tone(360, 0.35, 'triangle', 0.12, 520);
+  }
+  badBuzz() { this.tone(150, 0.22, 'sawtooth', 0.14, 82); }
+  updateMusic(dt, superMode) {
+    if (this.muted || !this.ctx) return;
+    const tempo = superMode ? 0.115 : 0.145;
+    this.musicTimer += dt;
+    if (this.musicTimer >= tempo) {
+      this.musicTimer -= tempo;
+      const lead = [
+        659.25, 587.33, 523.25, 587.33, 659.25, 783.99, 659.25, 0,
+        587.33, 659.25, 587.33, 0, 659.25, 880.00, 783.99, 0
+      ];
+      const bass = [130.81, 164.81, 196.00, 164.81, 146.83, 174.61, 220.00, 174.61];
+      const l = lead[this.step % lead.length];
+      const b = bass[this.step % bass.length];
+      if (l > 0) this.tone(l * (superMode ? 1.12 : 1), tempo * 0.7, 'square', 0.028);
+      this.tone(b, tempo * 0.85, 'triangle', 0.04);
+      this.step++;
     }
   }
+}
+const sfx = new SonicAudio();
 
-  const sfx = new SonicAudio();
+// ===========================================================================
+// THREE.JS HIGH-FIDELITY PBR SCENE, LIGHTING & REPURPOSED CC0 ASSETS
+// ===========================================================================
+const container = document.getElementById('webglContainer');
+const fxCanvas = document.getElementById('fxCanvas');
+const fxCtx = fxCanvas.getContext('2d');
+if (!fxCtx.roundRect) fxCtx.roundRect = function (x, y, w, h) { this.rect(x, y, w, h); };
 
-  // =========================================================================
-  // DOM & CANVAS SETUP
-  // =========================================================================
-  const canvas = document.getElementById('gameCanvas');
-  const ctx = canvas.getContext('2d');
-  if (!ctx.roundRect) {
-    ctx.roundRect = function (x, y, w, h) { this.rect(x, y, w, h); };
-  }
+let W = window.innerWidth;
+let H = window.innerHeight;
 
-  const hud = document.getElementById('hud');
-  const scoreVal = document.getElementById('scoreVal');
-  const timeVal = document.getElementById('timeVal');
-  const orangesLabel = document.getElementById('orangesLabel');
-  const orangesVal = document.getElementById('orangesVal');
-  const livesVal = document.getElementById('livesVal');
-  const dustBar = document.getElementById('dustBar');
-  const zoneBannerText = document.getElementById('zoneBannerText');
-  const superBanner = document.getElementById('superBanner');
-  const ponderBtn = document.getElementById('ponderBtn');
-  const muteBtn = document.getElementById('muteBtn');
-  const pauseBtn = document.getElementById('pauseBtn');
-  const actCard = document.getElementById('actCard');
-  const actCardName = document.getElementById('actCardName');
-  const actCardNum = document.getElementById('actCardNum');
+const renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
+renderer.setSize(W, H);
+renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.15;
+container.appendChild(renderer.domElement);
 
-  const startOverlay = document.getElementById('startOverlay');
-  const perkOverlay = document.getElementById('perkOverlay');
-  const perksGrid = document.getElementById('perksGrid');
-  const pauseOverlay = document.getElementById('pauseOverlay');
-  const gameOverOverlay = document.getElementById('gameOverOverlay');
-  const hmmInput = document.getElementById('hmmInput');
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x0047b3);
+scene.fog = new THREE.FogExp2(0x1e68d6, 0.0065);
 
-  let W = window.innerWidth;
-  let H = window.innerHeight;
-  let dpr = Math.min(window.devicePixelRatio || 1, 2);
+const camera = new THREE.PerspectiveCamera(52, W / H, 0.5, 420);
+camera.position.set(10, -18, 42);
 
-  function resize() {
-    W = window.innerWidth;
-    H = window.innerHeight;
-    dpr = Math.min(window.devicePixelRatio || 1, 2);
-    canvas.width = Math.floor(W * dpr);
-    canvas.height = Math.floor(H * dpr);
-    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-  }
-  window.addEventListener('resize', resize);
-  resize();
+// Post-Processing Pipeline (UnrealBloomPass + ACES OutputPass per threejs-asset-sourcing Layer 3!)
+const composer = new EffectComposer(renderer);
+const renderPass = new RenderPass(scene, camera);
+const bloomPass = new UnrealBloomPass(new THREE.Vector2(W, H), 0.42, 0.55, 0.78);
+const outputPass = new OutputPass();
+composer.addPass(renderPass);
+composer.addPass(bloomPass);
+composer.addPass(outputPass);
 
-  // =========================================================================
-  // CONTROLS
-  // =========================================================================
-  const keys = { left: false, right: false, jump: false, down: false };
-  let jumpJustPressed = false;
+// Procedural HDR-style Studio/Sunset Environment Map via PMREMGenerator for Metallic Clearcoat Reflections!
+const pmrem = new THREE.PMREMGenerator(renderer);
+const envScene = new THREE.Scene();
+const envSky = new THREE.Mesh(
+  new THREE.SphereGeometry(40, 24, 16),
+  new THREE.MeshBasicMaterial({ color: 0x38bdf8, side: THREE.BackSide })
+);
+envScene.add(envSky);
+const envSun = new THREE.Mesh(
+  new THREE.SphereGeometry(6, 16, 16),
+  new THREE.MeshBasicMaterial({ color: 0xffaa00 })
+);
+envSun.position.set(18, 20, 15);
+envScene.add(envSun);
+const envGround = new THREE.Mesh(
+  new THREE.PlaneGeometry(80, 80),
+  new THREE.MeshBasicMaterial({ color: 0xc2410c, side: THREE.DoubleSide })
+);
+envGround.rotation.x = Math.PI / 2;
+envGround.position.y = -10;
+envScene.add(envGround);
+scene.environment = pmrem.fromScene(envScene).texture;
 
-  function isInputFocused() {
-    const el = document.activeElement;
-    return el && (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA');
-  }
+// Complex Multi-Light Setup (Key Sun Shadow Light + Sky/Earth Hemisphere + Rim Backlight + Tinker-Tang PointLight)
+const hemiLight = new THREE.HemisphereLight(0x93c5fd, 0xc2410c, 0.95);
+scene.add(hemiLight);
 
-  window.addEventListener('keydown', (e) => {
-    if (isInputFocused()) {
-      if (e.key === 'Enter') { document.activeElement.blur(); startGame(); }
-      return;
+const sunLight = new THREE.DirectionalLight(0xffedd5, 2.2);
+sunLight.position.set(22, 36, 28);
+sunLight.castShadow = true;
+sunLight.shadow.mapSize.set(2048, 2048);
+sunLight.shadow.camera.near = 2;
+sunLight.shadow.camera.far = 140;
+sunLight.shadow.camera.left = -45;
+sunLight.shadow.camera.right = 45;
+sunLight.shadow.camera.top = 45;
+sunLight.shadow.camera.bottom = -45;
+sunLight.shadow.bias = -0.0008;
+scene.add(sunLight);
+scene.add(sunLight.target);
+
+const rimLight = new THREE.DirectionalLight(0x38bdf8, 1.15);
+rimLight.position.set(-20, 14, -22);
+scene.add(rimLight);
+
+const pixieLight = new THREE.PointLight(0xff9900, 3.2, 16);
+scene.add(pixieLight);
+
+// Load & Repurpose CC0 PBR Textures from ./assets/!
+const texLoader = new THREE.TextureLoader();
+function loadTiled(url, rx = 2, ry = 2, isColor = false) {
+  const t = texLoader.load(url);
+  t.wrapS = t.wrapT = THREE.RepeatWrapping;
+  t.repeat.set(rx, ry);
+  if (isColor) t.colorSpace = THREE.SRGBColorSpace;
+  return t;
+}
+
+// Procedural High-Contrast Sonic Checkered Albedo combined with repurposed CC0 brick_normal & earth_roughness!
+function createSonicCheckerAlbedo() {
+  const c = document.createElement('canvas');
+  c.width = 256;
+  c.height = 256;
+  const g = c.getContext('2d');
+  for (let y = 0; y < 4; y++) {
+    for (let x = 0; x < 4; x++) {
+      const dark = (x + y) % 2 === 0;
+      g.fillStyle = dark ? '#5c1f08' : '#9c3d10';
+      g.fillRect(x * 64, y * 64, 64, 64);
+      g.fillStyle = dark ? '#73290c' : '#bd4f16';
+      g.fillRect(x * 64 + 4, y * 64 + 4, 56, 12);
     }
-    if (['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', ' '].includes(e.key)) e.preventDefault();
-
-    const k = e.key.toLowerCase();
-    if (k === 'a' || e.key === 'ArrowLeft') keys.left = true;
-    if (k === 'd' || e.key === 'ArrowRight') keys.right = true;
-    if (k === 's' || e.key === 'ArrowDown') keys.down = true;
-    if (k === 'w' || e.key === 'ArrowUp' || e.key === ' ') {
-      if (!keys.jump) jumpJustPressed = true;
-      keys.jump = true;
-      if (game.mode === 'gameover') startGame();
-    }
-    if (k === 'h' || k === 'e' || e.key === 'Shift') triggerPonder();
-    if (k === 'p' || e.key === 'Escape') togglePause();
-    if (k === 'm') toggleMute();
-    if (game.mode === 'perk' && ['1', '2', '3'].includes(k)) {
-      const choice = game.perkChoices[parseInt(k, 10) - 1];
-      if (choice) applyPerk(choice);
-    }
-  });
-
-  window.addEventListener('keyup', (e) => {
-    const k = e.key.toLowerCase();
-    if (k === 'a' || e.key === 'ArrowLeft') keys.left = false;
-    if (k === 'd' || e.key === 'ArrowRight') keys.right = false;
-    if (k === 's' || e.key === 'ArrowDown') keys.down = false;
-    if (k === 'w' || e.key === 'ArrowUp' || e.key === ' ') keys.jump = false;
-  });
-
-  window.addEventListener('contextmenu', (e) => {
-    if (game.mode === 'playing') { e.preventDefault(); triggerPonder(); }
-  });
-
-  document.querySelectorAll('.s-chip').forEach((c) => {
-    c.addEventListener('click', () => { hmmInput.value = c.dataset.val; });
-  });
-
-  function bindTouch(id, prop) {
-    const el = document.getElementById(id);
-    if (!el) return;
-    el.addEventListener('pointerdown', (e) => {
-      e.preventDefault();
-      sfx.init();
-      if (prop === 'jump' && !keys.jump) jumpJustPressed = true;
-      keys[prop] = true;
-    });
-    const release = (e) => { e.preventDefault(); keys[prop] = false; };
-    el.addEventListener('pointerup', release);
-    el.addEventListener('pointerleave', release);
-    el.addEventListener('pointercancel', release);
   }
-  bindTouch('tLeft', 'left');
-  bindTouch('tRight', 'right');
-  bindTouch('tDown', 'down');
-  bindTouch('tJump', 'jump');
+  const tex = new THREE.CanvasTexture(c);
+  tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
+  tex.repeat.set(1.5, 1.5);
+  tex.colorSpace = THREE.SRGBColorSpace;
+  return tex;
+}
 
-  document.getElementById('startBtn').addEventListener('click', () => { sfx.init(); startGame(); });
-  document.getElementById('restartBtn').addEventListener('click', () => { sfx.init(); startGame(); });
-  document.getElementById('resumeBtn').addEventListener('click', togglePause);
-  pauseBtn.addEventListener('click', togglePause);
-  muteBtn.addEventListener('click', toggleMute);
-  ponderBtn.addEventListener('click', () => { sfx.init(); triggerPonder(); });
+const matCheckeredSoil = new THREE.MeshStandardMaterial({
+  map: createSonicCheckerAlbedo(),
+  normalMap: loadTiled('assets/brick_normal.jpg', 2, 2),
+  roughnessMap: loadTiled('assets/earth_roughness.jpg', 2, 2),
+  normalScale: new THREE.Vector2(1.15, 1.15),
+  roughness: 0.72,
+  metalness: 0.08
+});
 
-  function toggleMute() {
+const matTurfEmerald = new THREE.MeshPhysicalMaterial({
+  map: loadTiled('assets/grass_color.jpg', 3, 1, true),
+  normalMap: loadTiled('assets/grass_normal.jpg', 3, 1),
+  color: 0x34d399,
+  roughness: 0.52,
+  clearcoat: 0.25
+});
+
+const matTurfOrangeLip = new THREE.MeshPhysicalMaterial({
+  normalMap: loadTiled('assets/citrus_peel_normal.jpg', 3, 1),
+  color: 0xff6a00,
+  roughness: 0.35,
+  clearcoat: 0.65
+});
+
+const matGoldRing = new THREE.MeshPhysicalMaterial({
+  map: loadTiled('assets/metal_color.jpg', 1, 1, true),
+  normalMap: loadTiled('assets/metal_normal.jpg', 1, 1),
+  roughnessMap: loadTiled('assets/metal_roughness.jpg', 1, 1),
+  color: 0xffb700,
+  emissive: 0xff6a00,
+  emissiveIntensity: 0.28,
+  metalness: 0.92,
+  roughness: 0.15,
+  clearcoat: 1.0
+});
+
+const matWoodPalm = new THREE.MeshStandardMaterial({
+  map: loadTiled('assets/wood_color.jpg', 1, 3, true),
+  normalMap: loadTiled('assets/wood_normal.jpg', 1, 3),
+  color: 0xb45309,
+  roughness: 0.78
+});
+
+const matSpringRed = new THREE.MeshPhysicalMaterial({
+  map: loadTiled('assets/redmetal_color.jpg', 1, 1, true),
+  normalMap: loadTiled('assets/redmetal_normal.jpg', 1, 1),
+  color: 0xff3b3b,
+  emissive: 0x991b1b,
+  emissiveIntensity: 0.28,
+  metalness: 0.72,
+  roughness: 0.22,
+  clearcoat: 1.0
+});
+
+const matCliffStrata = new THREE.MeshStandardMaterial({
+  map: loadTiled('assets/cliff_color.jpg', 2, 4, true),
+  normalMap: loadTiled('assets/cliff_normal.jpg', 2, 4),
+  roughness: 0.82,
+  metalness: 0.05
+});
+
+const matPinballBumper = new THREE.MeshPhysicalMaterial({
+  normalMap: loadTiled('assets/citrus_peel_normal.jpg', 1, 1),
+  color: 0x06b6d4,
+  emissive: 0x0891b2,
+  emissiveIntensity: 0.55,
+  metalness: 0.5,
+  roughness: 0.15,
+  clearcoat: 1.0
+});
+
+const waterNormal = loadTiled('assets/water_normal.jpg', 16, 8);
+const oceanMesh = new THREE.Mesh(
+  new THREE.PlaneGeometry(600, 180),
+  new THREE.MeshPhysicalMaterial({
+    color: 0x0284c7,
+    normalMap: waterNormal,
+    metalness: 0.38,
+    roughness: 0.10,
+    clearcoat: 1.0
+  })
+);
+oceanMesh.rotation.x = -Math.PI * 0.48;
+oceanMesh.position.set(0, -34, -46);
+scene.add(oceanMesh);
+
+// Iconic "Second Star to the Right" 3D Blazing Sun-Star in Sky!
+const secondStarGroup = new THREE.Group();
+const starCore = new THREE.Mesh(
+  new THREE.OctahedronGeometry(3.2, 2),
+  new THREE.MeshBasicMaterial({ color: 0xfff7ed })
+);
+const starHalo = new THREE.Mesh(
+  new THREE.SphereGeometry(6.8, 24, 24),
+  new THREE.MeshBasicMaterial({ color: 0xff7700, transparent: true, opacity: 0.32 })
+);
+secondStarGroup.add(starCore, starHalo);
+scene.add(secondStarGroup);
+
+// ===========================================================================
+// 3D ARTICULATED S-KEVIN CHARACTER RIG
+// ===========================================================================
+const kevinGroup = new THREE.Group();
+scene.add(kevinGroup);
+
+const matKevinOrange = new THREE.MeshPhysicalMaterial({
+  normalMap: loadTiled('assets/citrus_peel_normal.jpg', 2, 2),
+  color: 0xff6200,
+  roughness: 0.36,
+  clearcoat: 0.65
+});
+const matKevinSuper = new THREE.MeshPhysicalMaterial({
+  color: 0xffe600,
+  emissive: 0xff8800,
+  emissiveIntensity: 0.55,
+  metalness: 0.6,
+  roughness: 0.15,
+  clearcoat: 1.0
+});
+const matSneaker = new THREE.MeshPhysicalMaterial({
+  color: 0xff3b00,
+  roughness: 0.2,
+  clearcoat: 1.0
+});
+const matWhiteGlove = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.4 });
+const matSkin = new THREE.MeshStandardMaterial({ color: 0xfed7aa, roughness: 0.55 });
+
+const bodyRig = new THREE.Group();
+kevinGroup.add(bodyRig);
+
+// Tunic Torso
+const torsoMesh = new THREE.Mesh(new THREE.ConeGeometry(0.82, 1.55, 16), matKevinOrange);
+torsoMesh.position.y = 1.25;
+torsoMesh.castShadow = true;
+bodyRig.add(torsoMesh);
+
+// Head
+const headMesh = new THREE.Mesh(new THREE.SphereGeometry(0.62, 24, 24), matSkin);
+headMesh.position.y = 2.38;
+headMesh.castShadow = true;
+bodyRig.add(headMesh);
+
+// Eyes
+const eyeMat = new THREE.MeshBasicMaterial({ color: 0x0f172a });
+const eyeL = new THREE.Mesh(new THREE.SphereGeometry(0.10, 12, 12), eyeMat);
+eyeL.position.set(0.48, 2.45, 0.22);
+const eyeR = eyeL.clone();
+eyeR.position.z = -0.22;
+bodyRig.add(eyeL, eyeR);
+
+// Swept-Back Sonic Quill-Cap + Blazing Peter Pan Feather!
+const capGroup = new THREE.Group();
+capGroup.position.y = 2.65;
+for (let q = 0; q < 3; q++) {
+  const quill = new THREE.Mesh(new THREE.ConeGeometry(0.36 - q * 0.05, 1.45, 12), matKevinOrange);
+  quill.rotation.z = Math.PI * 0.62 + q * 0.16;
+  quill.position.set(-0.55, -q * 0.22, (q - 1) * 0.18);
+  capGroup.add(quill);
+}
+const featherMesh = new THREE.Mesh(
+  new THREE.ConeGeometry(0.18, 1.25, 10),
+  new THREE.MeshBasicMaterial({ color: 0xffd800 })
+);
+featherMesh.rotation.z = Math.PI * 0.72;
+featherMesh.position.set(-0.62, 0.48, 0);
+capGroup.add(featherMesh);
+bodyRig.add(capGroup);
+
+// Gloved Hands & Hi-Top Sneakers
+const handL = new THREE.Mesh(new THREE.SphereGeometry(0.26, 14, 14), matWhiteGlove);
+const handR = handL.clone();
+bodyRig.add(handL, handR);
+
+const shoeGeo = new THREE.BoxGeometry(0.75, 0.36, 0.42);
+const shoeL = new THREE.Mesh(shoeGeo, matSneaker);
+const shoeR = new THREE.Mesh(shoeGeo, matSneaker);
+shoeL.castShadow = shoeR.castShadow = true;
+bodyRig.add(shoeL, shoeR);
+
+// Sonic Figure-8 Speed Blur Ring around feet!
+const speedBlurWheel = new THREE.Mesh(
+  new THREE.TorusGeometry(0.55, 0.18, 12, 24),
+  new THREE.MeshBasicMaterial({ color: 0xff7700, transparent: true, opacity: 0.78 })
+);
+speedBlurWheel.position.y = 0.55;
+speedBlurWheel.visible = false;
+bodyRig.add(speedBlurWheel);
+
+// 3D Spiky Sonic Spinball Mesh!
+const spinballGroup = new THREE.Group();
+spinballGroup.position.y = 1.25;
+spinballGroup.visible = false;
+const spinCore = new THREE.Mesh(new THREE.SphereGeometry(0.98, 24, 24), matKevinOrange);
+spinballGroup.add(spinCore);
+for (let i = 0; i < 6; i++) {
+  const spike = new THREE.Mesh(
+    new THREE.ConeGeometry(0.28, 0.72, 10),
+    new THREE.MeshBasicMaterial({ color: 0xffd800 })
+  );
+  const a = (i / 6) * Math.PI * 2;
+  spike.position.set(Math.cos(a) * 1.05, Math.sin(a) * 1.05, 0);
+  spike.rotation.z = a - Math.PI / 2;
+  spinballGroup.add(spike);
+}
+kevinGroup.add(spinballGroup);
+
+// Tinker-Tang 3D Glowing Pixie Orb
+const pixieMesh = new THREE.Mesh(
+  new THREE.SphereGeometry(0.24, 16, 16),
+  new THREE.MeshBasicMaterial({ color: 0xffe600 })
+);
+scene.add(pixieMesh);
+
+// ===========================================================================
+// SHARED 3D GEOMETRIES FOR HIGH-PERFORMANCE PROCEDURAL STREAMING
+// ===========================================================================
+const geoRing = new THREE.TorusGeometry(0.56, 0.15, 16, 32);
+const geoMonitor = new THREE.BoxGeometry(1.5, 1.4, 1.2);
+const geoBumper = new THREE.CylinderGeometry(0.9, 0.9, 0.75, 20);
+geoBumper.rotateX(Math.PI / 2);
+const geoSpringPad = new THREE.CylinderGeometry(2.2, 1.8, 0.55, 24);
+const geoMine = new THREE.IcosahedronGeometry(0.7, 1);
+
+const world3D = new THREE.Group();
+scene.add(world3D);
+
+function resize() {
+  W = window.innerWidth;
+  H = window.innerHeight;
+  renderer.setSize(W, H);
+  composer.setSize(W, H);
+  camera.aspect = W / H;
+  camera.updateProjectionMatrix();
+  const dpr = Math.min(window.devicePixelRatio || 1, 2);
+  fxCanvas.width = Math.floor(W * dpr);
+  fxCanvas.height = Math.floor(H * dpr);
+  fxCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
+}
+window.addEventListener('resize', resize);
+resize();
+
+// ===========================================================================
+// DOM & CONTROLS
+// ===========================================================================
+const hud = document.getElementById('hud');
+const scoreVal = document.getElementById('scoreVal');
+const timeVal = document.getElementById('timeVal');
+const orangesLabel = document.getElementById('orangesLabel');
+const orangesVal = document.getElementById('orangesVal');
+const livesVal = document.getElementById('livesVal');
+const dustBar = document.getElementById('dustBar');
+const zoneBannerText = document.getElementById('zoneBannerText');
+const superBanner = document.getElementById('superBanner');
+const bossBarWrap = document.getElementById('bossBarWrap');
+const bossHpFill = document.getElementById('bossHpFill');
+const ponderBtn = document.getElementById('ponderBtn');
+const muteBtn = document.getElementById('muteBtn');
+const pauseBtn = document.getElementById('pauseBtn');
+const actCard = document.getElementById('actCard');
+const actCardName = document.getElementById('actCardName');
+const actCardSub = document.getElementById('actCardSub');
+const actCardNum = document.getElementById('actCardNum');
+
+const startOverlay = document.getElementById('startOverlay');
+const perkOverlay = document.getElementById('perkOverlay');
+const perksGrid = document.getElementById('perksGrid');
+const pauseOverlay = document.getElementById('pauseOverlay');
+const gameOverOverlay = document.getElementById('gameOverOverlay');
+const hmmInput = document.getElementById('hmmInput');
+
+const keys = { left: false, right: false, jump: false, down: false };
+let jumpJustPressed = false;
+
+window.addEventListener('keydown', (e) => {
+  const el = document.activeElement;
+  if (el && (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA')) {
+    if (e.key === 'Enter') { el.blur(); startGame(); }
+    return;
+  }
+  if (['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', ' '].includes(e.key)) e.preventDefault();
+  const k = e.key.toLowerCase();
+  if (k === 'a' || e.key === 'ArrowLeft') keys.left = true;
+  if (k === 'd' || e.key === 'ArrowRight') keys.right = true;
+  if (k === 's' || e.key === 'ArrowDown') keys.down = true;
+  if (k === 'w' || e.key === 'ArrowUp' || e.key === ' ') {
+    if (!keys.jump) jumpJustPressed = true;
+    keys.jump = true;
+    if (game.mode === 'gameover') startGame();
+  }
+  if (k === 'h' || k === 'e' || e.key === 'Shift') triggerPonder();
+  if (k === 'p' || e.key === 'Escape') togglePause();
+  if (k === 'm') toggleMute();
+  if (game.mode === 'perk' && ['1', '2', '3'].includes(k)) {
+    const c = game.perkChoices[parseInt(k, 10) - 1];
+    if (c) applyPerk(c);
+  }
+});
+
+window.addEventListener('keyup', (e) => {
+  const k = e.key.toLowerCase();
+  if (k === 'a' || e.key === 'ArrowLeft') keys.left = false;
+  if (k === 'd' || e.key === 'ArrowRight') keys.right = false;
+  if (k === 's' || e.key === 'ArrowDown') keys.down = false;
+  if (k === 'w' || e.key === 'ArrowUp' || e.key === ' ') keys.jump = false;
+});
+
+window.addEventListener('contextmenu', (e) => {
+  if (game.mode === 'playing') { e.preventDefault(); triggerPonder(); }
+});
+
+document.querySelectorAll('.s-chip').forEach((c) => {
+  c.addEventListener('click', () => { hmmInput.value = c.dataset.val; });
+});
+
+function bindTouch(id, prop) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.addEventListener('pointerdown', (e) => {
+    e.preventDefault();
     sfx.init();
-    sfx.muted = !sfx.muted;
-    muteBtn.textContent = sfx.muted ? '🔇' : '🔊';
+    if (prop === 'jump' && !keys.jump) jumpJustPressed = true;
+    keys[prop] = true;
+  });
+  const off = (e) => { e.preventDefault(); keys[prop] = false; };
+  el.addEventListener('pointerup', off);
+  el.addEventListener('pointerleave', off);
+  el.addEventListener('pointercancel', off);
+}
+bindTouch('tLeft', 'left');
+bindTouch('tRight', 'right');
+bindTouch('tDown', 'down');
+bindTouch('tJump', 'jump');
+
+document.getElementById('startBtn').addEventListener('click', () => { sfx.init(); startGame(); });
+document.getElementById('restartBtn').addEventListener('click', () => { sfx.init(); startGame(); });
+document.getElementById('resumeBtn').addEventListener('click', togglePause);
+pauseBtn.addEventListener('click', togglePause);
+muteBtn.addEventListener('click', toggleMute);
+ponderBtn.addEventListener('click', () => { sfx.init(); triggerPonder(); });
+
+function toggleMute() {
+  sfx.init();
+  sfx.muted = !sfx.muted;
+  muteBtn.textContent = sfx.muted ? '🔇' : '🔊';
+}
+function togglePause() {
+  if (game.mode === 'playing') {
+    game.mode = 'paused';
+    pauseOverlay.classList.remove('hidden');
+  } else if (game.mode === 'paused') {
+    game.mode = 'playing';
+    pauseOverlay.classList.add('hidden');
+    lastTime = performance.now();
+  }
+}
+
+// ===========================================================================
+// GAME STATE & HIGH-VARIATION ENTITIES
+// ===========================================================================
+let bestScore = Number(localStorage.getItem('skevin_3d_best') || 0);
+
+const game = {
+  mode: 'menu',
+  time: 0,
+  runClock: 0,
+  score: 0,
+  oranges: 5,
+  lives: 3,
+  combo: 1,
+  holesCleared: 0,
+  nextPerkAt: 4,
+  nextBossAt: 3,
+  deepestLegal: 0,
+  fourthLove: 'Chili-Orange Dogs',
+  superTimer: 0,
+  actBannerTimer: 0,
+  lastActIdx: -1,
+  camX: 0,
+  camY: 0,
+  fovCurrent: 52,
+  generatedUntilX: 0,
+  chunks: [],
+  holes: [],
+  platforms: [],   // Floating Sonic high-road emerald platforms (static & moving!)
+  loops: [],       // Playable 360° 3D Loop-de-Loops!
+  rails: [],       // Orange Sky-Grind Rails exiting deep shafts!
+  dashPads: [],
+  rings: [],
+  crocs: [],
+  boss: null,      // Dr. Hook-nik 3D Hover-Pod Boss!
+  mines: [],
+  popups: [],
+  sonarWaves: [],
+  perkChoices: []
+};
+
+const player = {
+  x: 150,
+  y: 420,
+  vx: 0,
+  vy: 0,
+  facing: 1,
+  onGround: true,
+  spinning: false,
+  coyote: 0,
+  inHole: null,
+  launchingHole: null,
+  activeLoop: null,
+  loopAngle: 0,
+  activeRail: null,
+  railT: 0,
+  enteredDeepFt: 0,
+  invuln: 0,
+  dust: 100,
+  maxDust: 100,
+  ponderCd: 0,
+  ponderMaxCd: 4.0,
+  ponderRadius: 760,
+  ponderPose: 0,
+  magnetRange: 110,
+  fiftyMaster: false,
+  quip: '',
+  quipTimer: 0,
+  animTime: 0
+};
+
+const PERKS = [
+  {
+    icon: '🧲',
+    title: 'Chaos Ring Magnet',
+    desc: 'Doubles 3D Citrus Ring pull range & grants +1 Extra Life!',
+    apply: () => { player.magnetRange += 135; game.lives++; }
+  },
+  {
+    icon: '✨',
+    title: 'Second Star Turbines',
+    desc: '+45% Pixie Spin-Boost tank & stronger upward Peter Pan lift!',
+    apply: () => { player.maxDust += 45; player.dust = player.maxDust; }
+  },
+  {
+    icon: '🤔',
+    title: 'Omniscient "Hmm..."',
+    desc: 'Fast cooldown Sonar reveals all shafts + grants +8 Oranges!',
+    apply: () => { player.ponderRadius += 380; player.ponderMaxCd = 2.2; game.oranges += 8; }
+  },
+  {
+    icon: '💎',
+    title: '50ft Super Emerald',
+    desc: '35ft–50ft shafts trigger Super Orange Mode & +80% points!',
+    apply: () => { player.fiftyMaster = true; }
+  }
+];
+
+// Coordinate Helper: Logical 2D (x right, y down) -> Three.js World (X right, Y up)
+function to3DX(lx) { return lx * SCALE; }
+function to3DY(ly) { return -ly * SCALE; }
+
+function getActIndex() {
+  return Math.min(ACTS.length - 1, Math.floor(game.holesCleared / 3));
+}
+
+function showActTitleCard(idx) {
+  const a = ACTS[idx];
+  actCardName.textContent = a.zone;
+  actCardSub.textContent = a.sub;
+  actCardNum.textContent = a.act;
+  actCard.classList.add('visible');
+  game.actBannerTimer = 2.2;
+  scene.background.setHex(a.skyHex);
+  scene.fog.color.setHex(a.fogHex);
+  sunLight.color.setHex(a.sunHex);
+}
+
+function sayQuip(txt, dur = 2.4) {
+  player.quip = txt;
+  player.quipTimer = dur;
+}
+
+function addPopup(x, y, text, color = '#ffd800', size = 18) {
+  game.popups.push({ x, y, vy: -56, text, color, size, life: 1.3, maxLife: 1.3 });
+}
+
+// ===========================================================================
+// 3D SIGNPOST TEXTURE HELPER
+// ===========================================================================
+function makeSignMaterial(label, subLabel, bgHex, borderHex) {
+  const c = document.createElement('canvas');
+  c.width = 256;
+  c.height = 128;
+  const g = c.getContext('2d');
+  g.fillStyle = bgHex;
+  g.fillRect(0, 0, 256, 128);
+  g.strokeStyle = borderHex;
+  g.lineWidth = 10;
+  g.strokeRect(5, 5, 246, 118);
+  g.fillStyle = '#ffffff';
+  g.font = 'italic 900 44px Trebuchet MS, sans-serif';
+  g.textAlign = 'center';
+  g.fillText(label, 128, 62);
+  g.fillStyle = '#ffd800';
+  g.font = '900 24px Trebuchet MS, sans-serif';
+  g.fillText(subLabel, 128, 102);
+  const tex = new THREE.CanvasTexture(c);
+  tex.colorSpace = THREE.SRGBColorSpace;
+  return new THREE.MeshBasicMaterial({ map: tex });
+}
+
+// ===========================================================================
+// PROCEDURAL 3D WORLD & 4 HOLE ARCHETYPE BUILDER
+// ===========================================================================
+function clearWorld3D() {
+  while (world3D.children.length > 0) {
+    const ch = world3D.children[0];
+    world3D.remove(ch);
+  }
+}
+
+function createPalmTree3D(lx, ly) {
+  const grp = new THREE.Group();
+  grp.position.set(to3DX(lx), to3DY(ly), -2.6);
+  const curve = new THREE.CatmullRomCurve3([
+    new THREE.Vector3(0, 0, 0),
+    new THREE.Vector3(0.4, 3.2, 0),
+    new THREE.Vector3(-0.2, 6.4, 0.2),
+    new THREE.Vector3(0.3, 9.2, 0)
+  ]);
+  const trunk = new THREE.Mesh(new THREE.TubeGeometry(curve, 16, 0.42, 10, false), matWoodPalm);
+  trunk.castShadow = true;
+  grp.add(trunk);
+
+  for (let f = 0; f < 6; f++) {
+    const ang = (f / 6) * Math.PI * 2;
+    const frond = new THREE.Mesh(new THREE.ConeGeometry(0.65, 3.8, 6), matTurfEmerald);
+    frond.position.set(0.3 + Math.cos(ang) * 1.5, 9.1, Math.sin(ang) * 1.5);
+    frond.rotation.z = -Math.cos(ang) * 1.15;
+    frond.rotation.x = Math.sin(ang) * 1.15;
+    grp.add(frond);
+  }
+  // Glowing Orange Coconuts!
+  for (let c = 0; c < 3; c++) {
+    const coco = new THREE.Mesh(new THREE.SphereGeometry(0.34, 12, 12), matTurfOrangeLip);
+    coco.position.set(0.3 + (c - 1) * 0.35, 8.6, 0.35);
+    grp.add(coco);
+  }
+  world3D.add(grp);
+  return grp;
+}
+
+function createSolidBlock3D(x1, x2, topY, depthPx = 1350) {
+  const w3 = (x2 - x1) * SCALE;
+  const h3 = depthPx * SCALE;
+  const cx3 = ((x1 + x2) * 0.5) * SCALE;
+  const cy3 = to3DY(topY) - h3 * 0.5;
+
+  const grp = new THREE.Group();
+
+  // Checkered 3D Cliff Body
+  const soil = new THREE.Mesh(new THREE.BoxGeometry(w3, h3, 5.5), matCheckeredSoil);
+  soil.position.set(cx3, cy3, 0);
+  soil.receiveShadow = true;
+  grp.add(soil);
+
+  // Orange Lip + Lush Emerald Grass Cap
+  const orangeCap = new THREE.Mesh(new THREE.BoxGeometry(w3 + 0.08, 0.48, 5.7), matTurfOrangeLip);
+  orangeCap.position.set(cx3, to3DY(topY) - 0.22, 0);
+  grp.add(orangeCap);
+
+  const grassCap = new THREE.Mesh(new THREE.BoxGeometry(w3 + 0.14, 0.42, 5.85), matTurfEmerald);
+  grassCap.position.set(cx3, to3DY(topY) + 0.08, 0);
+  grassCap.receiveShadow = true;
+  grp.add(grassCap);
+
+  world3D.add(grp);
+  return grp;
+}
+
+function spawnRing(lx, ly, kind = 'ring') {
+  const mesh = new THREE.Mesh(
+    kind === 'monitor' ? geoMonitor : geoRing,
+    kind === 'monitor'
+      ? new THREE.MeshStandardMaterial({ color: 0x1d4ed8, emissive: 0xff6a00, emissiveIntensity: 0.4, metalness: 0.6, roughness: 0.25 })
+      : matGoldRing
+  );
+  mesh.position.set(to3DX(lx), to3DY(ly), 0);
+  world3D.add(mesh);
+  game.rings.push({ x: lx, y: ly, vx: 0, vy: 0, scattered: false, collectDelay: 0, life: 999, kind, mesh });
+}
+
+function generateWorldAhead() {
+  while (game.generatedUntilX < player.x + 2600) {
+    const startX = game.generatedUntilX;
+    const groundY = 420 + Math.round((Math.random() - 0.5) * 3) * 26;
+    const runLen = 360 + Math.floor(Math.random() * 140);
+    const holeW = 148;
+    const afterLen = 180;
+
+    // 1. Solid Plateau Approach before the Hole
+    const block1 = createSolidBlock3D(startX, startX + runLen, groundY);
+    const palm = createPalmTree3D(startX + 75, groundY);
+
+    // Variation Set-Piece on Surface Approach!
+    const setPieceRoll = Math.random();
+    if (game.holes.length >= 1 && setPieceRoll < 0.36) {
+      // PLAYABLE 360° 3D SONIC LOOP-DE-LOOP!
+      const loopX = startX + runLen * 0.52;
+      const loopR = 96; // 192px tall loop!
+      const torus = new THREE.Mesh(
+        new THREE.TorusGeometry(loopR * SCALE, 0.68, 16, 48),
+        matCheckeredSoil
+      );
+      torus.position.set(to3DX(loopX), to3DY(groundY - loopR), -0.8);
+      torus.castShadow = true;
+      world3D.add(torus);
+
+      const trim = new THREE.Mesh(
+        new THREE.TorusGeometry(loopR * SCALE + 0.55, 0.14, 10, 48),
+        matTurfOrangeLip
+      );
+      trim.position.copy(torus.position);
+      world3D.add(trim);
+
+      game.loops.push({ x: loopX, groundY, r: loopR, triggered: false, mesh: torus, trim });
+
+      // Halo of 8 Citrus Rings around inside of the 3D Loop!
+      for (let a = 0; a < 8; a++) {
+        const ang = (a / 8) * Math.PI * 2;
+        spawnRing(loopX + Math.cos(ang) * (loopR - 22), (groundY - loopR) + Math.sin(ang) * (loopR - 22));
+      }
+    } else {
+      // HIGH-ROAD FLOATING EMERALD PLATFORM + DASH PAD + BADNIK CROC!
+      const platW = 155;
+      const platX = startX + runLen * 0.58;
+      const platY = groundY - 118;
+      const moving = Math.random() < 0.5;
+      const pMesh = new THREE.Mesh(new THREE.BoxGeometry(platW * SCALE, 0.75, 4.2), matTurfEmerald);
+      pMesh.position.set(to3DX(platX), to3DY(platY), 0);
+      pMesh.castShadow = true;
+      pMesh.receiveShadow = true;
+      world3D.add(pMesh);
+
+      game.platforms.push({
+        baseX: platX, x: platX, y: platY, w: platW,
+        moving, phase: Math.random() * Math.PI * 2, mesh: pMesh
+      });
+      spawnRing(platX - 36, platY - 34);
+      spawnRing(platX, platY - 42, Math.random() < 0.45 ? 'monitor' : 'ring');
+      spawnRing(platX + 36, platY - 34);
+
+      // Dash Pad on Low Road
+      const dpX = startX + 85;
+      const dpMesh = new THREE.Mesh(new THREE.ConeGeometry(0.65, 1.8, 12), matSpringRed);
+      dpMesh.rotation.z = -Math.PI / 2;
+      dpMesh.position.set(to3DX(dpX), to3DY(groundY) + 0.35, 0);
+      world3D.add(dpMesh);
+      game.dashPads.push({ x: dpX, y: groundY, mesh: dpMesh });
+
+      // Badnik Robo-Croc patrolling Low Road
+      if (game.holes.length >= 1) {
+        const cMesh = new THREE.Group();
+        const body = new THREE.Mesh(new THREE.BoxGeometry(2.1, 0.95, 1.3), matTurfEmerald);
+        const eye = new THREE.Mesh(new THREE.SphereGeometry(0.24, 12, 12), matSpringRed);
+        eye.position.set(0.75, 0.3, 0.4);
+        const gear = new THREE.Mesh(new THREE.TorusGeometry(0.32, 0.09, 10, 16), matGoldRing);
+        gear.position.set(-0.2, 0.2, 0.68);
+        cMesh.add(body, eye, gear);
+        world3D.add(cMesh);
+        game.crocs.push({
+          x: startX + runLen * 0.6,
+          y: groundY,
+          minX: startX + 135,
+          maxX: startX + runLen - 34,
+          vx: 95 + getActIndex() * 16,
+          alive: true,
+          mesh: cMesh
+        });
+      }
+    }
+
+    // 2. Build the 3D Subterranean Hole Shaft (with 4 Varied Archetypes!)
+    const holeStart = startX + runLen;
+    const holeCenterX = holeStart + holeW * 0.5;
+    const hole = buildVaried3DHole(holeCenterX, groundY, holeW);
+    game.holes.push(hole);
+
+    // 3. Solid Post-Hole Landing Block (+ Sky-Grind Rail on 30ft+ Legal Holes!)
+    const afterStart = holeStart + holeW;
+    const block2 = createSolidBlock3D(afterStart, afterStart + afterLen, groundY);
+
+    if (hole.category === 'legal' && hole.depthFt >= 28) {
+      // Blazing Orange Curved 3D Sonic Sky-Grind Rail exiting the hole!
+      const rStart = { x: holeCenterX + 20, y: groundY - 135 };
+      const rMid = { x: afterStart + afterLen * 0.55, y: groundY - 165 };
+      const rEnd = { x: afterStart + afterLen + 55, y: groundY - 95 };
+      const railCurve = new THREE.CatmullRomCurve3([
+        new THREE.Vector3(to3DX(rStart.x), to3DY(rStart.y), 0),
+        new THREE.Vector3(to3DX(rMid.x), to3DY(rMid.y), 0),
+        new THREE.Vector3(to3DX(rEnd.x), to3DY(rEnd.y), 0)
+      ]);
+      const railMesh = new THREE.Mesh(
+        new THREE.TubeGeometry(railCurve, 20, 0.18, 10, false),
+        matGoldRing
+      );
+      world3D.add(railMesh);
+      hole.exitRail = { p0: rStart, p1: rMid, p2: rEnd, mesh: railMesh };
+    }
+
+    game.chunks.push({
+      endX: afterStart + afterLen,
+      meshes: [block1, block2, palm, hole.group, hole.exitRail ? hole.exitRail.mesh : null]
+    });
+
+    game.generatedUntilX = afterStart + afterLen;
   }
 
-  function togglePause() {
-    if (game.mode === 'playing') {
-      game.mode = 'paused';
-      pauseOverlay.classList.remove('hidden');
-    } else if (game.mode === 'paused') {
-      game.mode = 'playing';
-      pauseOverlay.classList.add('hidden');
-      lastTime = performance.now();
+  // Prune old 3D chunks cleanly
+  const cutoff = player.x - 1600;
+  while (game.chunks.length > 0 && game.chunks[0].endX < cutoff) {
+    const old = game.chunks.shift();
+    old.meshes.forEach((m) => { if (m) world3D.remove(m); });
+  }
+  game.holes = game.holes.filter((h) => h.x + h.w > cutoff);
+  game.platforms = game.platforms.filter((p) => {
+    if (p.baseX + p.w < cutoff) { world3D.remove(p.mesh); return false; }
+    return true;
+  });
+  game.loops = game.loops.filter((l) => {
+    if (l.x + l.r < cutoff) { world3D.remove(l.mesh); world3D.remove(l.trim); return false; }
+    return true;
+  });
+  game.dashPads = game.dashPads.filter((d) => {
+    if (d.x < cutoff) { world3D.remove(d.mesh); return false; }
+    return true;
+  });
+  game.crocs = game.crocs.filter((c) => {
+    if (!c.alive || c.maxX < cutoff) { world3D.remove(c.mesh); return false; }
+    return true;
+  });
+}
+
+function buildVaried3DHole(x, rimY, w) {
+  const idx = game.holes.length;
+  let category = 'legal';
+  if (idx >= 2) {
+    const roll = Math.random();
+    if (roll < 0.68) category = 'legal';
+    else if (roll < 0.84) category = 'shallow';
+    else category = 'deep';
+  }
+
+  let depthFt = 32;
+  if (category === 'legal') {
+    const sp = Math.random();
+    if (sp < 0.18) depthFt = 50;
+    else if (sp < 0.28) depthFt = 10;
+    else depthFt = 14 + Math.floor(Math.random() * 36);
+  } else if (category === 'shallow') {
+    depthFt = 4 + Math.floor(Math.random() * 6);
+  } else {
+    depthFt = 55 + Math.floor(Math.random() * 25);
+  }
+
+  // 4 Distinct Gameplay Archetypes for Legal Holes!
+  const archetypes = ['SPRING', 'PINBALL', 'UPDRAFT', 'HELIX'];
+  const archetype = category === 'legal'
+    ? (depthFt < 18 ? 'SPRING' : archetypes[idx % archetypes.length])
+    : (category === 'shallow' ? 'DITCH' : 'ABYSS');
+
+  const mystery = idx >= 2 && Math.random() < 0.28;
+  const depthPx = depthFt * PX_PER_FT;
+
+  const grp = new THREE.Group();
+
+  // Recessed 3D Subterranean Cliff Strata Back Wall of the Shaft!
+  const backMat = matCliffStrata.clone();
+  backMat.color.setHex(category === 'legal' ? 0xb45309 : (category === 'shallow' ? 0x64748b : 0x881337));
+  const backWall = new THREE.Mesh(
+    new THREE.BoxGeometry(w * SCALE, depthPx * SCALE, 1.2),
+    backMat
+  );
+  backWall.position.set(to3DX(x), to3DY(rimY + depthPx * 0.5), -2.5);
+  grp.add(backWall);
+
+  // Shaft Floor + Bottom Sonic Coil Bumper Spring!
+  const floorBlock = new THREE.Mesh(
+    new THREE.BoxGeometry(w * SCALE, 3.0, 5.5),
+    matCheckeredSoil
+  );
+  floorBlock.position.set(to3DX(x), to3DY(rimY + depthPx) - 1.5, 0);
+  grp.add(floorBlock);
+
+  if (category === 'legal') {
+    const springMesh = new THREE.Mesh(geoSpringPad, matSpringRed);
+    springMesh.position.set(to3DX(x), to3DY(rimY + depthPx) + 0.35, 0);
+    grp.add(springMesh);
+
+    const starCenter = new THREE.Mesh(new THREE.CylinderGeometry(0.9, 0.9, 0.62, 16), matGoldRing);
+    starCenter.position.copy(springMesh.position);
+    grp.add(starCenter);
+
+    // PointLight glowing inside every 10–50ft legal hole!
+    const shaftLight = new THREE.PointLight(depthFt === 50 ? 0xffe600 : 0xff7700, 3.5, 22);
+    shaftLight.position.set(to3DX(x), to3DY(rimY + depthPx * 0.65), 1.5);
+    grp.add(shaftLight);
+  }
+
+  // 50ft Illegal Limit Laser Ring inside >50ft holes!
+  if (depthFt > MAX_LEGAL_FT) {
+    const limitRing = new THREE.Mesh(
+      new THREE.TorusGeometry((w * 0.46) * SCALE, 0.14, 12, 32),
+      new THREE.MeshBasicMaterial({ color: 0xff2a2a })
+    );
+    limitRing.rotation.x = Math.PI / 2;
+    limitRing.position.set(to3DX(x), to3DY(rimY + MAX_LEGAL_FT * PX_PER_FT), 0);
+    grp.add(limitRing);
+  }
+
+  // Populate Shaft Internals by Archetype!
+  const bumpers = [];
+  const spinners = [];
+  let hasUpdraft = false;
+
+  if (category === 'legal' || category === 'deep') {
+    const maxFt = Math.min(depthFt - 4, 48);
+
+    if (archetype === 'PINBALL') {
+      // Glowing 3D Sonic Casino Pinball Bumpers + Ring Clusters!
+      const count = Math.max(2, Math.floor(maxFt / 11));
+      for (let b = 1; b <= count; b++) {
+        const bFt = (b / (count + 1)) * maxFt;
+        const bx = x + (b % 2 === 0 ? -w * 0.22 : w * 0.22);
+        const by = rimY + bFt * PX_PER_FT;
+        const bMesh = new THREE.Mesh(geoBumper, matPinballBumper);
+        bMesh.position.set(to3DX(bx), to3DY(by), 0);
+        grp.add(bMesh);
+        bumpers.push({ x: bx, y: by, scale: 1, mesh: bMesh });
+        spawnRing(x - (bx - x), by);
+      }
+    } else if (archetype === 'UPDRAFT') {
+      // Rising Thermal Orange Wind Column + High-Value Chaos Monitor!
+      hasUpdraft = true;
+      const windCyl = new THREE.Mesh(
+        new THREE.CylinderGeometry((w * 0.34) * SCALE, (w * 0.34) * SCALE, (maxFt * PX_PER_FT) * SCALE, 16, 1, true),
+        new THREE.MeshBasicMaterial({ color: 0xff9900, transparent: true, opacity: 0.22, side: THREE.DoubleSide })
+      );
+      windCyl.position.set(to3DX(x), to3DY(rimY + maxFt * 0.5 * PX_PER_FT), 0);
+      grp.add(windCyl);
+      spawnRing(x, rimY + maxFt * 0.45 * PX_PER_FT, 'monitor');
+      for (let r = 1; r <= 5; r++) {
+        spawnRing(x + Math.sin(r * 1.3) * 34, rimY + (r * maxFt / 6) * PX_PER_FT);
+      }
+    } else if (archetype === 'HELIX') {
+      // Rotating 3D Laser-Bar Spinners + Double Helix of Citrus Rings!
+      const nSpin = Math.max(1, Math.floor(maxFt / 16));
+      for (let s = 1; s <= nSpin; s++) {
+        const sy = rimY + (s / (nSpin + 1)) * maxFt * PX_PER_FT;
+        const barGrp = new THREE.Group();
+        barGrp.position.set(to3DX(x), to3DY(sy), 0);
+        const hub = new THREE.Mesh(new THREE.SphereGeometry(0.45, 14, 14), matGoldRing);
+        const laser = new THREE.Mesh(
+          new THREE.BoxGeometry((w * 0.78) * SCALE, 0.22, 0.22),
+          new THREE.MeshBasicMaterial({ color: 0xff2a2a })
+        );
+        barGrp.add(hub, laser);
+        grp.add(barGrp);
+        spinners.push({ x, y: sy, angle: s * 1.1, smashed: false, grp: barGrp });
+      }
+      for (let r = 1; r <= 6; r++) {
+        spawnRing(x + Math.cos(r * 0.9) * 38, rimY + (r * maxFt / 7) * PX_PER_FT);
+      }
+    } else {
+      // Classic High-Speed Ring Spiral!
+      const nRings = Math.max(3, Math.floor(maxFt / 4.5));
+      for (let r = 1; r <= nRings; r++) {
+        spawnRing(
+          x + Math.sin(r * 1.0) * 34,
+          rimY + (r / (nRings + 1)) * maxFt * PX_PER_FT,
+          r === nRings && Math.random() < 0.4 ? 'monitor' : 'ring'
+        );
+      }
     }
   }
 
-  // =========================================================================
-  // GAME & S-KEVIN STATE
-  // =========================================================================
-  let bestScore = Number(localStorage.getItem('skevin_best_v2') || 0);
+  // 3D Star-Post Signpost beside Rim!
+  const postX = x - w * 0.5 - 26;
+  const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.14, 0.14, 2.8, 10), matGoldRing);
+  pole.position.set(to3DX(postX), to3DY(rimY) + 1.4, 1.2);
+  grp.add(pole);
 
-  const game = {
-    mode: 'menu',
+  const signBoard = new THREE.Mesh(
+    new THREE.BoxGeometry(3.8, 1.85, 0.25),
+    getHoleSignMat(depthFt, category, archetype, !mystery)
+  );
+  signBoard.position.set(to3DX(postX), to3DY(rimY) + 3.0, 1.2);
+  grp.add(signBoard);
+
+  world3D.add(grp);
+
+  return {
+    x, rimY, w, depthFt, depthPx,
+    category, archetype, mystery,
+    revealed: !mystery,
+    sealed: false,
+    sealLabel: '',
+    bumpers,
+    spinners,
+    hasUpdraft,
+    exitRail: null,
+    group: grp,
+    signBoard
+  };
+}
+
+function getHoleSignMat(depthFt, category, archetype, revealed) {
+  if (!revealed) return makeSignMaterial('??? FT', 'PRESS [H] HMM!', '#5b21b6', '#ffd800');
+  if (category === 'shallow') return makeSignMaterial(`${depthFt} FT`, 'TOO SHALLOW!', '#334155', '#94a3b8');
+  if (category === 'deep') return makeSignMaterial(`${depthFt} FT`, 'OVER 50FT!', '#9f1239', '#fda4af');
+  if (depthFt === 50) return makeSignMaterial('★ 50 FT ★', archetype, '#ea580c', '#ffffff');
+  return makeSignMaterial(`${depthFt} FT`, archetype, '#0044cc', '#ffd800');
+}
+
+// ===========================================================================
+// DR. HOOK-NIK 3D HOVER-POD BOSS!
+// ===========================================================================
+function spawnBossEncounter() {
+  if (game.boss) return;
+  const grp = new THREE.Group();
+  const hull = new THREE.Mesh(
+    new THREE.SphereGeometry(1.75, 24, 20),
+    new THREE.MeshPhysicalMaterial({ color: 0xb91c1c, metalness: 0.75, roughness: 0.2, clearcoat: 1.0 })
+  );
+  const dome = new THREE.Mesh(
+    new THREE.SphereGeometry(1.15, 20, 16, 0, Math.PI * 2, 0, Math.PI * 0.5),
+    new THREE.MeshPhysicalMaterial({ color: 0x7df9ff, transparent: true, opacity: 0.62, roughness: 0.05, clearcoat: 1.0 })
+  );
+  dome.position.y = 0.65;
+  const stripe = new THREE.Mesh(new THREE.TorusGeometry(1.72, 0.16, 12, 32), matGoldRing);
+  stripe.rotation.x = Math.PI / 2;
+
+  // Swinging Pirate Hook underneath!
+  const hookArm = new THREE.Mesh(new THREE.TorusGeometry(0.75, 0.16, 12, 24, Math.PI * 1.4), matGoldRing);
+  hookArm.position.y = -2.1;
+
+  grp.add(hull, dome, stripe, hookArm);
+  scene.add(grp);
+
+  game.boss = {
+    x: player.x + 260,
+    y: 235,
+    hp: 3,
+    maxHp: 3,
+    hitCd: 0,
+    mineTimer: 1.6,
+    phase: 0,
+    mesh: grp
+  };
+  bossBarWrap.style.display = 'block';
+  bossHpFill.style.width = '100%';
+  sayQuip(`IT'S DR. HOOK-NIK! Spin-Jump his Hover-Pod 3 times!`, 3.0);
+}
+
+// ===========================================================================
+// "HMM..." SONAR & SONIC RING-SCATTER DAMAGE
+// ===========================================================================
+function triggerPonder() {
+  if (game.mode !== 'playing' || player.ponderCd > 0) return;
+  player.ponderCd = player.ponderMaxCd;
+  player.ponderPose = 0.8;
+  sfx.hmmSonar();
+  game.sonarWaves.push({ x: player.x, y: player.y - 24, r: 12, maxR: player.ponderRadius, alpha: 1 });
+
+  let found = 0;
+  game.holes.forEach((h) => {
+    if (!h.revealed && Math.hypot(h.x - player.x, h.rimY - player.y) <= player.ponderRadius) {
+      h.revealed = true;
+      h.signBoard.material = getHoleSignMat(h.depthFt, h.category, h.archetype, true);
+      found++;
+      addPopup(h.x, h.rimY - 58, `HMM: ${h.depthFt}FT ${h.archetype}!`, h.category === 'legal' ? '#4ade80' : '#fb7185', 17);
+    }
+  });
+
+  if (found > 0) {
+    game.score += found * 125;
+    sayQuip(`Hmmmm... revealed ${found} 3D shaft${found > 1 ? 's' : ''}!`, 2.2);
+  } else {
+    sayQuip(`Hmm... Orange, Peter Pan, 10–50ft shafts, and ${game.fourthLove}!`, 2.1);
+  }
+}
+
+function takeSonicHit(reason) {
+  if (player.invuln > 0 || game.superTimer > 0) return;
+  player.invuln = 1.8;
+  game.combo = 1;
+  if (reason) sayQuip(reason, 2.4);
+
+  if (game.oranges > 0) {
+    const drop = Math.min(18, game.oranges);
+    game.oranges = 0;
+    sfx.ringScatter();
+    for (let i = 0; i < drop; i++) {
+      const ang = -Math.PI * (0.15 + 0.7 * (i / Math.max(1, drop - 1)));
+      const spd = 260 + (i % 3) * 90;
+      const mesh = new THREE.Mesh(geoRing, matGoldRing);
+      mesh.position.set(to3DX(player.x), to3DY(player.y - 28), 0);
+      world3D.add(mesh);
+      game.rings.push({
+        x: player.x,
+        y: player.y - 28,
+        vx: Math.cos(ang) * spd,
+        vy: Math.sin(ang) * spd - 120,
+        scattered: true,
+        collectDelay: 0.35,
+        life: 4.5,
+        kind: 'ring',
+        mesh
+      });
+    }
+    addPopup(player.x, player.y - 54, 'ORANGES SCATTERED!', '#ffd800', 18);
+  } else {
+    sfx.badBuzz();
+    game.lives--;
+    if (game.lives <= 0) triggerGameOver();
+    else game.oranges = 3;
+  }
+}
+
+// ===========================================================================
+// LIFECYCLE: START, PERKS & GAME OVER
+// ===========================================================================
+function startGame() {
+  game.fourthLove = (hmmInput.value || '').trim() || 'Chili-Orange Dogs';
+  clearWorld3D();
+  if (game.boss) { scene.remove(game.boss.mesh); game.boss = null; }
+  game.mines.forEach((m) => world3D.remove(m.mesh));
+  bossBarWrap.style.display = 'none';
+
+  Object.assign(game, {
+    mode: 'playing',
     time: 0,
     runClock: 0,
     score: 0,
-    oranges: 0,      // Works just like Sonic RINGS!
+    oranges: 5,
     lives: 3,
     combo: 1,
     holesCleared: 0,
     nextPerkAt: 4,
+    nextBossAt: 3,
     deepestLegal: 0,
-    fourthLove: 'Chili-Orange Dogs',
     superTimer: 0,
-    actBannerTimer: 0,
-    lastActIdx: -1,
-    shake: 0,
-    camX: 0,
-    camY: 0,
-    generatedUntilX: 0,
-    lastPlateauY: 430,
-    segments: [],
-    scenery: [],     // Palm trees, Sonic totem flowers, loop silhouettes, dash pads!
+    lastActIdx: 0,
+    generatedUntilX: 380,
+    chunks: [],
     holes: [],
-    rings: [],       // Spinning Golden-Orange Citrus Rings (including scattered dropped rings!)
-    crocs: [],       // Badnik Robo-Crocs!
-    particles: [],
+    platforms: [],
+    loops: [],
+    rails: [],
+    dashPads: [],
+    rings: [],
+    crocs: [],
+    mines: [],
     popups: [],
-    sonarWaves: [],
-    perkChoices: []
-  };
+    sonarWaves: []
+  });
 
-  const player = {
-    x: 160,
-    y: 430,
+  // Starter Runway Block
+  const starter = createSolidBlock3D(-260, 380, 420);
+  const startPalm = createPalmTree3D(70, 420);
+  game.chunks.push({ endX: 380, meshes: [starter, startPalm] });
+
+  Object.assign(player, {
+    x: 130,
+    y: 420,
     vx: 0,
     vy: 0,
     facing: 1,
     onGround: true,
-    spinning: false, // Sonic curl spinball state!
-    coyote: 0,
+    spinning: false,
+    coyote: 0.12,
     inHole: null,
     launchingHole: null,
+    activeLoop: null,
+    activeRail: null,
     enteredDeepFt: 0,
     invuln: 0,
     dust: 100,
     maxDust: 100,
     ponderCd: 0,
-    ponderMaxCd: 4.0,
-    ponderRadius: 740,
     ponderPose: 0,
-    magnetRange: 105,
-    shieldPerks: false,
-    fiftyMaster: false,
     quip: '',
-    quipTimer: 0,
-    animTime: 0,
-    afterimages: []
-  };
+    quipTimer: 0
+  });
 
-  const PERKS = [
-    {
-      icon: '⚡',
-      title: 'Orange Shield Magnet',
-      desc: 'Attracts Citrus Rings from twice as far & +1 Extra Life!',
-      apply: () => { player.magnetRange += 130; game.lives++; }
-    },
-    {
-      icon: '✨',
-      title: 'Super Pan Spin-Boost',
-      desc: '+40% Max Pixie Boost & faster mid-air Peter Pan flight!',
-      apply: () => { player.maxDust += 40; player.dust = player.maxDust; }
-    },
-    {
-      icon: '🤔',
-      title: 'Supersonic "Hmm..."',
-      desc: 'Wider Ponder Sonar reveals mystery holes + awards +5 Oranges!',
-      apply: () => { player.ponderRadius += 350; player.ponderMaxCd = 2.4; game.oranges += 5; }
-    },
-    {
-      icon: '🎯',
-      title: '50ft Chaos Emerald',
-      desc: '35ft–50ft holes trigger Super Orange S-Kevin & +75% points!',
-      apply: () => { player.fiftyMaster = true; }
-    }
-  ];
+  generateWorldAhead();
+  game.camX = player.x + 140;
+  game.camY = player.y - 90;
 
-  function getActIndex() {
-    return Math.min(ACTS.length - 1, Math.floor(game.holesCleared / 3));
+  startOverlay.classList.add('hidden');
+  perkOverlay.classList.add('hidden');
+  pauseOverlay.classList.add('hidden');
+  gameOverOverlay.classList.add('hidden');
+  hud.classList.remove('hidden');
+
+  showActTitleCard(0);
+  sayQuip(`3D TANGERINE HILL! Loops, Pinball Shafts & 10–50ft Springs—LET'S GO!`, 2.8);
+  updateHud();
+  lastTime = performance.now();
+}
+
+function openPerkModal() {
+  game.mode = 'perk';
+  keys.left = keys.right = keys.jump = keys.down = false;
+  const picks = [...PERKS].sort(() => Math.random() - 0.5).slice(0, 3);
+  game.perkChoices = picks;
+  perksGrid.innerHTML = '';
+  picks.forEach((p, idx) => {
+    const card = document.createElement('div');
+    card.className = 'perk-card';
+    card.innerHTML = `
+      <div style="font-size:32px;">${p.icon}</div>
+      <div style="font-size:15px;font-weight:900;color:#ffd800;margin:6px 0;">[${idx + 1}] ${p.title}</div>
+      <div style="font-size:12px;color:#e2e8f0;line-height:1.35;">${p.desc}</div>
+    `;
+    card.addEventListener('click', () => applyPerk(p));
+    perksGrid.appendChild(card);
+  });
+  perkOverlay.classList.remove('hidden');
+}
+
+function applyPerk(p) {
+  p.apply();
+  sfx.springBoing(false);
+  perkOverlay.classList.add('hidden');
+  game.mode = 'playing';
+  lastTime = performance.now();
+}
+
+function triggerGameOver() {
+  game.mode = 'gameover';
+  hud.classList.add('hidden');
+  if (game.score > bestScore) {
+    bestScore = game.score;
+    localStorage.setItem('skevin_3d_best', String(bestScore));
+  }
+  document.getElementById('goScore').textContent = game.score.toLocaleString();
+  document.getElementById('goHoles').textContent = String(game.holesCleared);
+  document.getElementById('goDeepest').textContent = `${game.deepestLegal} FT`;
+  document.getElementById('goBest').textContent = bestScore.toLocaleString();
+  document.getElementById('goRankText').textContent =
+    game.holesCleared >= 8 ? 'RANK S • 3D NEVERLAND SPEED GOD' : 'RANK A • 10–50FT SONIC EXPLORER';
+  gameOverOverlay.classList.remove('hidden');
+}
+
+// ===========================================================================
+// SURFACE HEIGHT LOOKUP
+// ===========================================================================
+function surfaceYAt(lx) {
+  for (let i = 0; i < game.holes.length; i++) {
+    const h = game.holes[i];
+    if (Math.abs(lx - h.x) < 420) return h.rimY;
+  }
+  return 420;
+}
+
+function findHoleAtX(lx, margin = 0) {
+  for (let i = 0; i < game.holes.length; i++) {
+    const h = game.holes[i];
+    if (lx > h.x - h.w * 0.5 + margin && lx < h.x + h.w * 0.5 - margin) return h;
+  }
+  return null;
+}
+
+// ===========================================================================
+// MAIN PHYSICS & VARIATION SIMULATION
+// ===========================================================================
+function update(rawDt) {
+  if (game.mode !== 'playing') return;
+  const dt = Math.min(0.033, rawDt);
+
+  game.time += dt;
+  game.runClock += dt;
+  player.animTime += dt * (1 + Math.abs(player.vx) / 240);
+  if (player.invuln > 0) player.invuln = Math.max(0, player.invuln - dt);
+  if (player.ponderCd > 0) player.ponderCd = Math.max(0, player.ponderCd - dt);
+  if (player.ponderPose > 0) player.ponderPose = Math.max(0, player.ponderPose - dt);
+  if (player.quipTimer > 0) player.quipTimer = Math.max(0, player.quipTimer - dt);
+  if (game.superTimer > 0) game.superTimer = Math.max(0, game.superTimer - dt);
+
+  if (game.actBannerTimer > 0) {
+    game.actBannerTimer -= dt;
+    if (game.actBannerTimer <= 0) actCard.classList.remove('visible');
   }
 
-  function showActTitleCard(actIdx) {
-    const a = ACTS[actIdx];
-    actCardName.textContent = a.zone;
-    actCardNum.textContent = a.act;
-    actCard.classList.add('visible');
-    game.actBannerTimer = 2.1;
+  const actIdx = getActIndex();
+  if (actIdx !== game.lastActIdx) {
+    game.lastActIdx = actIdx;
+    showActTitleCard(actIdx);
   }
 
-  function sayQuip(txt, dur = 2.3) {
-    player.quip = txt;
-    player.quipTimer = dur;
+  if (game.holesCleared >= game.nextBossAt && !game.boss) {
+    game.nextBossAt += 4;
+    spawnBossEncounter();
   }
 
-  function addPopup(x, y, text, color = '#ffd800', size = 18) {
-    game.popups.push({ x, y, vy: -58, text, color, size, life: 1.25, maxLife: 1.25 });
-  }
+  sfx.updateMusic(dt, game.superTimer > 0);
+  generateWorldAhead();
+  window.__inHoleForShot = Boolean(player.inHole);
 
-  function burst(x, y, n, colors, spd = 260) {
-    for (let i = 0; i < n; i++) {
-      const a = Math.random() * Math.PI * 2;
-      const v = (0.3 + Math.random() * 0.8) * spd;
-      game.particles.push({
-        x, y,
-        vx: Math.cos(a) * v,
-        vy: Math.sin(a) * v - 40,
-        r: 2.5 + Math.random() * 4,
-        color: colors[Math.floor(Math.random() * colors.length)],
-        life: 0.45 + Math.random() * 0.45,
-        maxLife: 0.9
-      });
-    }
-  }
-
-  // =========================================================================
-  // WORLD GENERATOR (Sonic Checkered Hills, Palms, Dash Pads & 10–50ft Shafts)
-  // =========================================================================
-  function groundHeightAt(x) {
-    for (let i = 0; i < game.segments.length; i++) {
-      const s = game.segments[i];
-      if (x >= s.x1 && x <= s.x2) {
-        if (s.y1 === s.y2) return s.y1;
-        const t = (x - s.x1) / (s.x2 - s.x1);
-        const mu = (1 - Math.cos(t * Math.PI)) * 0.5;
-        return s.y1 * (1 - mu) + s.y2 * mu;
-      }
-    }
-    return 430;
-  }
-
-  function findHoleAtX(x, margin = 0) {
-    for (let i = 0; i < game.holes.length; i++) {
-      const h = game.holes[i];
-      if (x > h.x - h.w * 0.5 + margin && x < h.x + h.w * 0.5 - margin) return h;
-    }
-    return null;
-  }
-
-  function generateWorldAhead() {
-    while (game.generatedUntilX < player.x + W * 2.2) {
-      const sx = game.generatedUntilX;
-      const py = game.lastPlateauY;
-      const ny = Math.max(300, Math.min(495, py + (Math.random() - 0.5) * 115));
-
-      const hillLen = 230 + Math.random() * 170;
-      game.segments.push({ x1: sx, x2: sx + hillLen, y1: py, y2: ny });
-
-      // Decorative Sonic Palm Tree or Loop Arch + Arc of Citrus Rings!
-      const midX = sx + hillLen * 0.5;
-      game.scenery.push({
-        x: midX,
-        y: groundHeightAt(midX),
-        kind: Math.random() < 0.32 ? 'loop' : (Math.random() < 0.55 ? 'palm' : 'flower')
-      });
-
-      for (let r = 0; r < 5; r++) {
-        const f = (r + 0.5) / 5;
-        const rx = sx + hillLen * f;
-        const ry = groundHeightAt(rx) - 48 - Math.sin(f * Math.PI) * 68;
-        game.rings.push({ x: rx, y: ry, vx: 0, vy: 0, scattered: false, life: 999, kind: 'ring' });
-      }
-
-      // Plateau with Dash Pad + Hole!
-      const platStart = sx + hillLen;
-      const holeW = 132 + Math.floor(Math.random() * 22);
-      const padL = 130 + Math.random() * 80;
-      const padR = 120 + Math.random() * 90;
-      const platLen = padL + holeW + padR;
-      game.segments.push({ x1: platStart, x2: platStart + platLen, y1: ny, y2: ny });
-
-      if (Math.random() < 0.55) {
-        game.scenery.push({ x: platStart + 42, y: ny, kind: 'dashpad' });
-      }
-
-      const holeX = platStart + padL + holeW * 0.5;
-      const hole = buildHole(holeX, ny, holeW);
-      game.holes.push(hole);
-
-      if (game.holes.length > 2 && Math.random() < 0.42) {
-        const minX = platStart + 24;
-        const maxX = holeX - holeW * 0.5 - 26;
-        if (maxX - minX > 70) {
-          game.crocs.push({
-            x: (minX + maxX) * 0.5,
-            y: ny,
-            minX,
-            maxX,
-            vx: 85 + getActIndex() * 18,
-            alive: true
-          });
-        }
-      }
-
-      game.lastPlateauY = ny;
-      game.generatedUntilX = platStart + platLen;
-    }
-
-    const cutoff = player.x - W * 1.4;
-    game.segments = game.segments.filter((s) => s.x2 > cutoff);
-    game.scenery = game.scenery.filter((sc) => sc.x > cutoff - 160);
-    game.holes = game.holes.filter((h) => h.x + h.w > cutoff);
-    game.rings = game.rings.filter((r) => r.life > 0 && r.x > cutoff);
-    game.crocs = game.crocs.filter((c) => c.alive && c.maxX > cutoff);
-  }
-
-  function buildHole(x, rimY, w) {
-    const idx = game.holes.length;
-    let category = 'legal';
-    if (idx >= 2) {
-      const r = Math.random();
-      if (r < 0.64) category = 'legal';
-      else if (r < 0.82) category = 'shallow';
-      else category = 'deep';
-    }
-
-    let depthFt = 30;
-    if (category === 'legal') {
-      const sp = Math.random();
-      if (sp < 0.16) depthFt = 50;
-      else if (sp < 0.26) depthFt = 10;
-      else depthFt = 11 + Math.floor(Math.random() * 39);
-    } else if (category === 'shallow') {
-      depthFt = 3 + Math.floor(Math.random() * 7);
-    } else {
-      depthFt = 54 + Math.floor(Math.random() * 28);
-    }
-
-    const mystery = idx >= 2 && Math.random() < 0.30;
-    const hasMonitor = category === 'legal' && Math.random() < 0.45;
-    const depthPx = depthFt * PX_PER_FT;
-
-    // Vertical Sonic Ring line inside shaft!
-    if (category === 'legal' || category === 'deep') {
-      const maxFt = Math.min(depthFt - 4, 48);
-      const count = Math.max(3, Math.floor(maxFt / 4));
-      for (let i = 1; i <= count; i++) {
-        const ft = (i / (count + 1)) * maxFt;
-        const ox = Math.sin(i * 1.1) * (w * 0.26);
-        game.rings.push({
-          x: x + ox,
-          y: rimY + ft * PX_PER_FT,
-          vx: 0,
-          vy: 0,
-          scattered: false,
-          life: 999,
-          kind: (i === count && hasMonitor) ? 'monitor' : 'ring'
-        });
-      }
-    }
-
-    const obstacles = [];
-    if (depthFt >= 24 && idx >= 1) {
-      const nObs = Math.floor((Math.min(depthFt, 50) - 14) / 14);
-      for (let k = 0; k < nObs; k++) {
-        obstacles.push({
-          y: rimY + (14 + k * 13) * PX_PER_FT,
-          side: (k + idx) % 2 === 0 ? -1 : 1,
-          len: w * 0.40,
-          smashed: false
-        });
-      }
-    }
-
-    return {
-      x, rimY, w, depthFt, depthPx,
-      category, mystery,
-      revealed: !mystery,
-      sealed: false,
-      sealLabel: '',
-      obstacles
-    };
-  }
-
-  // =========================================================================
-  // "HMM..." SONAR & RING-SCATTER DAMAGE (AUTHENTIC SONIC MECHANIC!)
-  // =========================================================================
-  function triggerPonder() {
-    if (game.mode !== 'playing' || player.ponderCd > 0) return;
-    player.ponderCd = player.ponderMaxCd;
-    player.ponderPose = 0.75;
-    sfx.hmmSonar();
-
-    game.sonarWaves.push({ x: player.x, y: player.y - 24, r: 12, maxR: player.ponderRadius, alpha: 1 });
-
-    let found = 0;
-    game.holes.forEach((h) => {
-      if (!h.revealed && Math.hypot(h.x - player.x, h.rimY - player.y) <= player.ponderRadius) {
-        h.revealed = true;
-        found++;
-        const col = h.category === 'legal' ? '#4ade80' : '#fb7185';
-        addPopup(h.x, h.rimY - 56, `HMM: ${h.depthFt}FT!`, col, 17);
-      }
-    });
-
-    if (found > 0) {
-      game.score += found * 100;
-      sayQuip(`Hmmmm... scanned ${found} mystery shaft${found > 1 ? 's' : ''}! Gotta jump smart!`, 2.1);
-    } else {
-      sayQuip(`Hmm... Orange, Peter Pan, 10–50ft holes, and ${game.fourthLove}!`, 2.0);
+  // Animate Moving High-Road Emerald Platforms
+  for (let i = 0; i < game.platforms.length; i++) {
+    const p = game.platforms[i];
+    if (p.moving) {
+      p.x = p.baseX + Math.sin(game.time * 2.1 + p.phase) * 58;
+      p.mesh.position.x = to3DX(p.x);
     }
   }
 
-  function takeSonicHit(reason) {
-    if (player.invuln > 0 || game.superTimer > 0) return;
-    player.invuln = 1.8;
-    game.combo = 1;
-    game.shake = 13;
-    if (reason) sayQuip(reason, 2.4);
-
-    if (game.oranges > 0) {
-      // CLASSIC SONIC RING SCATTER!!
-      const dropCount = Math.min(20, game.oranges);
-      game.oranges = 0;
-      sfx.ringScatter();
-      for (let i = 0; i < dropCount; i++) {
-        const ang = -Math.PI * (0.15 + 0.7 * (i / Math.max(1, dropCount - 1)));
-        const spd = 260 + (i % 3) * 95;
-        game.rings.push({
-          x: player.x,
-          y: player.y - 28,
-          vx: Math.cos(ang) * spd,
-          vy: Math.sin(ang) * spd - 120,
-          scattered: true,
-          collectDelay: 0.35,
-          life: 4.5,
-          kind: 'ring'
-        });
-      }
-      addPopup(player.x, player.y - 54, 'ORANGES SCATTERED!', '#ffd800', 18);
-    } else {
-      // Zero Oranges -> Lose a Life!
-      sfx.badBuzz();
-      game.lives--;
-      burst(player.x, player.y - 24, 22, ['#ff7700', '#ffd800', '#ffffff'], 300);
-      if (game.lives <= 0) {
-        triggerGameOver();
-      } else {
-        game.oranges = 3; // Mercy starter rings on continue
-      }
+  // -------------------------------------------------------------------------
+  // SPECIAL MOVEMENT MODES: 360° LOOP-DE-LOOP, SKY-RAIL GRIND, SPRING LAUNCH
+  // -------------------------------------------------------------------------
+  if (player.activeLoop) {
+    const lp = player.activeLoop;
+    player.loopAngle += dt * 7.2;
+    player.spinning = true;
+    const ang = Math.PI * 0.5 - player.loopAngle;
+    player.x = lp.x + Math.cos(ang) * (lp.r - 16);
+    player.y = (lp.groundY - lp.r) + Math.sin(ang) * (lp.r - 16);
+    if (player.loopAngle >= Math.PI * 2) {
+      player.activeLoop = null;
+      player.y = lp.groundY;
+      player.vx = 540;
+      player.onGround = true;
+      addPopup(lp.x, lp.groundY - 120, '360° LOOP BOOST! +300', '#ffd800', 19);
+      game.score += 300;
     }
-  }
-
-  // =========================================================================
-  // START, PERKS & GAME OVER
-  // =========================================================================
-  function startGame() {
-    const val = (hmmInput.value || '').trim();
-    game.fourthLove = val || 'Chili-Orange Dogs';
-
-    Object.assign(game, {
-      mode: 'playing',
-      time: 0,
-      runClock: 0,
-      score: 0,
-      oranges: 5,
-      lives: 3,
-      combo: 1,
-      holesCleared: 0,
-      nextPerkAt: 4,
-      deepestLegal: 0,
-      superTimer: 0,
-      lastActIdx: 0,
-      shake: 0,
-      segments: [{ x1: -300, x2: 440, y1: 430, y2: 430 }],
-      scenery: [{ x: 95, y: 430, kind: 'palm' }, { x: 310, y: 430, kind: 'dashpad' }],
-      holes: [],
-      rings: [],
-      crocs: [],
-      particles: [],
-      popups: [],
-      sonarWaves: [],
-      generatedUntilX: 440,
-      lastPlateauY: 430
-    });
-
-    Object.assign(player, {
-      x: 150,
-      y: 430,
-      vx: 0,
-      vy: 0,
-      facing: 1,
-      onGround: true,
-      spinning: false,
-      coyote: 0.12,
-      inHole: null,
-      launchingHole: null,
-      enteredDeepFt: 0,
-      invuln: 0,
-      dust: 100,
-      maxDust: 100,
-      ponderCd: 0,
-      ponderMaxCd: 4.0,
-      ponderRadius: 740,
-      ponderPose: 0,
-      magnetRange: 105,
-      fiftyMaster: false,
-      quip: '',
-      quipTimer: 0,
-      afterimages: []
-    });
-
-    generateWorldAhead();
-    game.camX = player.x - W * 0.28;
-    game.camY = player.y - H * 0.58;
-
-    startOverlay.classList.add('hidden');
-    perkOverlay.classList.add('hidden');
-    pauseOverlay.classList.add('hidden');
-    gameOverOverlay.classList.add('hidden');
-    hud.classList.remove('hidden');
-
-    showActTitleCard(0);
-    sayQuip(`Gotta jump in 10ft–50ft holes FAST! Second star to the right!`, 2.8);
-    updateHud();
-    lastTime = performance.now();
-  }
-
-  function openPerkModal() {
-    game.mode = 'perk';
-    keys.left = keys.right = keys.jump = keys.down = false;
-    const picks = [...PERKS].sort(() => Math.random() - 0.5).slice(0, 3);
-    game.perkChoices = picks;
-    perksGrid.innerHTML = '';
-
-    picks.forEach((p, idx) => {
-      const card = document.createElement('div');
-      card.className = 'perk-card';
-      card.innerHTML = `
-        <div style="font-size:32px;">${p.icon}</div>
-        <div style="font-size:15px;font-weight:900;color:#ffd800;margin:6px 0;">[${idx + 1}] ${p.title}</div>
-        <div style="font-size:12px;color:#e2e8f0;line-height:1.35;">${p.desc}</div>
-      `;
-      card.addEventListener('click', () => applyPerk(p));
-      perksGrid.appendChild(card);
-    });
-    perkOverlay.classList.remove('hidden');
-  }
-
-  function applyPerk(p) {
-    p.apply();
-    sfx.springBoing(false);
-    perkOverlay.classList.add('hidden');
-    game.mode = 'playing';
-    lastTime = performance.now();
-  }
-
-  function triggerGameOver() {
-    game.mode = 'gameover';
-    hud.classList.add('hidden');
-    if (game.score > bestScore) {
-      bestScore = game.score;
-      localStorage.setItem('skevin_best_v2', String(bestScore));
-    }
-    document.getElementById('goScore').textContent = game.score.toLocaleString();
-    document.getElementById('goHoles').textContent = String(game.holesCleared);
-    document.getElementById('goDeepest').textContent = `${game.deepestLegal} FT`;
-    document.getElementById('goBest').textContent = bestScore.toLocaleString();
-
-    const rank = game.holesCleared >= 10 ? 'RANK S • SUPER ORANGE PAN LEGEND'
-      : (game.holesCleared >= 5 ? 'RANK A • 10–50FT SONIC CONNOISSEUR' : 'RANK B • TANGERINE ROOKIE');
-    document.getElementById('goRankText').textContent = rank;
-    gameOverOverlay.classList.remove('hidden');
-  }
-
-  // =========================================================================
-  // PHYSICS & GAMEPLAY UPDATE
-  // =========================================================================
-  function update(rawDt) {
-    if (game.mode !== 'playing') return;
-    const dt = Math.min(0.033, rawDt);
-
-    game.time += dt;
-    game.runClock += dt;
-    player.animTime += dt * (1 + Math.abs(player.vx) / 260);
-    if (player.invuln > 0) player.invuln = Math.max(0, player.invuln - dt);
-    if (player.ponderCd > 0) player.ponderCd = Math.max(0, player.ponderCd - dt);
-    if (player.ponderPose > 0) player.ponderPose = Math.max(0, player.ponderPose - dt);
-    if (player.quipTimer > 0) player.quipTimer = Math.max(0, player.quipTimer - dt);
-    if (game.superTimer > 0) game.superTimer = Math.max(0, game.superTimer - dt);
-    if (game.shake > 0) game.shake = Math.max(0, game.shake - dt * 30);
-
-    if (game.actBannerTimer > 0) {
-      game.actBannerTimer -= dt;
-      if (game.actBannerTimer <= 0) actCard.classList.remove('visible');
-    }
-
-    const curAct = getActIndex();
-    if (curAct !== game.lastActIdx) {
-      game.lastActIdx = curAct;
-      showActTitleCard(curAct);
-    }
-
-    sfx.updateMusic(dt, game.superTimer > 0);
-    generateWorldAhead();
-
-    window.__inHoleForShot = Boolean(player.inHole);
-
-    // 1. SONIC RED BUMPER SPRING LAUNCH OUT OF SHAFT!
-    if (player.launchingHole) {
-      const lh = player.launchingHole;
-      player.x += (lh.x - player.x) * Math.min(1, dt * 12);
-      player.vy = -1260;
-      player.y += player.vy * dt;
-      player.spinning = true;
-
-      if (Math.random() < 0.75) {
-        burst(player.x, player.y + 8, 2, ['#ff7700', '#ffd800', '#ffffff'], 110);
-      }
-
-      if (player.y <= lh.rimY - 145) {
-        lh.sealed = true;
-        player.launchingHole = null;
-        player.inHole = null;
-        player.vy = -320;
-        player.vx = player.facing * 340;
-
-        if (game.holesCleared >= game.nextPerkAt) {
-          game.nextPerkAt += 4;
-          openPerkModal();
-          return;
-        }
-      }
-    } else {
-      // 2. SONIC MOMENTUM RUNNING, SPIN-JUMP & PETER PAN PIXIE FLIGHT
-      const topSpeed = game.superTimer > 0 ? 520 : 435;
-      const accel = player.onGround ? 2350 : 1700;
-      const dir = (keys.right ? 1 : 0) - (keys.left ? 1 : 0);
-
-      if (dir !== 0) {
-        player.facing = dir;
-        player.vx += dir * accel * dt;
-        if (Math.abs(player.vx) > topSpeed) player.vx = dir * topSpeed;
-      } else {
-        player.vx *= Math.max(0, 1 - (player.onGround ? 11 : 4) * dt);
-        if (Math.abs(player.vx) < 5) player.vx = 0;
-      }
-
-      if (player.onGround) player.coyote = 0.11;
-      else player.coyote = Math.max(0, player.coyote - dt);
-
-      if (jumpJustPressed && player.coyote > 0 && !player.inHole) {
-        player.vy = -640;
-        player.onGround = false;
-        player.spinning = true;
-        player.coyote = 0;
-        jumpJustPressed = false;
-        sfx.spinJump();
-      } else if (keys.jump && !player.onGround && (player.dust > 1 || game.superTimer > 0)) {
-        // Peter Pan Pixie Boost Flight!
-        const emergency = player.inHole && player.inHole.category === 'deep';
-        if (game.superTimer <= 0) player.dust = Math.max(0, player.dust - (emergency ? 18 : 32) * dt);
-        player.vy = Math.max(emergency ? -440 : -280, player.vy - 2350 * dt);
-        player.spinning = false;
-        if (Math.random() < 0.5) burst(player.x - player.facing * 12, player.y - 20, 1, ['#ffd800', '#ff7700', '#fff'], 90);
-      }
+  } else if (player.activeRail) {
+    const rl = player.activeRail;
+    player.railT += dt * 1.45;
+    sfx.railGrind();
+    const t = Math.min(1, player.railT);
+    const omt = 1 - t;
+    player.x = omt * omt * rl.p0.x + 2 * omt * t * rl.p1.x + t * t * rl.p2.x;
+    player.y = omt * omt * rl.p0.y + 2 * omt * t * rl.p1.y + t * t * rl.p2.y;
+    player.spinning = false;
+    if (jumpJustPressed || t >= 1) {
+      player.activeRail = null;
+      player.vy = jumpJustPressed ? -540 : -220;
+      player.vx = 430;
       jumpJustPressed = false;
+      game.score += 300;
+      addPopup(player.x, player.y - 36, 'ORANGE RAIL GRIND! +300', '#ffd800', 18);
+    }
+  } else if (player.launchingHole) {
+    const lh = player.launchingHole;
+    player.x += (lh.x - player.x) * Math.min(1, dt * 12);
+    player.vy = -1280;
+    player.y += player.vy * dt;
+    player.spinning = true;
 
-      // Spin-Smash Dive (Down key)
-      if (keys.down) {
-        player.spinning = true;
-        if (!player.onGround) player.vy = Math.max(player.vy + 2500 * dt, 800);
-        else if (Math.abs(player.vx) > 60) player.vx = player.facing * Math.max(Math.abs(player.vx), 460);
-      } else if (player.onGround) {
-        player.spinning = false;
+    if (player.y <= lh.rimY - 140) {
+      lh.sealed = true;
+      const sealMesh = new THREE.Mesh(
+        new THREE.BoxGeometry((lh.w + 8) * SCALE, 0.45, 5.6),
+        lh.category === 'legal' ? matTurfOrangeLip : matCheckeredSoil
+      );
+      sealMesh.position.set(to3DX(lh.x), to3DY(lh.rimY), 0);
+      lh.group.add(sealMesh);
+
+      const exitRail = lh.category === 'legal' ? lh.exitRail : null;
+      player.launchingHole = null;
+      player.inHole = null;
+
+      if (exitRail) {
+        player.activeRail = exitRail;
+        player.railT = 0;
+        sayQuip(`ORANGE SKY-RAIL GRIND!! Way past cool!`, 2.0);
+      } else {
+        player.vy = -310;
+        player.vx = player.facing * 350;
       }
 
+      if (game.holesCleared >= game.nextPerkAt) {
+        game.nextPerkAt += 4;
+        openPerkModal();
+        return;
+      }
+    }
+  } else {
+    // -----------------------------------------------------------------------
+    // STANDARD SONIC RUN, HIGH-ROAD PLATFORMS & VARIED 3D SHAFT DIVES
+    // -----------------------------------------------------------------------
+    const topSpd = game.superTimer > 0 ? 530 : 440;
+    const accel = player.onGround ? 2400 : 1750;
+    const dir = (keys.right ? 1 : 0) - (keys.left ? 1 : 0);
+
+    if (dir !== 0) {
+      player.facing = dir;
+      player.vx += dir * accel * dt;
+      if (Math.abs(player.vx) > topSpd) player.vx = dir * topSpd;
+    } else {
+      player.vx *= Math.max(0, 1 - (player.onGround ? 11 : 4) * dt);
+      if (Math.abs(player.vx) < 5) player.vx = 0;
+    }
+
+    if (player.onGround) player.coyote = 0.11;
+    else player.coyote = Math.max(0, player.coyote - dt);
+
+    if (jumpJustPressed && player.coyote > 0 && !player.inHole) {
+      player.vy = -650;
+      player.onGround = false;
+      player.spinning = true;
+      player.coyote = 0;
+      jumpJustPressed = false;
+      sfx.spinJump();
+    } else if (keys.jump && !player.onGround && (player.dust > 1 || game.superTimer > 0)) {
+      const emergency = player.inHole && player.inHole.category === 'deep';
+      if (game.superTimer <= 0) player.dust = Math.max(0, player.dust - (emergency ? 17 : 31) * dt);
+      player.vy = Math.max(emergency ? -450 : -285, player.vy - 2380 * dt);
+      player.spinning = false;
+    }
+    jumpJustPressed = false;
+
+    if (keys.down) {
+      player.spinning = true;
+      if (!player.onGround) player.vy = Math.max(player.vy + 2500 * dt, 810);
+    } else if (player.onGround) {
+      player.spinning = false;
+    }
+
+    // Thermal Updraft inside UPDRAFT shafts!
+    if (player.inHole && player.inHole.hasUpdraft && !keys.down) {
+      player.vy += (GRAVITY * 0.42) * dt;
+    } else {
       player.vy = Math.min(1100, player.vy + GRAVITY * dt);
-      if (player.onGround || game.superTimer > 0) {
-        player.dust = Math.min(player.maxDust, player.dust + 32 * dt);
-      }
+    }
 
-      player.x += player.vx * dt;
-      if (player.x < game.camX + 26) {
-        player.x = game.camX + 26;
-        if (player.vx < 0) player.vx = 0;
-      }
+    if (player.onGround || game.superTimer > 0) {
+      player.dust = Math.min(player.maxDust, player.dust + 34 * dt);
+    }
 
-      // Check Sonic Dash Pads!
-      for (let i = 0; i < game.scenery.length; i++) {
-        const sc = game.scenery[i];
-        if (sc.kind === 'dashpad' && player.onGround && Math.abs(player.x - sc.x) < 26) {
-          if (Math.abs(player.vx) < 510) {
-            player.vx = 540;
-            player.facing = 1;
-            sfx.dashPad();
-            burst(sc.x, sc.y - 6, 10, ['#ff7700', '#ffd800'], 210);
+    const prevY = player.y;
+    player.x += player.vx * dt;
+    if (player.x < game.camX - 420) player.x = game.camX - 420;
+
+    // Trigger 360° Loop-de-Loop when sprinting past loop entrance!
+    if (!player.inHole && player.onGround && player.vx > 220) {
+      for (let i = 0; i < game.loops.length; i++) {
+        const lp = game.loops[i];
+        if (!lp.triggered && Math.abs(player.x - lp.x) < 26 && Math.abs(player.y - lp.groundY) < 24) {
+          lp.triggered = true;
+          player.activeLoop = lp;
+          player.loopAngle = 0;
+          sfx.dashPad();
+          break;
+        }
+      }
+    }
+
+    // Trigger Dash Pads
+    for (let i = 0; i < game.dashPads.length; i++) {
+      const dp = game.dashPads[i];
+      if (player.onGround && Math.abs(player.x - dp.x) < 26 && Math.abs(player.y - dp.y) < 20) {
+        if (player.vx < 520) {
+          player.vx = 550;
+          player.facing = 1;
+          sfx.dashPad();
+        }
+      }
+    }
+
+    const overHole = findHoleAtX(player.x, 11);
+
+    if (!player.inHole) {
+      player.y += player.vy * dt;
+      let landed = false;
+
+      // Check High-Road Floating Emerald Platforms (one-way from above unless holding Down!)
+      if (player.vy >= 0 && !keys.down) {
+        for (let i = 0; i < game.platforms.length; i++) {
+          const p = game.platforms[i];
+          if (Math.abs(player.x - p.x) < p.w * 0.5 && prevY <= p.y + 6 && player.y >= p.y) {
+            player.y = p.y;
+            player.vy = 0;
+            player.onGround = true;
+            player.spinning = false;
+            landed = true;
+            break;
           }
         }
       }
 
-      const overHole = findHoleAtX(player.x, 11);
-
-      if (!player.inHole) {
-        player.y += player.vy * dt;
+      if (!landed) {
         if (overHole && !overHole.sealed && player.y > overHole.rimY + 4) {
           player.inHole = overHole;
           player.onGround = false;
           player.enteredDeepFt = 0;
-          overHole.revealed = true;
+          if (!overHole.revealed) {
+            overHole.revealed = true;
+            overHole.signBoard.material = getHoleSignMat(overHole.depthFt, overHole.category, overHole.archetype, true);
+          }
           if (overHole.category === 'deep') {
-            player.dust = Math.max(player.dust, 50);
-            sayQuip(`WHOA ${overHole.depthFt}FT! HOLD SPACE TO PIXIE-FLY OUT BEFORE 50FT!`, 2.5);
+            player.dust = Math.max(player.dust, 55);
+            sayQuip(`⚠ ${overHole.depthFt}FT ABYSS! HOLD SPACE TO PIXIE-FLY OUT BEFORE 50FT!`, 2.5);
           } else if (overHole.category === 'legal') {
-            sayQuip(overHole.depthFt === 50 ? `50FT CHAOS JACKPOT!!` : `${overHole.depthFt}FT! GOTTA DIVE FAST!`, 2.0);
+            sayQuip(`${overHole.depthFt}FT ${overHole.archetype} SHAFT! Pure orange thrills!`, 2.1);
           }
         } else {
-          const gy = groundHeightAt(player.x);
+          const gy = surfaceYAt(player.x);
           if (player.y >= gy && player.vy >= 0 && (!overHole || overHole.sealed)) {
             player.y = gy;
             player.vy = 0;
@@ -1711,938 +2392,455 @@
             player.onGround = false;
           }
         }
-      } else {
-        // 3. SUBTERRANEAN SONIC CHECKERED SHAFT!
-        const h = player.inHole;
-        const lw = h.x - h.w * 0.5 + 14;
-        const rw = h.x + h.w * 0.5 - 14;
-        if (player.x < lw) { player.x = lw; player.vx = 0; }
-        if (player.x > rw) { player.x = rw; player.vx = 0; }
-
-        player.y += player.vy * dt;
-        const curFt = (player.y - h.rimY) / PX_PER_FT;
-        if (curFt > player.enteredDeepFt) player.enteredDeepFt = curFt;
-
-        if (player.y <= h.rimY) {
-          player.inHole = null;
-          if (h.category === 'deep' && player.enteredDeepFt >= 10) {
-            h.sealed = true;
-            h.sealLabel = `✓ DODGED ${h.depthFt}FT!`;
-            game.score += 400;
-            sfx.ringChime();
-            addPopup(h.x, h.rimY - 50, '50FT LIMIT RESPECTED! +400', '#4ade80', 19);
-            sayQuip(`Way past cool! I never go past 50 feet!`, 2.2);
-          }
-        } else {
-          // Shaft Obstacles
-          for (let i = 0; i < h.obstacles.length; i++) {
-            const ob = h.obstacles[i];
-            if (ob.smashed) continue;
-            if (Math.abs((player.y - 22) - ob.y) < 19) {
-              const hitL = ob.side === -1 && (player.x - 12) < (h.x - h.w * 0.5 + ob.len);
-              const hitR = ob.side === 1 && (player.x + 12) > (h.x + h.w * 0.5 - ob.len);
-              if (hitL || hitR) {
-                ob.smashed = true;
-                if (player.spinning) {
-                  game.score += 150;
-                  sfx.ringChime();
-                  burst(player.x, ob.y, 12, ['#ff7700', '#ffd800'], 220);
-                  addPopup(player.x, ob.y - 16, 'SPIN SMASH! +150', '#ffd800', 15);
-                } else {
-                  takeSonicHit(`Ouch! Spin-curl through shaft spikes!`);
-                }
-              }
-            }
-          }
-
-          if (h.category === 'deep' && curFt >= MAX_LEGAL_FT) {
-            takeSonicHit(`${h.depthFt}FT?! Over 50ft is NO GOOD!`);
-            h.sealLabel = `✗ ${h.depthFt}FT (TOO DEEP)`;
-            player.launchingHole = h;
-          } else if (player.y >= h.rimY + h.depthPx) {
-            player.y = h.rimY + h.depthPx;
-            if (h.category === 'shallow') {
-              takeSonicHit(`${h.depthFt}FT?! Barely a puddle! Need 10–50ft!`);
-              h.sealLabel = `✗ ${h.depthFt}FT (SHALLOW)`;
-              player.launchingHole = h;
-            } else {
-              // HIT THE SONIC RED BUMPER SPRING AT THE BOTTOM OF A 10–50FT HOLE!
-              game.holesCleared++;
-              if (h.depthFt > game.deepestLegal) game.deepestLegal = h.depthFt;
-
-              let pts = h.depthFt * 25 + (h.depthFt === 50 ? 1200 : (h.depthFt === 10 ? 300 : 0));
-              if (player.fiftyMaster && h.depthFt >= 35) {
-                pts = Math.round(pts * 1.75);
-                game.superTimer = Math.max(game.superTimer, 6.0);
-              }
-              const gained = pts * game.combo * (game.superTimer > 0 ? 2 : 1);
-              game.score += gained;
-              if (game.score > bestScore) {
-                bestScore = game.score;
-                localStorage.setItem('skevin_best_v2', String(bestScore));
-              }
-              game.combo = Math.min(15, game.combo + 1);
-              player.dust = player.maxDust;
-              game.shake = h.depthFt === 50 ? 15 : 9;
-              sfx.springBoing(h.depthFt === 50);
-
-              burst(h.x, player.y - 12, 30, ['#ff7700', '#ffd800', '#ef4444', '#ffffff'], 340);
-              addPopup(
-                h.x,
-                h.rimY - 56,
-                h.depthFt === 50 ? `★ 50FT SUPER SPRING!! +${gained} ★` : `${h.depthFt}FT SPRING CLEAR! +${gained}`,
-                '#ffd800',
-                21
-              );
-              sayQuip(
-                h.depthFt === 50 ? `FIFTY FEET!! COCK-A-DOODLE-SONIC-BOOM!!` : `BOING!! ${h.depthFt}ft of pure orange speed!`,
-                2.4
-              );
-
-              h.sealLabel = `★ ${h.depthFt}FT CLEARED`;
-              player.launchingHole = h;
-            }
-          }
-        }
       }
-    }
-
-    // 4. RINGS (INCLUDING BOUNCING SCATTERED RINGS!) & ITEM MONITORS
-    for (let i = game.rings.length - 1; i >= 0; i--) {
-      const r = game.rings[i];
-      if (r.scattered) {
-        r.life -= dt;
-        if (r.collectDelay > 0) r.collectDelay -= dt;
-        r.vy += GRAVITY * 0.78 * dt;
-        r.x += r.vx * dt;
-        r.y += r.vy * dt;
-        const gy = groundHeightAt(r.x);
-        if (r.y >= gy - 10 && r.vy > 0) {
-          r.y = gy - 10;
-          r.vy = -r.vy * 0.72;
-        }
-        if (r.life <= 0) { game.rings.splice(i, 1); continue; }
-      }
-
-      const dx = player.x - r.x;
-      const dy = (player.y - 25) - r.y;
-      const dist = Math.hypot(dx, dy);
-
-      if (!r.scattered && dist < player.magnetRange) {
-        r.x += (dx / Math.max(1, dist)) * 520 * dt;
-        r.y += (dy / Math.max(1, dist)) * 520 * dt;
-      }
-
-      if (dist < 30 && (!r.scattered || r.collectDelay <= 0)) {
-        sfx.ringChime();
-        burst(r.x, r.y, 7, ['#ffd800', '#ff7700', '#fff'], 150);
-        if (r.kind === 'monitor') {
-          // Sonic TV Item Monitor smashed!
-          game.oranges += 10;
-          game.score += 500;
-          game.superTimer = 8.0;
-          addPopup(r.x, r.y - 20, `📺 ${game.fourthLove.toUpperCase()} +10 🍊!`, '#7df9ff', 17);
-          sayQuip(`AW YEAH! ${game.fourthLove} Monitor! SUPER ORANGE MODE!`, 2.5);
-        } else {
-          game.oranges++;
-          game.score += 100;
-          player.dust = Math.min(player.maxDust, player.dust + 8);
-        }
-        game.rings.splice(i, 1);
-      }
-    }
-
-    // 5. BADNIK ROBO-CROCS (Destroyable with Spin-Jump just like Sonic Badniks!)
-    for (let i = game.crocs.length - 1; i >= 0; i--) {
-      const c = game.crocs[i];
-      if (!c.alive) continue;
-      c.x += c.vx * dt;
-      if (c.x < c.minX) { c.x = c.minX; c.vx = Math.abs(c.vx); }
-      if (c.x > c.maxX) { c.x = c.maxX; c.vx = -Math.abs(c.vx); }
-
-      if (!player.inHole && !player.launchingHole && Math.abs(player.x - c.x) < 34 && Math.abs(player.y - c.y) < 30) {
-        if (player.spinning || player.vy > 60 || game.superTimer > 0) {
-          c.alive = false;
-          if (!player.onGround) player.vy = -520;
-          game.score += 300;
-          sfx.springBoing(false);
-          burst(c.x, c.y - 16, 18, ['#ff7700', '#ffd800', '#38bdf8', '#fff'], 260);
-          addPopup(c.x, c.y - 40, 'BADNIK CROC POPPED! +300', '#ffd800', 17);
-        } else {
-          takeSonicHit(`Tick-Tock Badnik! Jump or Spin-attack it!`);
-        }
-      }
-    }
-
-    // 6. SONIC SPEED AFTERIMAGES, WAVES, PARTICLES & CAMERA
-    player.afterimages.unshift({ x: player.x, y: player.y, spinning: player.spinning, facing: player.facing });
-    if (player.afterimages.length > 9) player.afterimages.pop();
-
-    for (let i = game.sonarWaves.length - 1; i >= 0; i--) {
-      const sw = game.sonarWaves[i];
-      sw.r += 1050 * dt;
-      sw.alpha = Math.max(0, 1 - sw.r / sw.maxR);
-      if (sw.r >= sw.maxR) game.sonarWaves.splice(i, 1);
-    }
-
-    for (let i = game.particles.length - 1; i >= 0; i--) {
-      const p = game.particles[i];
-      p.x += p.vx * dt;
-      p.y += p.vy * dt;
-      p.vy += 800 * dt;
-      p.life -= dt;
-      if (p.life <= 0) game.particles.splice(i, 1);
-    }
-
-    for (let i = game.popups.length - 1; i >= 0; i--) {
-      const pop = game.popups[i];
-      pop.y += pop.vy * dt;
-      pop.life -= dt;
-      if (pop.life <= 0) game.popups.splice(i, 1);
-    }
-
-    const targetCamX = player.inHole
-      ? player.inHole.x - W * 0.5
-      : player.x - W * 0.28 + player.vx * 0.24;
-    const targetCamY = player.inHole
-      ? (player.launchingHole ? player.y - H * 0.55 : player.y - H * 0.34)
-      : player.y - H * 0.60;
-
-    game.camX += (targetCamX - game.camX) * Math.min(1, dt * 7);
-    game.camY += (targetCamY - game.camY) * Math.min(1, dt * 8);
-
-    updateHud();
-  }
-
-  function updateHud() {
-    scoreVal.textContent = String(game.score);
-    const mins = Math.floor(game.runClock / 60);
-    const secs = String(Math.floor(game.runClock % 60)).padStart(2, '0');
-    timeVal.textContent = `${mins}:${secs}`;
-
-    orangesVal.textContent = String(game.oranges);
-    if (game.oranges === 0) orangesLabel.classList.add('flash-danger');
-    else orangesLabel.classList.remove('flash-danger');
-
-    livesVal.textContent = `× ${String(game.lives).padStart(2, '0')}`;
-    dustBar.style.width = `${Math.round((player.dust / player.maxDust) * 100)}%`;
-
-    const a = ACTS[getActIndex()];
-    zoneBannerText.textContent = `${a.zone} ${a.act} • 10–50FT HOLES: ${game.holesCleared}`;
-    superBanner.style.display = game.superTimer > 0 ? 'block' : 'none';
-
-    if (player.ponderCd > 0.05) {
-      ponderBtn.classList.add('cooldown');
-      ponderBtn.textContent = `🤔 HMM... (${player.ponderCd.toFixed(1)}s)`;
     } else {
-      ponderBtn.classList.remove('cooldown');
-      ponderBtn.textContent = `🤔 "HMM..." [H]`;
-    }
-  }
+      // INSIDE ONE OF THE 4 VARIED 3D HOLE ARCHETYPES!
+      const h = player.inHole;
+      const lw = h.x - h.w * 0.5 + 14;
+      const rw = h.x + h.w * 0.5 - 14;
+      if (player.x < lw) { player.x = lw; player.vx = Math.abs(player.vx) * 0.5; }
+      if (player.x > rw) { player.x = rw; player.vx = -Math.abs(player.vx) * 0.5; }
 
-  // =========================================================================
-  // SONIC VISUAL RENDERER (Checkered Soil, Palms, Totems, Bumper Springs!)
-  // =========================================================================
-  let checkerPattern = null;
-  function getCheckerPattern() {
-    if (checkerPattern) return checkerPattern;
-    const off = document.createElement('canvas');
-    off.width = 48;
-    off.height = 48;
-    const octx = off.getContext('2d');
-    octx.fillStyle = '#85320c';
-    octx.fillRect(0, 0, 48, 48);
-    octx.fillStyle = '#561c06';
-    octx.fillRect(0, 0, 24, 24);
-    octx.fillRect(24, 24, 24, 24);
-    octx.fillStyle = 'rgba(255, 136, 0, 0.14)';
-    octx.fillRect(2, 2, 20, 4);
-    octx.fillRect(26, 26, 20, 4);
-    checkerPattern = ctx.createPattern(off, 'repeat');
-    return checkerPattern;
-  }
+      player.y += player.vy * dt;
+      const curFt = (player.y - h.rimY) / PX_PER_FT;
+      if (curFt > player.enteredDeepFt) player.enteredDeepFt = curFt;
 
-  function render() {
-    const a = ACTS[getActIndex()];
-
-    // 1. Vibrant Sega Cobalt-to-Cyan Sonic Sky + Neverland Second Star!
-    const sky = ctx.createLinearGradient(0, 0, 0, H);
-    sky.addColorStop(0, a.sky1);
-    sky.addColorStop(0.55, a.sky2);
-    sky.addColorStop(1, a.sky3);
-    ctx.fillStyle = sky;
-    ctx.fillRect(0, 0, W, H);
-
-    // Iconic Bright Orange "Second Star to the Right"
-    const sx = W * 0.82;
-    const sy = H * 0.16;
-    ctx.fillStyle = 'rgba(255, 165, 0, 0.35)';
-    ctx.beginPath();
-    ctx.arc(sx, sy, 48, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.fillStyle = '#ffd800';
-    ctx.beginPath();
-    ctx.arc(sx, sy, 14, 0, Math.PI * 2);
-    ctx.fill();
-
-    // Fluffy Retro Sonic Clouds & Distant Emerald/Sapphire Ocean Band
-    ctx.fillStyle = 'rgba(255, 255, 255, 0.82)';
-    for (let c = 0; c < 6; c++) {
-      const cx = ((c * 310 - game.camX * 0.12) % (W + 240) + (W + 240)) % (W + 240) - 120;
-      const cy = 78 + (c % 3) * 44;
-      ctx.beginPath();
-      ctx.roundRect(cx, cy, 110, 26, 13);
-      ctx.arc(cx + 35, cy, 18, 0, Math.PI * 2);
-      ctx.arc(cx + 72, cy + 2, 15, 0, Math.PI * 2);
-      ctx.fill();
-    }
-
-    // Distant Sonic Mountains & Shimmering Horizon Water
-    ctx.fillStyle = '#0f3d7a';
-    ctx.beginPath();
-    ctx.moveTo(0, H);
-    for (let x = 0; x <= W + 60; x += 60) {
-      const wx = x + game.camX * 0.18;
-      const my = H * 0.58 - Math.abs(Math.sin(wx * 0.004)) * 95;
-      ctx.lineTo(x, my);
-    }
-    ctx.lineTo(W, H);
-    ctx.fill();
-
-    ctx.fillStyle = a.water;
-    ctx.fillRect(0, H * 0.63, W, H * 0.37);
-
-    // Camera Transform
-    ctx.save();
-    const shX = game.shake > 0 ? (Math.random() - 0.5) * game.shake : 0;
-    const shY = game.shake > 0 ? (Math.random() - 0.5) * game.shake : 0;
-    ctx.translate(-game.camX + shX, -game.camY + shY);
-
-    // 2. Background Scenery (Sonic Palm Trees, Loop-de-Loop Arches, Totem Flowers, Dash Pads)
-    drawScenery();
-
-    // 3. Iconic Sonic Checkered Ground & 10ft–50ft Hole Shafts!
-    drawCheckeredEarthAndHoles(a);
-
-    // 4. Spinning Citrus Rings & Monitors
-    drawRingsAndMonitors();
-
-    // 5. Badnik Robo-Crocs
-    drawBadnikCrocs();
-
-    // 6. S-Kevin + Supersonic Orange Afterimages!
-    drawSKevin();
-
-    // 7. Sonar Waves, Popups & Live Depth Gauge
-    drawEffects();
-    if (player.inHole) drawSonicShaftGauge(player.inHole);
-
-    ctx.restore();
-  }
-
-  function drawScenery() {
-    for (let i = 0; i < game.scenery.length; i++) {
-      const sc = game.scenery[i];
-      if (sc.x < game.camX - 180 || sc.x > game.camX + W + 180) continue;
-      ctx.save();
-      ctx.translate(sc.x, sc.y);
-
-      if (sc.kind === 'palm') {
-        // Classic Green Hill Segmented Trunk + Orange Coconuts + Fronds!
-        ctx.fillStyle = '#92400e';
-        for (let seg = 0; seg < 6; seg++) {
-          ctx.fillRect(-7 + Math.sin(seg * 0.4) * 3, -22 * (seg + 1), 14, 20);
+      // Pinball Bumpers inside PINBALL Casino Shafts!
+      for (let i = 0; i < h.bumpers.length; i++) {
+        const b = h.bumpers[i];
+        if (b.scale > 1) {
+          b.scale = Math.max(1, b.scale - dt * 4);
+          b.mesh.scale.setScalar(b.scale);
         }
-        ctx.fillStyle = '#16a34a';
-        for (let f = 0; f < 6; f++) {
-          ctx.save();
-          ctx.translate(2, -132);
-          ctx.rotate((f / 6) * Math.PI * 2 + Math.sin(game.time * 1.5) * 0.05);
-          ctx.beginPath();
-          ctx.ellipse(26, 0, 28, 8, 0, 0, Math.PI * 2);
-          ctx.fill();
-          ctx.restore();
+        const dx = player.x - b.x;
+        const dy = (player.y - 20) - b.y;
+        const d = Math.hypot(dx, dy);
+        if (d < 34) {
+          const nx = dx / Math.max(1, d);
+          const ny = dy / Math.max(1, d);
+          player.vx = nx * 420;
+          player.vy = Math.min(-260, ny * 420);
+          player.spinning = true;
+          b.scale = 1.45;
+          b.mesh.scale.setScalar(1.45);
+          game.score += 200;
+          sfx.pinballBumper();
+          addPopup(b.x, b.y - 20, 'BUMPER! +200', '#7df9ff', 16);
         }
-        ctx.fillStyle = '#ff7700';
-        ctx.beginPath();
-        ctx.arc(-5, -126, 6, 0, Math.PI * 2);
-        ctx.arc(7, -125, 6, 0, Math.PI * 2);
-        ctx.fill();
-      } else if (sc.kind === 'flower') {
-        // Spinning Sonic Geometric Sunflower!
-        ctx.fillStyle = '#15803d';
-        ctx.fillRect(-3, -64, 6, 64);
-        ctx.save();
-        ctx.translate(0, -68);
-        ctx.rotate(game.time * 2.2);
-        ctx.fillStyle = '#ffd800';
-        for (let p = 0; p < 8; p++) {
-          ctx.rotate(Math.PI / 4);
-          ctx.fillRect(-5, -22, 10, 14);
+      }
+
+      // Rotating Helix Laser Spinners inside HELIX Shafts!
+      for (let i = 0; i < h.spinners.length; i++) {
+        const sp = h.spinners[i];
+        if (sp.smashed) continue;
+        sp.angle += dt * 2.6;
+        sp.grp.rotation.z = sp.angle;
+        if (Math.abs((player.y - 20) - sp.y) < 18) {
+          if (player.spinning && Math.abs(player.x - sp.x) < 26) {
+            sp.smashed = true;
+            sp.grp.visible = false;
+            game.score += 250;
+            sfx.pinballBumper();
+            addPopup(sp.x, sp.y - 18, 'HELIX SMASH! +250', '#ffd800', 17);
+          } else if (Math.abs(Math.cos(sp.angle)) > 0.65) {
+            takeSonicHit(`Zap! Spin-Smash the center hub or time the rotation!`);
+          }
         }
-        ctx.fillStyle = '#ff6a00';
-        ctx.beginPath();
-        ctx.arc(0, 0, 11, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.restore();
-      } else if (sc.kind === 'loop') {
-        // Iconic Checkered Sonic Loop-de-Loop Arch in Backdrop!
-        ctx.lineWidth = 22;
-        ctx.strokeStyle = '#6c2707';
-        ctx.beginPath();
-        ctx.arc(0, -88, 88, 0, Math.PI * 2);
-        ctx.stroke();
-        ctx.lineWidth = 5;
-        ctx.strokeStyle = '#ff7700';
-        ctx.stroke();
-      } else if (sc.kind === 'dashpad') {
-        // Red & Yellow Flashing Sonic Speed Booster Pad!
-        ctx.fillStyle = '#dc2626';
-        ctx.strokeStyle = '#ffffff';
-        ctx.lineWidth = 2;
-        ctx.beginPath();
-        ctx.moveTo(-22, 0);
-        ctx.lineTo(22, 0);
-        ctx.lineTo(14, -14);
-        ctx.lineTo(-18, -8);
-        ctx.closePath();
-        ctx.fill();
-        ctx.stroke();
-        ctx.fillStyle = '#ffd800';
-        ctx.font = '900 13px sans-serif';
-        ctx.fillText('>>>', -12, -2);
       }
 
-      ctx.restore();
+      if (player.y <= h.rimY) {
+        player.inHole = null;
+        if (h.category === 'deep' && player.enteredDeepFt >= 10) {
+          h.sealed = true;
+          game.score += 450;
+          sfx.ringChime();
+          addPopup(h.x, h.rimY - 50, '50FT LIMIT RESPECTED! +450', '#4ade80', 19);
+        }
+      } else if (h.category === 'deep' && curFt >= MAX_LEGAL_FT) {
+        takeSonicHit(`${h.depthFt}FT?! 50ft is S-Kevin's strict limit!`);
+        player.launchingHole = h;
+      } else if (player.y >= h.rimY + h.depthPx) {
+        player.y = h.rimY + h.depthPx;
+        if (h.category === 'shallow') {
+          takeSonicHit(`${h.depthFt}FT?! Too shallow—10ft minimum!`);
+          player.launchingHole = h;
+        } else {
+          // CONQUERED 10–50FT 3D SHAFT!
+          game.holesCleared++;
+          if (h.depthFt > game.deepestLegal) game.deepestLegal = h.depthFt;
+          let pts = h.depthFt * 25 + (h.depthFt === 50 ? 1250 : (h.depthFt === 10 ? 300 : 0));
+          if (player.fiftyMaster && h.depthFt >= 35) {
+            pts = Math.round(pts * 1.8);
+            game.superTimer = Math.max(game.superTimer, 6.0);
+          }
+          const total = pts * game.combo * (game.superTimer > 0 ? 2 : 1);
+          game.score += total;
+          if (game.score > bestScore) {
+            bestScore = game.score;
+            localStorage.setItem('skevin_3d_best', String(bestScore));
+          }
+          game.combo = Math.min(15, game.combo + 1);
+          player.dust = player.maxDust;
+          sfx.springBoing(h.depthFt === 50);
+          addPopup(h.x, h.rimY - 55, `${h.depthFt}FT ${h.archetype} CLEAR! +${total}`, '#ffd800', 21);
+          player.launchingHole = h;
+        }
+      }
     }
   }
 
-  function drawCheckeredEarthAndHoles(a) {
-    const startX = game.camX - 80;
-    const endX = game.camX + W + 80;
-    const bottomY = game.camY + H + 1500;
+  // -------------------------------------------------------------------------
+  // RINGS, BADNIK CROCS & DR. HOOK-NIK 3D BOSS HOVER-POD
+  // -------------------------------------------------------------------------
+  for (let i = game.rings.length - 1; i >= 0; i--) {
+    const r = game.rings[i];
+    r.mesh.rotation.y += dt * 3.6;
 
-    // 3D Checkered Sonic Ground Polygon!
-    ctx.fillStyle = getCheckerPattern();
-    ctx.beginPath();
-    ctx.moveTo(startX, bottomY);
-    for (let x = startX; x <= endX; x += 14) {
-      ctx.lineTo(x, groundHeightAt(x));
-    }
-    ctx.lineTo(endX, groundHeightAt(endX));
-    ctx.lineTo(endX, bottomY);
-    ctx.closePath();
-    ctx.fill();
-
-    // Vibrant Sonic Double-Layer Zigzag Turf (Emerald + Blazing Orange!)
-    ctx.lineWidth = 14;
-    ctx.strokeStyle = a.grassMid;
-    ctx.beginPath();
-    let pen = false;
-    for (let x = startX; x <= endX; x += 8) {
-      const h = findHoleAtX(x, 0);
-      if (h && !h.sealed) {
-        pen = false;
-      } else {
-        const y = groundHeightAt(x) + 4;
-        if (!pen) { ctx.moveTo(x, y); pen = true; }
-        else ctx.lineTo(x, y);
-      }
-    }
-    ctx.stroke();
-
-    ctx.lineWidth = 8;
-    ctx.strokeStyle = a.grassTop;
-    ctx.beginPath();
-    pen = false;
-    for (let x = startX; x <= endX; x += 8) {
-      const h = findHoleAtX(x, 0);
-      if (h && !h.sealed) {
-        pen = false;
-      } else {
-        const y = groundHeightAt(x);
-        if (!pen) { ctx.moveTo(x, y); pen = true; }
-        else ctx.lineTo(x, y);
-      }
-    }
-    ctx.stroke();
-
-    for (let i = 0; i < game.holes.length; i++) {
-      const h = game.holes[i];
-      if (h.x + h.w < startX || h.x - h.w > endX) continue;
-      drawSonicHole(h);
-    }
-  }
-
-  function drawSonicHole(h) {
-    const left = h.x - h.w * 0.5;
-    const right = h.x + h.w * 0.5;
-    const bottom = h.rimY + h.depthPx;
-
-    // Deep Sonic Shaft Backdrop
-    ctx.fillStyle = h.category === 'legal' ? '#121c42' : (h.category === 'shallow' ? '#1e293b' : '#2e0827');
-    ctx.fillRect(left, h.rimY - 2, h.w, h.depthPx + 4);
-
-    // 50ft Super Beam!
-    if (h.revealed && h.depthFt === 50 && !h.sealed) {
-      const g = ctx.createLinearGradient(0, h.rimY - 150, 0, bottom);
-      g.addColorStop(0, 'rgba(255, 216, 0, 0)');
-      g.addColorStop(1, 'rgba(255, 119, 0, 0.45)');
-      ctx.fillStyle = g;
-      ctx.fillRect(left + 6, h.rimY - 150, h.w - 12, h.depthPx + 150);
+    if (r.scattered) {
+      r.life -= dt;
+      if (r.collectDelay > 0) r.collectDelay -= dt;
+      r.vy += GRAVITY * 0.78 * dt;
+      r.x += r.vx * dt;
+      r.y += r.vy * dt;
+      const gy = surfaceYAt(r.x);
+      if (r.y >= gy - 10 && r.vy > 0) { r.y = gy - 10; r.vy = -r.vy * 0.72; }
+      r.mesh.position.set(to3DX(r.x), to3DY(r.y), 0);
+      r.mesh.visible = !(r.life < 1.4 && Math.floor(r.life * 14) % 2 === 0);
+      if (r.life <= 0) { world3D.remove(r.mesh); game.rings.splice(i, 1); continue; }
     }
 
-    // Shaft Walls & Depth Ticks
-    ctx.strokeStyle = h.category === 'legal' ? '#ffd800' : '#64748b';
-    ctx.lineWidth = 4;
-    ctx.beginPath();
-    ctx.moveTo(left, h.rimY); ctx.lineTo(left, bottom);
-    ctx.moveTo(right, h.rimY); ctx.lineTo(right, bottom);
-    ctx.stroke();
-
-    ctx.font = '900 12px sans-serif';
-    ctx.textAlign = 'left';
-    for (let ft = 10; ft <= h.depthFt; ft += 10) {
-      const my = h.rimY + ft * PX_PER_FT;
-      if (my < game.camY - 20 || my > game.camY + H + 20) continue;
-      ctx.strokeStyle = ft > 50 ? '#fb7185' : '#ffd800';
-      ctx.lineWidth = 2;
-      ctx.beginPath();
-      ctx.moveTo(left + 2, my);
-      ctx.lineTo(left + 16, my);
-      ctx.stroke();
-      if (h.revealed) {
-        ctx.fillStyle = ft > 50 ? '#fda4af' : '#ffd800';
-        ctx.fillText(`${ft}FT`, left + 20, my + 4);
-      }
+    const dx = player.x - r.x;
+    const dy = (player.y - 24) - r.y;
+    const dist = Math.hypot(dx, dy);
+    if (!r.scattered && dist < player.magnetRange) {
+      r.x += (dx / Math.max(1, dist)) * 540 * dt;
+      r.y += (dy / Math.max(1, dist)) * 540 * dt;
+      r.mesh.position.set(to3DX(r.x), to3DY(r.y), 0);
     }
 
-    if (h.depthFt > MAX_LEGAL_FT) {
-      const ly = h.rimY + MAX_LEGAL_FT * PX_PER_FT;
-      ctx.save();
-      ctx.strokeStyle = '#ff2a2a';
-      ctx.lineWidth = 3;
-      ctx.setLineDash([8, 6]);
-      ctx.beginPath();
-      ctx.moveTo(left, ly); ctx.lineTo(right, ly);
-      ctx.stroke();
-      ctx.fillStyle = '#ffd800';
-      ctx.textAlign = 'center';
-      ctx.fillText('⚠ 50FT HARD LIMIT ⚠', h.x, ly - 7);
-      ctx.restore();
-    }
-
-    // Obstacles inside shaft
-    for (let i = 0; i < h.obstacles.length; i++) {
-      const ob = h.obstacles[i];
-      if (ob.smashed) continue;
-      ctx.fillStyle = '#dc2626';
-      ctx.strokeStyle = '#ffd800';
-      ctx.lineWidth = 2;
-      if (ob.side === -1) ctx.fillRect(left, ob.y - 7, ob.len, 14);
-      else ctx.fillRect(right - ob.len, ob.y - 7, ob.len, 14);
-    }
-
-    // ICONIC SONIC RED & YELLOW COIL BUMPER SPRING AT SHAFT BOTTOM!
-    if (h.category === 'legal') {
-      ctx.strokeStyle = '#cbd5e1';
-      ctx.lineWidth = 4;
-      ctx.beginPath();
-      ctx.moveTo(h.x - 24, bottom);
-      ctx.lineTo(h.x + 24, bottom - 6);
-      ctx.lineTo(h.x - 24, bottom - 12);
-      ctx.lineTo(h.x + 24, bottom - 18);
-      ctx.stroke();
-
-      ctx.fillStyle = '#ef4444';
-      ctx.strokeStyle = '#ffffff';
-      ctx.lineWidth = 2;
-      ctx.beginPath();
-      ctx.roundRect(left + 10, bottom - 28, h.w - 20, 12, 6);
-      ctx.fill();
-      ctx.stroke();
-
-      ctx.fillStyle = '#ffd800';
-      ctx.beginPath();
-      ctx.arc(h.x, bottom - 22, 5, 0, Math.PI * 2);
-      ctx.fill();
-    }
-
-    if (!h.revealed && !h.sealed) {
-      ctx.fillStyle = 'rgba(0, 40, 140, 0.85)';
-      ctx.fillRect(left + 2, h.rimY, h.w - 4, Math.min(h.depthPx, 170));
-    }
-
-    if (h.sealed) {
-      ctx.fillStyle = h.category === 'legal' ? '#ff7700' : '#475569';
-      ctx.fillRect(left - 4, h.rimY - 5, h.w + 8, 10);
-      ctx.fillStyle = '#ffd800';
-      ctx.font = 'italic 900 13px sans-serif';
-      ctx.textAlign = 'center';
-      ctx.fillText(h.sealLabel, h.x, h.rimY - 12);
-      return;
-    }
-
-    // Sonic Star-Post Style Depth Sign beside every hole!
-    const px = left - 26;
-    const py = h.rimY;
-    ctx.fillStyle = '#cbd5e1';
-    ctx.fillRect(px - 3, py - 48, 6, 48);
-
-    let bg = '#0044cc';
-    let bd = '#ffd800';
-    let txt = `${h.depthFt} FT`;
-    if (!h.revealed) { bg = '#6d28d9'; txt = '??? FT'; }
-    else if (h.category === 'shallow') { bg = '#334155'; bd = '#94a3b8'; }
-    else if (h.category === 'deep') { bg = '#be123c'; bd = '#fda4af'; }
-    else if (h.depthFt === 50) { bg = '#ff6a00'; bd = '#ffffff'; txt = '★ 50 FT ★'; }
-
-    ctx.fillStyle = bg;
-    ctx.strokeStyle = bd;
-    ctx.lineWidth = 3;
-    ctx.beginPath();
-    ctx.roundRect(px - 38, py - 72, 76, 28, 6);
-    ctx.fill();
-    ctx.stroke();
-
-    ctx.fillStyle = '#ffffff';
-    ctx.font = 'italic 900 13px sans-serif';
-    ctx.textAlign = 'center';
-    ctx.fillText(txt, px, py - 53);
-  }
-
-  function drawRingsAndMonitors() {
-    for (let i = 0; i < game.rings.length; i++) {
-      const r = game.rings[i];
-      if (r.x < game.camX - 40 || r.x > game.camX + W + 40) continue;
-      if (r.y < game.camY - 40 || r.y > game.camY + H + 40) continue;
-      if (r.scattered && r.life < 1.5 && Math.floor(r.life * 14) % 2 === 0) continue;
-
-      ctx.save();
-      ctx.translate(r.x, r.y);
-
+    if (dist < 32 && (!r.scattered || r.collectDelay <= 0)) {
+      sfx.ringChime();
       if (r.kind === 'monitor') {
-        // Classic 16-Bit Sonic Item TV Monitor!
-        ctx.fillStyle = '#475569';
-        ctx.strokeStyle = '#ffffff';
-        ctx.lineWidth = 2;
-        ctx.fillRect(-16, -16, 32, 30);
-        ctx.strokeRect(-16, -16, 32, 30);
-        ctx.fillStyle = '#002266';
-        ctx.fillRect(-12, -12, 24, 20);
-        ctx.fillStyle = '#ff7700';
-        ctx.beginPath();
-        ctx.arc(0, -2, 7, 0, Math.PI * 2);
-        ctx.fill();
+        game.oranges += 10;
+        game.score += 500;
+        game.superTimer = 8.0;
+        addPopup(r.x, r.y - 20, `📺 ${game.fourthLove.toUpperCase()} +10 🍊!`, '#7df9ff', 17);
       } else {
-        // Spinning Golden-Orange Sonic Citrus Ring!
-        const spinRx = Math.max(3, Math.abs(Math.cos(game.time * 6 + i * 0.4)) * 11);
-        ctx.strokeStyle = '#ffd800';
-        ctx.lineWidth = 4;
-        ctx.beginPath();
-        ctx.ellipse(0, 0, spinRx, 11, 0, 0, Math.PI * 2);
-        ctx.stroke();
-        ctx.strokeStyle = '#ff7700';
-        ctx.lineWidth = 1.5;
-        ctx.stroke();
+        game.oranges++;
+        game.score += 100;
+        player.dust = Math.min(player.maxDust, player.dust + 8);
       }
-      ctx.restore();
+      world3D.remove(r.mesh);
+      game.rings.splice(i, 1);
     }
   }
 
-  function drawBadnikCrocs() {
-    for (let i = 0; i < game.crocs.length; i++) {
-      const c = game.crocs[i];
-      if (!c.alive) continue;
-      ctx.save();
-      ctx.translate(c.x, c.y);
-      ctx.scale(c.vx >= 0 ? 1 : -1, 1);
+  for (let i = game.crocs.length - 1; i >= 0; i--) {
+    const c = game.crocs[i];
+    if (!c.alive) continue;
+    c.x += c.vx * dt;
+    if (c.x < c.minX) { c.x = c.minX; c.vx = Math.abs(c.vx); }
+    if (c.x > c.maxX) { c.x = c.maxX; c.vx = -Math.abs(c.vx); }
+    c.mesh.position.set(to3DX(c.x), to3DY(c.y) + 0.55, 0);
+    c.mesh.rotation.y = c.vx >= 0 ? 0 : Math.PI;
 
-      // Metallic Eggman-Style Robo-Croc Badnik!
-      ctx.fillStyle = '#16a34a';
-      ctx.strokeStyle = '#000';
-      ctx.lineWidth = 2;
-      ctx.beginPath();
-      ctx.roundRect(-26, -22, 48, 20, 8);
-      ctx.fill();
-      ctx.stroke();
-
-      // Wheel underneath
-      ctx.fillStyle = '#1e293b';
-      ctx.beginPath();
-      ctx.arc(-10, -3, 6, 0, Math.PI * 2);
-      ctx.arc(10, -3, 6, 0, Math.PI * 2);
-      ctx.fill();
-
-      // Glowing Red Badnik Eye + Ticking Clock Gear!
-      ctx.fillStyle = '#ef4444';
-      ctx.beginPath();
-      ctx.arc(14, -15, 4, 0, Math.PI * 2);
-      ctx.fill();
-
-      ctx.fillStyle = '#ffd800';
-      ctx.beginPath();
-      ctx.arc(-4, -12, 5.5, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.restore();
+    if (!player.inHole && Math.abs(player.x - c.x) < 34 && Math.abs(player.y - c.y) < 30) {
+      if (player.spinning || player.vy > 50 || game.superTimer > 0) {
+        c.alive = false;
+        world3D.remove(c.mesh);
+        if (!player.onGround) player.vy = -530;
+        game.score += 300;
+        sfx.springBoing(false);
+        addPopup(c.x, c.y - 36, 'ROBO-CROC POPPED! +300', '#ffd800', 17);
+      } else {
+        takeSonicHit(`Tick-Tock Robo-Croc! Spin-Jump it!`);
+      }
     }
   }
 
-  function drawSKevin() {
-    // Sonic Speed Afterimages!
-    if (Math.abs(player.vx) > 280 || player.spinning || game.superTimer > 0) {
-      for (let i = 2; i < player.afterimages.length; i += 2) {
-        const ai = player.afterimages[i];
-        ctx.save();
-        ctx.globalAlpha = 0.22 * (1 - i / player.afterimages.length);
-        ctx.translate(ai.x, ai.y - 24);
-        ctx.fillStyle = game.superTimer > 0 ? '#ffd800' : '#ff7700';
-        ctx.beginPath();
-        ctx.arc(0, 0, 18, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.restore();
-      }
+  // Dr. Hook-nik 3D Boss Logic
+  if (game.boss) {
+    const b = game.boss;
+    b.phase += dt * 2.3;
+    if (b.hitCd > 0) b.hitCd = Math.max(0, b.hitCd - dt);
+    const targetX = player.x + Math.sin(b.phase) * 155;
+    const targetY = surfaceYAt(player.x) - 165 + Math.cos(b.phase * 1.7) * 28;
+    b.x += (targetX - b.x) * Math.min(1, dt * 3.5);
+    b.y += (targetY - b.y) * Math.min(1, dt * 3.5);
+    b.mesh.position.set(to3DX(b.x), to3DY(b.y), 0);
+    b.mesh.rotation.y = Math.sin(b.phase) * 0.4;
+
+    b.mineTimer -= dt;
+    if (b.mineTimer <= 0 && !player.inHole) {
+      b.mineTimer = 2.1;
+      const mMesh = new THREE.Mesh(geoMine, matSpringRed);
+      mMesh.position.set(to3DX(b.x), to3DY(b.y + 30), 0);
+      world3D.add(mMesh);
+      game.mines.push({ x: b.x, y: b.y + 30, vy: 220, mesh: mMesh });
     }
 
-    if (player.invuln > 0 && Math.floor(player.invuln * 16) % 2 === 0) ctx.globalAlpha = 0.45;
+    if (b.hitCd <= 0 && Math.hypot(player.x - b.x, (player.y - 24) - b.y) < 48) {
+      if (player.spinning || player.vy < -50 || game.superTimer > 0) {
+        b.hp--;
+        b.hitCd = 0.85;
+        player.vy = 320;
+        sfx.bossHit();
+        bossHpFill.style.width = `${Math.max(0, (b.hp / b.maxHp) * 100)}%`;
+        addPopup(b.x, b.y - 40, `HOOK-NIK HIT! (${b.hp} LEFT)`, '#ffd800', 19);
 
-    ctx.save();
-    ctx.translate(player.x, player.y);
-
-    if (player.spinning) {
-      // ICONIC SONIC SPIN-JUMP / SPIN-DASH CURL BALL (IN BLAZING ORANGE!)
-      ctx.save();
-      ctx.translate(0, -22);
-      ctx.rotate(game.time * 28 * player.facing);
-      ctx.fillStyle = game.superTimer > 0 ? '#fde047' : '#ff6a00';
-      ctx.strokeStyle = '#ffffff';
-      ctx.lineWidth = 2.5;
-      ctx.beginPath();
-      ctx.arc(0, 0, 19, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.stroke();
-
-      // Spiky Sonic Quills / Feathers around spinball!
-      ctx.fillStyle = '#ffd800';
-      for (let q = 0; q < 5; q++) {
-        ctx.rotate((Math.PI * 2) / 5);
-        ctx.beginPath();
-        ctx.moveTo(15, -5);
-        ctx.lineTo(25, 0);
-        ctx.lineTo(15, 5);
-        ctx.fill();
+        if (b.hp <= 0) {
+          game.score += 2500;
+          for (let r = 0; r < 12; r++) {
+            spawnRing(b.x + (r - 6) * 22, b.y);
+          }
+          addPopup(b.x, b.y - 60, '💥 DR. HOOK-NIK DEFEATED! +2,500 💥', '#ffd800', 22);
+          sayQuip(`COCK-A-DOODLE-BOOM!! Back to the Jolly Roger, Hook-nik!`, 3.0);
+          scene.remove(b.mesh);
+          game.boss = null;
+          bossBarWrap.style.display = 'none';
+        }
+      } else {
+        takeSonicHit(`Watch Hook-nik's pirate hook! Spin-Jump into his dome!`);
       }
-      ctx.restore();
+    }
+  }
+
+  for (let i = game.mines.length - 1; i >= 0; i--) {
+    const m = game.mines[i];
+    m.y += m.vy * dt;
+    m.vy += 420 * dt;
+    m.mesh.position.set(to3DX(m.x), to3DY(m.y), 0);
+    m.mesh.rotation.x += dt * 5;
+    if (Math.hypot(m.x - player.x, m.y - (player.y - 22)) < 28) {
+      takeSonicHit(`Spiked Hook-Mine!`);
+      world3D.remove(m.mesh);
+      game.mines.splice(i, 1);
+    } else if (m.y > surfaceYAt(m.x) + 40) {
+      world3D.remove(m.mesh);
+      game.mines.splice(i, 1);
+    }
+  }
+
+  // Update Sonar & Popups
+  for (let i = game.sonarWaves.length - 1; i >= 0; i--) {
+    const sw = game.sonarWaves[i];
+    sw.r += 1050 * dt;
+    sw.alpha = Math.max(0, 1 - sw.r / sw.maxR);
+    if (sw.r >= sw.maxR) game.sonarWaves.splice(i, 1);
+  }
+  for (let i = game.popups.length - 1; i >= 0; i--) {
+    const pop = game.popups[i];
+    pop.y += pop.vy * dt;
+    pop.life -= dt;
+    if (pop.life <= 0) game.popups.splice(i, 1);
+  }
+
+  // Dynamic 3D Camera Tracking + Sonic Speed FOV Kick!
+  const targetX = player.inHole ? player.inHole.x : player.x + 115 + player.vx * 0.18;
+  const targetY = player.inHole
+    ? (player.launchingHole ? player.y - 40 : player.y + 85)
+    : player.y - 95;
+
+  game.camX += (targetX - game.camX) * Math.min(1, dt * 6.5);
+  game.camY += (targetY - game.camY) * Math.min(1, dt * 7.0);
+
+  const speedBoost = Math.abs(player.vx) > 380 || player.activeLoop || player.activeRail || game.superTimer > 0;
+  const targetFov = speedBoost ? 62 : (player.inHole ? 56 : 52);
+  game.fovCurrent += (targetFov - game.fovCurrent) * Math.min(1, dt * 5);
+  camera.fov = game.fovCurrent;
+  camera.updateProjectionMatrix();
+
+  updateHud();
+}
+
+function updateHud() {
+  scoreVal.textContent = String(game.score);
+  const mins = Math.floor(game.runClock / 60);
+  const secs = String(Math.floor(game.runClock % 60)).padStart(2, '0');
+  timeVal.textContent = `${mins}:${secs}`;
+
+  orangesVal.textContent = String(game.oranges);
+  if (game.oranges === 0) orangesLabel.classList.add('flash-danger');
+  else orangesLabel.classList.remove('flash-danger');
+
+  livesVal.textContent = `× ${String(game.lives).padStart(2, '0')}`;
+  dustBar.style.width = `${Math.round((player.dust / player.maxDust) * 100)}%`;
+
+  const a = ACTS[getActIndex()];
+  zoneBannerText.textContent = `${a.zone} ${a.act} • 10–50FT SHAFTS: ${game.holesCleared}`;
+  superBanner.style.display = game.superTimer > 0 ? 'block' : 'none';
+
+  if (player.ponderCd > 0.05) {
+    ponderBtn.classList.add('cooldown');
+    ponderBtn.textContent = `🤔 HMM... (${player.ponderCd.toFixed(1)}s)`;
+  } else {
+    ponderBtn.classList.remove('cooldown');
+    ponderBtn.textContent = `🤔 "HMM..." [H]`;
+  }
+}
+
+// ===========================================================================
+// 3D RIG SYNC + 2D HUD OVERLAY RENDERING
+// ===========================================================================
+function sync3DScene() {
+  const px3 = to3DX(player.x);
+  const py3 = to3DY(player.y);
+  kevinGroup.position.set(px3, py3, 0);
+  kevinGroup.visible = !(player.invuln > 0 && Math.floor(player.invuln * 16) % 2 === 1);
+
+  const activeMat = game.superTimer > 0 ? matKevinSuper : matKevinOrange;
+  torsoMesh.material = activeMat;
+  spinCore.material = activeMat;
+
+  if (player.spinning) {
+    bodyRig.visible = false;
+    spinballGroup.visible = true;
+    spinballGroup.rotation.z -= 0.42 * player.facing;
+  } else {
+    bodyRig.visible = true;
+    spinballGroup.visible = false;
+    bodyRig.rotation.y = player.facing >= 0 ? 0 : Math.PI;
+
+    const fast = Math.abs(player.vx) > 280 && player.onGround;
+    speedBlurWheel.visible = fast;
+    shoeL.visible = shoeR.visible = !fast;
+    speedBlurWheel.rotation.z -= 0.5;
+
+    const cyc = player.animTime * 12;
+    const swing = player.onGround ? Math.sin(cyc) * 0.42 : 0.25;
+    shoeL.position.set(swing, 0.2, 0.25);
+    shoeR.position.set(-swing, 0.2, -0.25);
+
+    if (player.ponderPose > 0) {
+      handL.position.set(0.55, 2.15, 0.35); // Chin-stroking "Hmm..."!
+      handR.position.set(-0.3, 1.35, -0.45);
     } else {
-      ctx.save();
-      ctx.scale(player.facing, 1);
-
-      const fast = Math.abs(player.vx) > 260;
-      const cycle = player.animTime * 15;
-
-      // Sonic Figure-8 Blur Feet when sprinting!
-      if (player.onGround && fast) {
-        ctx.strokeStyle = '#ff6a00';
-        ctx.lineWidth = 4;
-        ctx.beginPath();
-        ctx.ellipse(0, -8, 15, 8, 0, 0, Math.PI * 2);
-        ctx.stroke();
-      } else {
-        const swing = player.onGround ? Math.sin(cycle) * 8 : 5;
-        ctx.strokeStyle = '#c2410c';
-        ctx.lineWidth = 6;
-        ctx.beginPath();
-        ctx.moveTo(-2, -16); ctx.lineTo(-4 - swing, -4);
-        ctx.moveTo(2, -16); ctx.lineTo(5 + swing, -4);
-        ctx.stroke();
-        // Iconic Sonic Hi-Top Sneakers in Safety Orange with White Strap!
-        ctx.fillStyle = '#ff5500';
-        ctx.fillRect(-10 - swing, -6, 12, 6);
-        ctx.fillRect(1 + swing, -6, 12, 6);
-        ctx.fillStyle = '#ffffff';
-        ctx.fillRect(-6 - swing, -6, 3, 6);
-        ctx.fillRect(5 + swing, -6, 3, 6);
-      }
-
-      // Blazing Orange Peter Pan Tunic + White Sonic Gloves!
-      ctx.fillStyle = game.superTimer > 0 ? '#ffd800' : '#ff6a00';
-      ctx.beginPath();
-      ctx.moveTo(-11, -35);
-      ctx.lineTo(11, -35);
-      ctx.lineTo(14, -15);
-      ctx.lineTo(6, -19);
-      ctx.lineTo(0, -14);
-      ctx.lineTo(-7, -19);
-      ctx.lineTo(-13, -15);
-      ctx.closePath();
-      ctx.fill();
-
-      // White Gloved Hand (Chin-stroking on "Hmm...", swept back when dashing!)
-      ctx.fillStyle = '#ffffff';
-      if (player.ponderPose > 0) {
-        ctx.beginPath();
-        ctx.arc(9, -37, 5, 0, Math.PI * 2);
-        ctx.fill();
-      } else {
-        ctx.beginPath();
-        ctx.arc(fast ? -14 : 11, -24, 5, 0, Math.PI * 2);
-        ctx.fill();
-      }
-
-      // Head + Spiky Swept-Back Sonic-Style Orange Peter Pan Cap + Feather!
-      ctx.fillStyle = '#fed7aa';
-      ctx.beginPath();
-      ctx.arc(1, -43, 9.5, 0, Math.PI * 2);
-      ctx.fill();
-
-      ctx.fillStyle = '#0f172a';
-      ctx.beginPath();
-      ctx.arc(5, -44, 2, 0, Math.PI * 2);
-      ctx.fill();
-
-      // Swept-back Sonic Quill-Cap in Blazing Orange!
-      ctx.fillStyle = '#ea580c';
-      ctx.beginPath();
-      ctx.moveTo(12, -48);
-      ctx.lineTo(-22, -55);
-      ctx.lineTo(-10, -45);
-      ctx.lineTo(-24, -43);
-      ctx.lineTo(-8, -37);
-      ctx.closePath();
-      ctx.fill();
-
-      // Golden Peter Pan Feather!
-      ctx.fillStyle = '#ffd800';
-      ctx.beginPath();
-      ctx.moveTo(-6, -53);
-      ctx.lineTo(-25, -64);
-      ctx.lineTo(-13, -50);
-      ctx.closePath();
-      ctx.fill();
-
-      ctx.restore();
-    }
-
-    // Orbiting Tinker-Tang Pixie Ring Spark!
-    const px = Math.cos(game.time * 5) * 26;
-    const py = -52 + Math.sin(game.time * 7) * 7;
-    ctx.fillStyle = '#ffd800';
-    ctx.beginPath();
-    ctx.arc(px, py, 4.5, 0, Math.PI * 2);
-    ctx.fill();
-
-    ctx.restore();
-    ctx.globalAlpha = 1;
-
-    // Comic Quip Bubble
-    if (player.quipTimer > 0 && player.quip) {
-      ctx.save();
-      ctx.font = 'italic 900 13px sans-serif';
-      const w = ctx.measureText(player.quip).width + 24;
-      const bx = player.x - w * 0.5;
-      const by = player.y - 98;
-      ctx.fillStyle = '#001d5e';
-      ctx.strokeStyle = '#ffd800';
-      ctx.lineWidth = 2.5;
-      ctx.beginPath();
-      ctx.roundRect(bx, by, w, 28, 8);
-      ctx.fill();
-      ctx.stroke();
-      ctx.fillStyle = '#ffffff';
-      ctx.textAlign = 'center';
-      ctx.fillText(player.quip, player.x, by + 19);
-      ctx.restore();
+      handL.position.set(-swing * 0.8, 1.45, 0.52);
+      handR.position.set(swing * 0.8, 1.45, -0.52);
     }
   }
 
-  function drawSonicShaftGauge(h) {
+  // Orbiting Tinker-Tang Pixie + PointLight!
+  const ox = px3 + Math.cos(game.time * 4.5) * 1.45;
+  const oy = py3 + 2.9 + Math.sin(game.time * 6.5) * 0.35;
+  const oz = Math.sin(game.time * 4.5) * 1.1;
+  pixieMesh.position.set(ox, oy, oz);
+  pixieLight.position.set(ox, oy, oz + 0.5);
+
+  // Camera, Sun Shadow Frustum & Ocean Parallax
+  const cx3 = to3DX(game.camX);
+  const cy3 = to3DY(game.camY);
+  camera.position.set(cx3, cy3 + 2.4, player.inHole ? 26.5 : 31.5);
+  camera.lookAt(cx3, cy3 - 0.6, 0);
+
+  sunLight.position.set(cx3 + 18, cy3 + 32, 26);
+  sunLight.target.position.set(cx3, cy3, 0);
+
+  oceanMesh.position.x = cx3;
+  waterNormal.offset.x = game.time * 0.08;
+  waterNormal.offset.y = game.time * 0.04;
+
+  secondStarGroup.position.set(cx3 + 24, cy3 + 15, -36);
+  secondStarGroup.rotation.y = game.time * 0.8;
+
+  composer.render();
+
+  // Draw crisp 2D Screen-Space FX Overlay (Sonar Waves, Quip Bubbles, Live Shaft Depth Gauge & Score Popups)
+  fxCtx.clearRect(0, 0, W, H);
+
+  function projectToScreen(lx, ly) {
+    const v = new THREE.Vector3(to3DX(lx), to3DY(ly), 0).project(camera);
+    return { x: (v.x * 0.5 + 0.5) * W, y: (-v.y * 0.5 + 0.5) * H };
+  }
+
+  for (let i = 0; i < game.sonarWaves.length; i++) {
+    const sw = game.sonarWaves[i];
+    const sp = projectToScreen(sw.x, sw.y);
+    fxCtx.strokeStyle = `rgba(255, 216, 0, ${sw.alpha * 0.88})`;
+    fxCtx.lineWidth = 4;
+    fxCtx.beginPath();
+    fxCtx.arc(sp.x, sp.y, sw.r * 0.55, 0, Math.PI * 2);
+    fxCtx.stroke();
+  }
+
+  if (player.inHole) {
+    const h = player.inHole;
     const curFt = Math.max(0, Math.min(h.depthFt, (player.y - h.rimY) / PX_PER_FT));
-    const gx = h.x + h.w * 0.5 + 18;
-    const gy = player.y - 36;
-    ctx.save();
-    ctx.fillStyle = '#002277';
-    ctx.strokeStyle = '#ffd800';
-    ctx.lineWidth = 3;
-    ctx.fillRect(gx, gy, 146, 46);
-    ctx.strokeRect(gx, gy, 146, 46);
-
-    ctx.fillStyle = '#ffd800';
-    ctx.font = 'italic 900 12px sans-serif';
-    ctx.textAlign = 'left';
-    ctx.fillText('SHAFT DEPTH', gx + 10, gy + 17);
-
-    ctx.fillStyle = '#ffffff';
-    ctx.font = 'italic 900 17px sans-serif';
-    ctx.fillText(`${curFt.toFixed(1)} / ${h.depthFt} FT`, gx + 10, gy + 37);
-    ctx.restore();
+    const sp = projectToScreen(h.x + h.w * 0.5 + 24, player.y - 24);
+    fxCtx.fillStyle = 'rgba(0, 28, 104, 0.92)';
+    fxCtx.strokeStyle = '#ffd800';
+    fxCtx.lineWidth = 3;
+    fxCtx.fillRect(sp.x, sp.y - 24, 168, 50);
+    fxCtx.strokeRect(sp.x, sp.y - 24, 168, 50);
+    fxCtx.fillStyle = '#ffd800';
+    fxCtx.font = 'italic 900 12px Trebuchet MS, sans-serif';
+    fxCtx.textAlign = 'left';
+    fxCtx.fillText(`${h.archetype} DEPTH`, sp.x + 10, sp.y - 6);
+    fxCtx.fillStyle = '#ffffff';
+    fxCtx.font = 'italic 900 17px Trebuchet MS, sans-serif';
+    fxCtx.fillText(`${curFt.toFixed(1)} / ${h.depthFt} FT`, sp.x + 10, sp.y + 16);
   }
 
-  function drawEffects() {
-    for (let i = 0; i < game.sonarWaves.length; i++) {
-      const sw = game.sonarWaves[i];
-      ctx.strokeStyle = `rgba(255, 216, 0, ${sw.alpha * 0.9})`;
-      ctx.lineWidth = 4;
-      ctx.beginPath();
-      ctx.arc(sw.x, sw.y, sw.r, 0, Math.PI * 2);
-      ctx.stroke();
-    }
-
-    for (let i = 0; i < game.particles.length; i++) {
-      const p = game.particles[i];
-      ctx.globalAlpha = Math.max(0, p.life / p.maxLife);
-      ctx.fillStyle = p.color;
-      ctx.beginPath();
-      ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
-      ctx.fill();
-    }
-    ctx.globalAlpha = 1;
-
-    for (let i = 0; i < game.popups.length; i++) {
-      const pop = game.popups[i];
-      ctx.save();
-      ctx.font = `italic 900 ${pop.size}px sans-serif`;
-      ctx.textAlign = 'center';
-      ctx.strokeStyle = '#000000';
-      ctx.lineWidth = 4;
-      ctx.strokeText(pop.text, pop.x, pop.y);
-      ctx.fillStyle = pop.color;
-      ctx.fillText(pop.text, pop.x, pop.y);
-      ctx.restore();
-    }
+  if (player.quipTimer > 0 && player.quip) {
+    const sp = projectToScreen(player.x, player.y - 68);
+    fxCtx.font = 'italic 900 13px Trebuchet MS, sans-serif';
+    const bw = fxCtx.measureText(player.quip).width + 24;
+    fxCtx.fillStyle = 'rgba(0, 24, 72, 0.92)';
+    fxCtx.strokeStyle = '#ffd800';
+    fxCtx.lineWidth = 2.5;
+    fxCtx.beginPath();
+    fxCtx.roundRect(sp.x - bw * 0.5, sp.y - 20, bw, 28, 8);
+    fxCtx.fill();
+    fxCtx.stroke();
+    fxCtx.fillStyle = '#ffffff';
+    fxCtx.textAlign = 'center';
+    fxCtx.fillText(player.quip, sp.x, sp.y - 1);
   }
 
-  // =========================================================================
-  // MAIN LOOP
-  // =========================================================================
-  let lastTime = performance.now();
-  game.segments = [{ x1: -300, x2: 440, y1: 430, y2: 430 }];
-  game.scenery = [{ x: 110, y: 430, kind: 'palm' }, { x: 290, y: 430, kind: 'flower' }];
-  game.generatedUntilX = 440;
-  generateWorldAhead();
+  for (let i = 0; i < game.popups.length; i++) {
+    const pop = game.popups[i];
+    const sp = projectToScreen(pop.x, pop.y);
+    fxCtx.font = `italic 900 ${pop.size}px Trebuchet MS, sans-serif`;
+    fxCtx.textAlign = 'center';
+    fxCtx.strokeStyle = '#000000';
+    fxCtx.lineWidth = 4;
+    fxCtx.strokeText(pop.text, sp.x, sp.y);
+    fxCtx.fillStyle = pop.color;
+    fxCtx.fillText(pop.text, sp.x, sp.y);
+  }
+}
 
-  function frame(now) {
-    const rawDt = Math.min(0.05, Math.max(0.001, (now - lastTime) / 1000));
-    lastTime = now;
+// ===========================================================================
+// ANIMATION LOOP
+// ===========================================================================
+const previewBlock = createSolidBlock3D(-260, 420, 420);
+const previewPalm = createPalmTree3D(80, 420);
+game.chunks.push({ endX: 420, meshes: [previewBlock, previewPalm] });
+game.generatedUntilX = 420;
+generateWorldAhead();
 
-    if (game.mode === 'playing') {
-      update(rawDt);
-    } else if (game.mode === 'menu') {
-      game.time += rawDt;
-      player.animTime += rawDt * 2;
-      player.x = 220 + Math.sin(game.time * 1.1) * 95;
-      player.y = 430;
-      player.onGround = true;
-      player.vx = 300;
-      game.camX = player.x - W * 0.34;
-      game.camY = 145;
-    }
+let lastTime = performance.now();
+function animate(now) {
+  const rawDt = Math.min(0.05, Math.max(0.001, (now - lastTime) / 1000));
+  lastTime = now;
 
-    render();
-    requestAnimationFrame(frame);
+  if (game.mode === 'playing') {
+    update(rawDt);
+  } else if (game.mode === 'menu') {
+    game.time += rawDt;
+    player.animTime += rawDt * 1.8;
+    player.x = 180 + Math.sin(game.time * 0.9) * 85;
+    player.y = 420;
+    player.vx = 300;
+    player.onGround = true;
+    game.camX = player.x + 110;
+    game.camY = 330;
   }
 
-  requestAnimationFrame(frame);
-})();
+  sync3DScene();
+  requestAnimationFrame(animate);
+}
+requestAnimationFrame(animate);
 </script>
 </body>
 </html>
