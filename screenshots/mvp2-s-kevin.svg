@@ -1,0 +1,146 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 675" width="1200" height="675">
+  <defs>
+    <linearGradient id="sonicSky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#0038a8" />
+      <stop offset="55%" stop-color="#0077ff" />
+      <stop offset="100%" stop-color="#38bdf8" />
+    </linearGradient>
+    <pattern id="checkerSoil" width="48" height="48" patternUnits="userSpaceOnUse">
+      <rect width="48" height="48" fill="#85320c" />
+      <rect width="24" height="24" fill="#561c06" />
+      <rect x="24" y="24" width="24" height="24" fill="#561c06" />
+      <rect x="2" y="2" width="20" height="4" fill="#ff8800" opacity="0.2" />
+      <rect x="26" y="26" width="20" height="4" fill="#ff8800" opacity="0.2" />
+    </pattern>
+    <linearGradient id="superBeam" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#ffd800" stop-opacity="0" />
+      <stop offset="100%" stop-color="#ff7700" stop-opacity="0.52" />
+    </linearGradient>
+  </defs>
+
+  <!-- Sonic Cobalt Sky -->
+  <rect width="1200" height="675" fill="url(#sonicSky)" />
+
+  <!-- Second Star to the Right (Bright Gold/Orange) -->
+  <circle cx="980" cy="108" r="46" fill="#ff9900" opacity="0.35" />
+  <circle cx="980" cy="108" r="14" fill="#ffd800" />
+
+  <!-- Fluffy Retro Sonic Clouds -->
+  <g fill="#ffffff" opacity="0.86">
+    <rect x="130" y="92" width="120" height="28" rx="14" />
+    <circle cx="170" cy="90" r="20" />
+    <circle cx="212" cy="94" r="16" />
+    <rect x="650" y="75" width="130" height="28" rx="14" />
+    <circle cx="690" cy="74" r="21" />
+    <circle cx="738" cy="78" r="17" />
+  </g>
+
+  <!-- Distant Mountains & Horizon Ocean -->
+  <polygon points="0,425 140,320 290,415 470,300 660,415 860,310 1040,415 1200,335 1200,675 0,675" fill="#0f3d7a" />
+  <rect x="0" y="405" width="1200" height="65" fill="#0284c7" />
+
+  <!-- Background Sonic Loop-de-Loop & Palm Tree -->
+  <circle cx="235" cy="348" r="84" fill="none" stroke="#6c2707" stroke-width="22" />
+  <circle cx="235" cy="348" r="84" fill="none" stroke="#ff7700" stroke-width="5" />
+
+  <!-- Palm Tree -->
+  <g transform="translate(880, 435)">
+    <rect x="-7" y="-120" width="14" height="120" fill="#92400e" />
+    <ellipse cx="-28" cy="-124" rx="28" ry="8" fill="#16a34a" transform="rotate(-18 -28 -124)" />
+    <ellipse cx="28" cy="-124" rx="28" ry="8" fill="#16a34a" transform="rotate(18 28 124)" />
+    <ellipse cx="0" cy="-136" rx="8" ry="26" fill="#16a34a" />
+    <circle cx="-5" cy="-118" r="6" fill="#ff7700" />
+    <circle cx="7" cy="-117" r="6" fill="#ff7700" />
+  </g>
+
+  <!-- Checkered Brown/Orange Sonic Ground -->
+  <rect x="0" y="435" width="1200" height="240" fill="url(#checkerSoil)" />
+
+  <!-- Speed Booster Dash Pad -->
+  <polygon points="355,435 405,435 395,419 360,426" fill="#dc2626" stroke="#ffffff" stroke-width="2" />
+  <text x="366" y="433" fill="#ffd800" font-family="Trebuchet MS, sans-serif" font-size="13" font-weight="900">&gt;&gt;&gt;</text>
+
+  <!-- 50FT SONIC SPRING SHAFT (Center) -->
+  <rect x="520" y="433" width="152" height="242" fill="#121c42" stroke="#ffd800" stroke-width="4" />
+  <rect x="526" y="280" width="140" height="395" fill="url(#superBeam)" />
+  <g font-family="Trebuchet MS, sans-serif" font-size="12" font-weight="900" fill="#ffd800">
+    <line x1="522" y1="485" x2="538" y2="485" stroke="#ffd800" stroke-width="2" />
+    <text x="543" y="489">10FT</text>
+    <line x1="522" y1="545" x2="538" y2="545" stroke="#ffd800" stroke-width="2" />
+    <text x="543" y="549">30FT</text>
+    <line x1="522" y1="605" x2="538" y2="605" stroke="#ffd800" stroke-width="2" />
+    <text x="543" y="609">50FT</text>
+  </g>
+  <!-- Red & Yellow Sonic Bumper Spring at Shaft Bottom -->
+  <polyline points="572,668 620,662 572,656 620,650" fill="none" stroke="#cbd5e1" stroke-width="4" />
+  <rect x="534" y="638" width="124" height="12" rx="6" fill="#ef4444" stroke="#ffffff" stroke-width="2" />
+  <circle cx="596" cy="644" r="5" fill="#ffd800" />
+
+  <!-- Sonic Star-Post Depth Sign -->
+  <rect x="490" y="387" width="6" height="48" fill="#cbd5e1" />
+  <rect x="454" y="362" width="78" height="28" rx="6" fill="#ff6a00" stroke="#ffffff" stroke-width="3" />
+  <text x="493" y="381" fill="#ffffff" font-family="Trebuchet MS, sans-serif" font-style="italic" font-size="13" font-weight="900" text-anchor="middle">★ 50 FT ★</text>
+
+  <!-- Double-Layer Emerald + Orange Turf -->
+  <path d="M0 439 L520 439 M672 439 L1200 439" stroke="#ff7700" stroke-width="12" />
+  <path d="M0 434 L520 434 M672 434 L1200 434" stroke="#22c55e" stroke-width="8" />
+
+  <!-- Spinning Golden-Orange Citrus Rings -->
+  <g fill="none" stroke="#ffd800" stroke-width="4">
+    <circle cx="435" cy="390" r="11" />
+    <circle cx="475" cy="368" r="11" />
+    <circle cx="596" cy="495" r="11" />
+    <circle cx="596" cy="545" r="11" />
+    <circle cx="596" cy="595" r="11" />
+  </g>
+
+  <!-- S-KEVIN IN SUPERSONIC ORANGE SPINBALL / DASH -->
+  <g transform="translate(555, 345)">
+    <circle cx="-44" cy="-22" r="17" fill="#ff7700" opacity="0.24" />
+    <circle cx="-22" cy="-22" r="18" fill="#ff7700" opacity="0.45" />
+    <!-- S-Kevin Figure-8 Blur + Orange Tunic + Spiky Quill-Cap -->
+    <ellipse cx="0" cy="-8" rx="15" ry="8" fill="none" stroke="#ff6a00" stroke-width="4" />
+    <polygon points="-11,-35 11,-35 14,-15 6,-19 0,-14 -7,-19 -13,-15" fill="#ff6a00" />
+    <circle cx="-14" cy="-24" r="5" fill="#ffffff" />
+    <circle cx="1" cy="-43" r="9.5" fill="#fed7aa" />
+    <circle cx="5" cy="-44" r="2" fill="#0f172a" />
+    <polygon points="12,-48 -22,-55 -10,-45 -24,-43 -8,-37" fill="#ea580c" />
+    <polygon points="-6,-53 -25,-64 -13,-50" fill="#ffd800" />
+  </g>
+
+  <!-- CLASSIC SONIC TOP-LEFT HUD -->
+  <g transform="translate(26, 24)" font-family="Trebuchet MS, Impact, sans-serif" font-style="italic" font-weight="900" font-size="25">
+    <text x="3" y="27" fill="#000000">SCORE</text>
+    <text x="0" y="24" fill="#ffd800">SCORE</text>
+    <text x="213" y="27" fill="#000000" text-anchor="end">24800</text>
+    <text x="210" y="24" fill="#ffffff" text-anchor="end">24800</text>
+
+    <text x="3" y="59" fill="#000000">TIME</text>
+    <text x="0" y="56" fill="#ffd800">TIME</text>
+    <text x="213" y="59" fill="#000000" text-anchor="end">1:14</text>
+    <text x="210" y="56" fill="#ffffff" text-anchor="end">1:14</text>
+
+    <text x="3" y="91" fill="#000000">ORANGES</text>
+    <text x="0" y="88" fill="#ffd800">ORANGES</text>
+    <text x="213" y="91" fill="#000000" text-anchor="end">42</text>
+    <text x="210" y="88" fill="#ffffff" text-anchor="end">42</text>
+  </g>
+
+  <!-- SONIC ZONE BANNER TOP-CENTER -->
+  <g transform="translate(425, 22) skewX(-12)">
+    <rect width="380" height="36" fill="#0044cc" stroke="#ffffff" stroke-width="3" />
+    <rect x="235" width="145" height="36" fill="#ff6a00" />
+    <text x="190" y="24" fill="#ffffff" font-family="Trebuchet MS, sans-serif" font-size="14" font-weight="900" text-anchor="middle">TANGERINE HILL ACT 1 • 10–50FT ZONE</text>
+  </g>
+
+  <!-- BOTTOM-LEFT SONIC LIFE EMBLEM -->
+  <g transform="translate(26, 605) skewX(-10)">
+    <rect width="295" height="50" fill="#001440" stroke="#ffffff" stroke-width="3" />
+    <rect x="10" y="7" width="36" height="36" rx="5" fill="#ff7700" stroke="#ffffff" stroke-width="2" />
+    <text x="58" y="22" fill="#ffd800" font-family="Trebuchet MS, sans-serif" font-style="italic" font-size="13" font-weight="900">S-KEVIN</text>
+    <text x="58" y="42" fill="#ffffff" font-family="Trebuchet MS, sans-serif" font-style="italic" font-size="20" font-weight="900">× 03</text>
+    <text x="140" y="21" fill="#7df9ff" font-family="Trebuchet MS, sans-serif" font-style="italic" font-size="12" font-weight="900">PIXIE SPIN-BOOST</text>
+    <rect x="140" y="28" width="140" height="12" fill="#001233" stroke="#ffffff" stroke-width="2" />
+    <rect x="142" y="30" width="122" height="8" fill="#ffd800" />
+  </g>
+</svg>
