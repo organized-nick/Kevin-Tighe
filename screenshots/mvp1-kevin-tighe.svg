@@ -1,0 +1,157 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 675" width="1200" height="675">
+  <defs>
+    <linearGradient id="skyGrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#0d1b36" />
+      <stop offset="58%" stop-color="#23294d" />
+      <stop offset="100%" stop-color="#c2410c" />
+    </linearGradient>
+    <radialGradient id="secondStar" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#fff7ed" stop-opacity="1" />
+      <stop offset="35%" stop-color="#f97316" stop-opacity="0.7" />
+      <stop offset="100%" stop-color="#f97316" stop-opacity="0" />
+    </radialGradient>
+    <linearGradient id="earthGrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#431407" />
+      <stop offset="45%" stop-color="#29150e" />
+      <stop offset="100%" stop-color="#0f0814" />
+    </linearGradient>
+    <linearGradient id="shaftGrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#1e130c" />
+      <stop offset="65%" stop-color="#3b1908" />
+      <stop offset="100%" stop-color="#7c2d12" />
+    </linearGradient>
+    <linearGradient id="fiftyBeam" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#fde047" stop-opacity="0" />
+      <stop offset="35%" stop-color="#f97316" stop-opacity="0.24" />
+      <stop offset="100%" stop-color="#fde047" stop-opacity="0.48" />
+    </linearGradient>
+    <linearGradient id="hudCard" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#162038" stop-opacity="0.92" />
+      <stop offset="100%" stop-color="#0c1222" stop-opacity="0.95" />
+    </linearGradient>
+  </defs>
+
+  <!-- Twilight Orange Neverland Sky -->
+  <rect width="1200" height="675" fill="url(#skyGrad)" />
+
+  <!-- Stars -->
+  <g fill="#fed7aa" opacity="0.85">
+    <circle cx="110" cy="80" r="2" />
+    <circle cx="240" cy="130" r="1.5" />
+    <circle cx="390" cy="68" r="2.2" />
+    <circle cx="540" cy="105" r="1.6" />
+    <circle cx="690" cy="58" r="2" />
+    <circle cx="835" cy="128" r="1.8" />
+    <circle cx="1090" cy="95" r="2.1" />
+  </g>
+
+  <!-- Second Star to the Right -->
+  <circle cx="965" cy="118" r="68" fill="url(#secondStar)" />
+  <path d="M965 88 L965 148 M935 118 L995 118" stroke="#fff7ed" stroke-width="3" stroke-linecap="round" />
+
+  <!-- Distant Neverland Silhouette Hills -->
+  <path d="M0 440 Q180 345 360 410 T740 390 T1200 415 L1200 675 L0 675 Z" fill="#1d352d" />
+  <path d="M0 470 Q240 405 490 448 T980 430 T1200 455 L1200 675 L0 675 Z" fill="#152925" />
+
+  <!-- Earth Cross-Section -->
+  <rect x="0" y="430" width="1200" height="245" fill="url(#earthGrad)" />
+
+  <!-- Shallow 6FT Ditch (Left) -->
+  <rect x="150" y="428" width="110" height="82" fill="#1f2937" stroke="#475569" stroke-width="3" />
+  <rect x="154" y="502" width="102" height="8" fill="#64748b" />
+  <rect x="122" y="384" width="6" height="46" fill="#78350f" />
+  <rect x="88" y="362" width="72" height="26" rx="7" fill="#334155" stroke="#94a3b8" stroke-width="2" />
+  <text x="124" y="380" fill="#ffffff" font-family="Segoe UI, sans-serif" font-size="13" font-weight="900" text-anchor="middle">6 FT</text>
+
+  <!-- Glorious 42FT Certified Kevin Hole (Center) -->
+  <rect x="520" y="428" width="150" height="247" fill="url(#shaftGrad)" stroke="#c2410c" stroke-width="4" />
+  <rect x="528" y="290" width="134" height="385" fill="url(#fiftyBeam)" />
+  <!-- Chalk Ruler Marks -->
+  <g font-family="Segoe UI, sans-serif" font-size="12" font-weight="800" fill="#fdba74">
+    <line x1="522" y1="478" x2="538" y2="478" stroke="#fdba74" stroke-width="2" />
+    <text x="543" y="482">10ft</text>
+    <line x1="522" y1="538" x2="538" y2="538" stroke="#fdba74" stroke-width="2" />
+    <text x="543" y="542">25ft</text>
+    <line x1="522" y1="598" x2="538" y2="598" stroke="#fdba74" stroke-width="2" />
+    <text x="543" y="602">42ft</text>
+  </g>
+  <!-- Citrus Trampoline Bottom -->
+  <rect x="528" y="652" width="134" height="16" rx="8" fill="#fde047" stroke="#ea580c" stroke-width="3" />
+  <!-- Signpost -->
+  <rect x="492" y="384" width="6" height="46" fill="#78350f" />
+  <rect x="456" y="362" width="76" height="26" rx="7" fill="#ea580c" stroke="#fed7aa" stroke-width="2" />
+  <text x="494" y="380" fill="#ffffff" font-family="Segoe UI, sans-serif" font-size="13" font-weight="900" text-anchor="middle">★ 42 FT ★</text>
+
+  <!-- Mystery Hole (Right) -->
+  <rect x="920" y="428" width="135" height="247" fill="#231238" stroke="#6d28d9" stroke-width="3" />
+  <rect x="892" y="384" width="6" height="46" fill="#78350f" />
+  <rect x="856" y="362" width="76" height="26" rx="7" fill="#6d28d9" stroke="#fdba74" stroke-width="2" />
+  <text x="894" y="380" fill="#ffffff" font-family="Segoe UI, sans-serif" font-size="13" font-weight="900" text-anchor="middle">??? FT</text>
+
+  <!-- Orange Turf Crust -->
+  <path d="M0 430 L150 430 M260 430 L520 430 M670 430 L920 430 M1055 430 L1200 430" stroke="#ea580c" stroke-width="10" />
+  <path d="M0 427 L150 427 M260 427 L520 427 M670 427 L920 427 M1055 427 L1200 427" stroke="#fb923c" stroke-width="3.5" />
+
+  <!-- Glowing Oranges inside the 42ft Shaft -->
+  <g>
+    <circle cx="595" cy="495" r="11" fill="#f97316" />
+    <ellipse cx="599" cy="483" rx="5" ry="2.6" fill="#22c55e" />
+    <circle cx="612" cy="555" r="11" fill="#f97316" />
+    <ellipse cx="616" cy="543" rx="5" ry="2.6" fill="#22c55e" />
+    <circle cx="582" cy="615" r="11" fill="#f97316" />
+    <ellipse cx="586" cy="603" rx="5" ry="2.6" fill="#22c55e" />
+  </g>
+
+  <!-- Ponder "Hmm..." Sonar Ring -->
+  <circle cx="565" cy="318" r="135" fill="none" stroke="#fb923c" stroke-width="3.5" stroke-dasharray="10 6" opacity="0.72" />
+
+  <!-- KEVIN TIGHE (Mid-Leap in Blazing Orange Peter Pan Tunic + Feather Cap!) -->
+  <g transform="translate(565, 345)">
+    <!-- Detached Shadow -->
+    <g transform="translate(-38, 16)" opacity="0.32">
+      <circle cx="0" cy="-42" r="10" fill="#090d16" />
+      <rect x="-8" y="-31" width="16" height="22" fill="#090d16" />
+    </g>
+    <!-- Burnt-Orange Tights -->
+    <line x1="-3" y1="-16" x2="-12" y2="-2" stroke="#9a3412" stroke-width="6" stroke-linecap="round" />
+    <line x1="4" y1="-16" x2="14" y2="-6" stroke="#9a3412" stroke-width="6" stroke-linecap="round" />
+    <!-- Cavalier Boots -->
+    <rect x="-17" y="-4" width="10" height="5" fill="#ea580c" />
+    <rect x="10" y="-8" width="10" height="5" fill="#ea580c" />
+    <!-- Orange Peter Pan Tunic -->
+    <polygon points="-12,-36 12,-36 15,-14 7,-18 2,-13 -5,-18 -13,-14" fill="#f97316" />
+    <rect x="-12" y="-24" width="24" height="4" fill="#7c2d12" />
+    <rect x="2" y="-25" width="6" height="6" fill="#fbbf24" />
+    <!-- Chin-stroking / Heroic Arm -->
+    <polyline points="5,-33 15,-28 9,-39" fill="none" stroke="#fdba74" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" />
+    <!-- Head & Peter Pan Cap -->
+    <circle cx="0" cy="-44" r="10" fill="#fed7aa" />
+    <circle cx="4" cy="-45" r="1.8" fill="#1e293b" />
+    <polygon points="-13,-48 14,-49 -5,-62" fill="#ea580c" />
+    <!-- Blazing Feather -->
+    <path d="M-5 -57 Q-20 -72 -27 -65 Q-15 -57 -4 -52 Z" fill="#fde047" />
+    <!-- Tinker-Tang Pixie -->
+    <circle cx="28" cy="-54" r="4.5" fill="#fb923c" />
+    <ellipse cx="23" cy="-57" rx="7" ry="3" fill="#ffffff" opacity="0.8" />
+    <ellipse cx="33" cy="-57" rx="7" ry="3" fill="#ffffff" opacity="0.8" />
+  </g>
+
+  <!-- Quip Bubble -->
+  <rect x="415" y="232" width="300" height="32" rx="10" fill="#0c1222" stroke="#fb923c" stroke-width="2" />
+  <text x="565" y="253" fill="#ffedd5" font-family="Segoe UI, sans-serif" font-size="14" font-weight="800" text-anchor="middle">"Hmm... 42ft! Pure orange Peter Pan bliss!"</text>
+
+  <!-- MVP1 HUD Header -->
+  <rect x="24" y="20" width="290" height="92" rx="14" fill="url(#hudCard)" stroke="#f97316" stroke-width="2" />
+  <text x="40" y="45" fill="#fdba74" font-family="Segoe UI, sans-serif" font-size="15" font-weight="900">KEVIN TIGHE • MVP1</text>
+  <text x="40" y="71" fill="#fb923c" font-family="Segoe UI, sans-serif" font-size="18" font-weight="900">HEARTS: 4 / 4</text>
+  <text x="40" y="95" fill="#fde68a" font-family="Segoe UI, sans-serif" font-size="12" font-weight="800">PIXIE DUST</text>
+  <rect x="122" y="85" width="172" height="11" rx="5.5" fill="#334155" />
+  <rect x="122" y="85" width="148" height="11" rx="5.5" fill="#fbbf24" />
+
+  <rect x="405" y="22" width="390" height="34" rx="17" fill="#0c1222" stroke="#fb923c" stroke-width="2" />
+  <text x="600" y="44" fill="#ffedd5" font-family="Segoe UI, sans-serif" font-size="13" font-weight="800" text-anchor="middle">HOLE SWEET SPOT: 10 FT – 50 FT DEEP  |  Loves: "Hmm..."</text>
+
+  <rect x="966" y="20" width="210" height="82" rx="14" fill="url(#hudCard)" stroke="#f97316" stroke-width="2" />
+  <text x="1158" y="54" fill="#fb923c" font-family="Segoe UI, sans-serif" font-size="28" font-weight="900" text-anchor="end">12,450</text>
+  <text x="1158" y="76" fill="#fed7aa" font-family="Segoe UI, sans-serif" font-size="12" font-weight="800" text-anchor="end">HOLES (10–50ft): 6 • COMBO: x4</text>
+</svg>

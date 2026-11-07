@@ -1,0 +1,2995 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+<title>Kevin Tighe: 10ft to 50ft Deep — An Orange Neverland Adventure</title>
+<style>
+  :root {
+    --orange-50: #fff7ed;
+    --orange-200: #fed7aa;
+    --orange-300: #fdba74;
+    --orange-400: #fb923c;
+    --orange-500: #f97316;
+    --orange-600: #ea580c;
+    --orange-700: #c2410c;
+    --orange-900: #7c2d12;
+    --night-900: #0c1222;
+    --night-800: #162038;
+    --pan-green: #22c55e;
+  }
+
+  * {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    user-select: none;
+    -webkit-user-select: none;
+  }
+
+  html, body {
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    background: #0c1222;
+    font-family: 'Segoe UI', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+    color: #fff7ed;
+  }
+
+  #gameCanvas {
+    display: block;
+    width: 100vw;
+    height: 100vh;
+  }
+
+  /* HUD */
+  #hud {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 10;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    padding: 14px 18px;
+  }
+
+  #hud.hidden {
+    display: none;
+  }
+
+  .hud-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+
+  .hud-card {
+    background: rgba(12, 18, 34, 0.82);
+    border: 2px solid rgba(249, 115, 22, 0.55);
+    border-radius: 14px;
+    padding: 10px 15px;
+    backdrop-filter: blur(8px);
+    box-shadow: 0 6px 24px rgba(0, 0, 0, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  }
+
+  .hud-left {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    min-width: 265px;
+  }
+
+  .hero-badge {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+  }
+
+  .hero-name {
+    font-weight: 900;
+    font-size: 15px;
+    letter-spacing: 1px;
+    color: var(--orange-300);
+    text-transform: uppercase;
+  }
+
+  .zone-pill {
+    font-size: 12px;
+    font-weight: 800;
+    padding: 2px 9px;
+    border-radius: 999px;
+    background: linear-gradient(135deg, #ea580c, #f59e0b);
+    color: #fff;
+    letter-spacing: 0.4px;
+  }
+
+  .hearts-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 20px;
+    line-height: 1;
+  }
+
+  .meter-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .meter-label {
+    font-size: 12px;
+    font-weight: 800;
+    color: #fde68a;
+    min-width: 78px;
+    letter-spacing: 0.4px;
+  }
+
+  .meter-track {
+    flex: 1;
+    height: 11px;
+    background: rgba(255, 255, 255, 0.12);
+    border-radius: 999px;
+    overflow: hidden;
+    border: 1px solid rgba(251, 146, 60, 0.4);
+  }
+
+  .meter-fill {
+    height: 100%;
+    width: 100%;
+    background: linear-gradient(90deg, #f97316, #fbbf24, #fde047);
+    border-radius: 999px;
+    box-shadow: 0 0 10px rgba(251, 191, 36, 0.7);
+    transition: width 0.08s linear;
+  }
+
+  .hud-center {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .rule-banner {
+    background: rgba(12, 18, 34, 0.85);
+    border: 2px solid rgba(251, 146, 60, 0.65);
+    border-radius: 999px;
+    padding: 6px 16px;
+    font-size: 13px;
+    font-weight: 800;
+    color: #ffedd5;
+    letter-spacing: 0.4px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+    text-align: center;
+  }
+
+  .rule-banner span.sweet {
+    color: #fb923c;
+    text-shadow: 0 0 8px rgba(249, 115, 22, 0.6);
+  }
+
+  #feverBanner {
+    display: none;
+    background: linear-gradient(90deg, #ea580c, #f59e0b, #ea580c);
+    color: #fff;
+    font-weight: 900;
+    font-size: 14px;
+    padding: 5px 18px;
+    border-radius: 999px;
+    letter-spacing: 1.2px;
+    box-shadow: 0 0 20px rgba(249, 115, 22, 0.9);
+    animation: pulseGlow 0.55s infinite alternate;
+  }
+
+  @keyframes pulseGlow {
+    from { transform: scale(0.97); }
+    to { transform: scale(1.04); }
+  }
+
+  .hud-right {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+  }
+
+  .score-box {
+    text-align: right;
+    min-width: 185px;
+  }
+
+  .score-main {
+    font-size: 28px;
+    font-weight: 900;
+    color: #fb923c;
+    line-height: 1.05;
+    text-shadow: 0 2px 12px rgba(249, 115, 22, 0.55);
+  }
+
+  .score-sub {
+    font-size: 12px;
+    color: #fed7aa;
+    margin-top: 3px;
+    font-weight: 700;
+  }
+
+  .hud-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    pointer-events: auto;
+  }
+
+  .icon-btn {
+    background: rgba(12, 18, 34, 0.86);
+    color: #ffedd5;
+    border: 2px solid rgba(249, 115, 22, 0.55);
+    border-radius: 10px;
+    padding: 6px 11px;
+    font-size: 13px;
+    font-weight: 800;
+    cursor: pointer;
+    transition: transform 0.12s, background 0.15s;
+  }
+
+  .icon-btn:hover {
+    background: rgba(234, 88, 12, 0.35);
+    transform: translateY(-1px);
+  }
+
+  .hud-bottom {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    gap: 12px;
+  }
+
+  .controls-bar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    align-items: center;
+    background: rgba(12, 18, 34, 0.78);
+    border: 1px solid rgba(249, 115, 22, 0.4);
+    padding: 8px 13px;
+    border-radius: 12px;
+    font-size: 12px;
+    color: #fed7aa;
+  }
+
+  .key {
+    display: inline-block;
+    background: rgba(249, 115, 22, 0.24);
+    border: 1px solid rgba(251, 146, 60, 0.65);
+    color: #fff7ed;
+    font-weight: 800;
+    padding: 2px 7px;
+    border-radius: 6px;
+    margin-right: 3px;
+    font-size: 12px;
+  }
+
+  #ponderBtn {
+    pointer-events: auto;
+    background: linear-gradient(135deg, #f97316, #ea580c);
+    color: #fff;
+    border: 2px solid #fed7aa;
+    border-radius: 14px;
+    padding: 10px 16px;
+    font-size: 14px;
+    font-weight: 900;
+    cursor: pointer;
+    box-shadow: 0 6px 20px rgba(234, 88, 12, 0.5);
+    transition: transform 0.12s, opacity 0.15s;
+    letter-spacing: 0.4px;
+  }
+
+  #ponderBtn:hover {
+    transform: translateY(-2px) scale(1.02);
+  }
+
+  #ponderBtn.cooldown {
+    background: rgba(30, 41, 59, 0.85);
+    border-color: #64748b;
+    color: #94a3b8;
+    box-shadow: none;
+  }
+
+  /* Touch Controls */
+  #touchControls {
+    display: none;
+    pointer-events: auto;
+    gap: 8px;
+    align-items: center;
+  }
+
+  @media (pointer: coarse), (max-width: 820px) {
+    #touchControls {
+      display: flex;
+    }
+    .controls-bar {
+      display: none;
+    }
+  }
+
+  .touch-btn {
+    width: 54px;
+    height: 54px;
+    border-radius: 14px;
+    border: 2px solid rgba(251, 146, 60, 0.8);
+    background: rgba(12, 18, 34, 0.82);
+    color: #fff7ed;
+    font-size: 20px;
+    font-weight: 900;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    touch-action: manipulation;
+  }
+
+  .touch-btn:active {
+    background: #ea580c;
+  }
+
+  /* Overlay Screens */
+  .overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 30;
+    background: radial-gradient(circle at 50% 35%, rgba(124, 45, 18, 0.58), rgba(8, 12, 24, 0.92));
+    backdrop-filter: blur(7px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 18px;
+    overflow-y: auto;
+  }
+
+  .overlay.hidden {
+    display: none !important;
+  }
+
+  .modal-card {
+    width: 100%;
+    max-width: 720px;
+    background: linear-gradient(180deg, rgba(22, 32, 56, 0.96), rgba(12, 18, 34, 0.98));
+    border: 3px solid var(--orange-500);
+    border-radius: 24px;
+    padding: 28px 30px;
+    box-shadow: 0 24px 70px rgba(0, 0, 0, 0.7), 0 0 45px rgba(249, 115, 22, 0.28);
+    text-align: center;
+  }
+
+  .eyebrow {
+    display: inline-block;
+    background: rgba(249, 115, 22, 0.2);
+    border: 1px solid rgba(251, 146, 60, 0.6);
+    color: #fdba74;
+    font-weight: 800;
+    font-size: 12px;
+    letter-spacing: 1.6px;
+    text-transform: uppercase;
+    padding: 4px 12px;
+    border-radius: 999px;
+    margin-bottom: 10px;
+  }
+
+  .game-title {
+    font-size: clamp(28px, 5vw, 48px);
+    font-weight: 900;
+    line-height: 1.05;
+    letter-spacing: -0.5px;
+    color: #fff7ed;
+    text-shadow: 0 4px 0 #c2410c, 0 0 28px rgba(249, 115, 22, 0.65);
+  }
+
+  .game-title span {
+    color: #fb923c;
+  }
+
+  .subtitle {
+    margin-top: 8px;
+    font-size: 15px;
+    color: #fed7aa;
+    line-height: 1.45;
+  }
+
+  .depth-guide {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+    margin: 18px 0;
+  }
+
+  @media (max-width: 600px) {
+    .depth-guide {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  .guide-box {
+    border-radius: 14px;
+    padding: 11px 10px;
+    background: rgba(15, 23, 42, 0.75);
+    border: 2px solid rgba(255, 255, 255, 0.12);
+  }
+
+  .guide-box.bad-shallow {
+    border-color: rgba(148, 163, 184, 0.5);
+  }
+
+  .guide-box.sweet-spot {
+    background: linear-gradient(180deg, rgba(234, 88, 12, 0.28), rgba(15, 23, 42, 0.85));
+    border-color: #fb923c;
+    box-shadow: 0 0 18px rgba(249, 115, 22, 0.25);
+  }
+
+  .guide-box.bad-deep {
+    border-color: rgba(244, 63, 94, 0.55);
+  }
+
+  .guide-depth {
+    font-size: 18px;
+    font-weight: 900;
+    margin-bottom: 3px;
+  }
+
+  .guide-desc {
+    font-size: 12px;
+    color: #cbd5e1;
+    line-height: 1.35;
+  }
+
+  /* "And hmm..." customizer */
+  .hmm-box {
+    background: rgba(15, 23, 42, 0.85);
+    border: 1.5px dashed rgba(251, 146, 60, 0.65);
+    border-radius: 16px;
+    padding: 13px 16px;
+    margin-bottom: 18px;
+    text-align: left;
+  }
+
+  .hmm-label {
+    font-size: 13px;
+    font-weight: 800;
+    color: #fdba74;
+    margin-bottom: 8px;
+    display: block;
+  }
+
+  .hmm-input-row {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+
+  #hmmInput {
+    flex: 1;
+    min-width: 190px;
+    background: rgba(2, 6, 23, 0.8);
+    border: 2px solid rgba(249, 115, 22, 0.55);
+    border-radius: 10px;
+    padding: 8px 12px;
+    color: #fff7ed;
+    font-size: 14px;
+    font-weight: 700;
+    outline: none;
+    user-select: text;
+    -webkit-user-select: text;
+  }
+
+  #hmmInput:focus {
+    border-color: #fbbf24;
+    box-shadow: 0 0 12px rgba(251, 191, 36, 0.35);
+  }
+
+  .chip-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 8px;
+  }
+
+  .hmm-chip {
+    background: rgba(249, 115, 22, 0.16);
+    border: 1px solid rgba(251, 146, 60, 0.45);
+    color: #ffedd5;
+    font-size: 12px;
+    font-weight: 700;
+    padding: 4px 10px;
+    border-radius: 999px;
+    cursor: pointer;
+    transition: background 0.15s, transform 0.1s;
+  }
+
+  .hmm-chip:hover {
+    background: rgba(249, 115, 22, 0.4);
+    transform: translateY(-1px);
+  }
+
+  .primary-btn {
+    background: linear-gradient(135deg, #fb923c, #ea580c);
+    color: #fff;
+    border: 2px solid #ffedd5;
+    border-radius: 999px;
+    padding: 14px 40px;
+    font-size: 19px;
+    font-weight: 900;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    cursor: pointer;
+    box-shadow: 0 10px 28px rgba(234, 88, 12, 0.55);
+    transition: transform 0.14s, box-shadow 0.14s;
+  }
+
+  .primary-btn:hover {
+    transform: translateY(-2px) scale(1.03);
+    box-shadow: 0 14px 34px rgba(249, 115, 22, 0.75);
+  }
+
+  .primary-btn:active {
+    transform: translateY(1px);
+  }
+
+  /* Perks Modal */
+  .perks-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    margin-top: 18px;
+  }
+
+  @media (max-width: 640px) {
+    .perks-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  .perk-card {
+    background: rgba(15, 23, 42, 0.9);
+    border: 2px solid rgba(251, 146, 60, 0.55);
+    border-radius: 16px;
+    padding: 16px 12px;
+    cursor: pointer;
+    transition: transform 0.14s, border-color 0.14s, background 0.14s;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .perk-card:hover {
+    transform: translateY(-4px);
+    border-color: #fde047;
+    background: rgba(234, 88, 12, 0.25);
+  }
+
+  .perk-icon {
+    font-size: 32px;
+  }
+
+  .perk-title {
+    font-size: 15px;
+    font-weight: 900;
+    color: #fdba74;
+  }
+
+  .perk-desc {
+    font-size: 12px;
+    color: #e2e8f0;
+    line-height: 1.35;
+  }
+
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+    margin: 18px 0;
+    text-align: left;
+  }
+
+  .stat-item {
+    background: rgba(15, 23, 42, 0.8);
+    border: 1px solid rgba(251, 146, 60, 0.35);
+    border-radius: 12px;
+    padding: 10px 14px;
+  }
+
+  .stat-k {
+    font-size: 12px;
+    color: #94a3b8;
+    font-weight: 700;
+  }
+
+  .stat-v {
+    font-size: 20px;
+    font-weight: 900;
+    color: #fb923c;
+    margin-top: 2px;
+  }
+</style>
+</head>
+<body>
+
+<canvas id="gameCanvas"></canvas>
+
+<!-- HUD -->
+<div id="hud" class="hidden">
+  <div class="hud-top">
+    <div class="hud-card hud-left">
+      <div class="hero-badge">
+        <span class="hero-name">🧢 Kevin Tighe</span>
+        <span class="zone-pill" id="zoneLabel">Zone 1 • Tangerine Meadows</span>
+      </div>
+      <div class="hearts-row" id="heartsRow">🧡🧡🧡🧡</div>
+      <div class="meter-row">
+        <span class="meter-label">✨ PIXIE DUST</span>
+        <div class="meter-track">
+          <div class="meter-fill" id="dustBar"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="hud-center">
+      <div class="rule-banner">
+        HOLE SWEET SPOT: <span class="sweet">10 FT – 50 FT DEEP</span> &nbsp;|&nbsp; <span id="hmmHudTag">🤔 Loves: "Hmm..."</span>
+      </div>
+      <div id="feverBanner">🔥 ORANGE PAN FEVER! 2X SCORE &amp; INFINITE FLIGHT! 🔥</div>
+    </div>
+
+    <div class="hud-right">
+      <div class="hud-card score-box">
+        <div class="score-main" id="scoreVal">0</div>
+        <div class="score-sub">
+          HOLES (10–50ft): <span id="holesVal">0</span> &nbsp;•&nbsp; COMBO: <span id="comboVal">x1</span>
+        </div>
+        <div class="score-sub" style="color:#94a3b8;">
+          BEST: <span id="bestVal">0</span>
+        </div>
+      </div>
+      <div class="hud-actions">
+        <button class="icon-btn" id="muteBtn" title="Toggle Audio (M)">🔊</button>
+        <button class="icon-btn" id="pauseBtn" title="Pause (P)">⏸</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="hud-bottom">
+    <div class="controls-bar">
+      <span><span class="key">A/D</span> or <span class="key">←/→</span> Run &amp; Steer</span>
+      <span><span class="key">W</span>/<span class="key">Space</span> Jump (Hold: Peter Pan Fly!)</span>
+      <span><span class="key">S</span>/<span class="key">↓</span> Orange Cannonball</span>
+      <span><span class="key">H</span>/<span class="key">E</span> "Hmm..." Reveal Mystery Holes</span>
+    </div>
+
+    <div id="touchControls">
+      <button class="touch-btn" id="tLeft">◀</button>
+      <button class="touch-btn" id="tRight">▶</button>
+      <button class="touch-btn" id="tDown">⬇</button>
+      <button class="touch-btn" id="tJump">✨</button>
+    </div>
+
+    <button id="ponderBtn" title="Press H or E to Ponder!">🤔 "Hmm..." [H]</button>
+  </div>
+</div>
+
+<!-- START SCREEN -->
+<div id="startOverlay" class="overlay">
+  <div class="modal-card">
+    <div class="eyebrow">★ Second Star to the Right, Straight Down a 40ft Hole ★</div>
+    <h1 class="game-title">KEVIN TIGHE:<br><span>10FT TO 50FT DEEP</span></h1>
+    <p class="subtitle">
+      Kevin Tighe refuses to grow up, wears exclusively <strong>blazing orange Peter Pan attire</strong>,
+      and lives for jumping into holes—<em>strictly</em> between <strong>10ft and 50ft deep</strong>.
+    </p>
+
+    <div class="depth-guide">
+      <div class="guide-box bad-shallow">
+        <div class="guide-depth" style="color:#94a3b8;">✗ 1 – 9 FT</div>
+        <div class="guide-desc"><strong>Pathetic Ditch!</strong><br>Hurts Kevin's pride (-1 🧡). Jump or fly right over it!</div>
+      </div>
+      <div class="guide-box sweet-spot">
+        <div class="guide-depth" style="color:#fb923c;">★ 10 – 50 FT ★</div>
+        <div class="guide-desc"><strong>CERTIFIED KEVIN HOLE!</strong><br>Plunge in, grab oranges, dodge roots &amp; hit the 50ft Holy Grail!</div>
+      </div>
+      <div class="guide-box bad-deep">
+        <div class="guide-depth" style="color:#fb7185;">⚠ 51+ FT</div>
+        <div class="guide-desc"><strong>Way Too Deep!</strong><br>Kevin has boundaries! Hold <strong>Space</strong> to Pixie-Fly out before 50ft!</div>
+      </div>
+    </div>
+
+    <div class="hmm-box">
+      <label class="hmm-label" for="hmmInput">
+        🍊 Kevin loves the color orange, Peter Pan, 10–50ft holes, and hmm... (fill in the "hmm..." or keep pondering!):
+      </label>
+      <div class="hmm-input-row">
+        <input id="hmmInput" type="text" maxlength="28" value="Pondering &quot;Hmm...&quot;" placeholder="Type a 4th thing Kevin loves..." />
+      </div>
+      <div class="chip-row">
+        <button type="button" class="hmm-chip" data-val='Pondering "Hmm..."'>🤔 Pondering "Hmm..."</button>
+        <button type="button" class="hmm-chip" data-val="Ice-Cold Orange Soda">🥤 Orange Soda</button>
+        <button type="button" class="hmm-chip" data-val="Traffic Cones">🚧 Traffic Cones</button>
+        <button type="button" class="hmm-chip" data-val="Cheddar Cheese">🧀 Sharp Cheddar</button>
+        <button type="button" class="hmm-chip" data-val="Tape Measures">📏 Tape Measures</button>
+      </div>
+    </div>
+
+    <button class="primary-btn" id="startBtn">🍊 CROW &amp; JUMP IN!</button>
+  </div>
+</div>
+
+<!-- PERK UPGRADE MODAL -->
+<div id="perkOverlay" class="overlay hidden">
+  <div class="modal-card">
+    <div class="eyebrow">✨ Neverland Milestone Reached ✨</div>
+    <h2 class="game-title" style="font-size:34px;">PICK AN <span>ORANGE PERK</span></h2>
+    <p class="subtitle">Kevin strokes his chin ("Hmm...") and levels up his hole-jumping craft:</p>
+    <div class="perks-grid" id="perksGrid"></div>
+  </div>
+</div>
+
+<!-- PAUSE OVERLAY -->
+<div id="pauseOverlay" class="overlay hidden">
+  <div class="modal-card" style="max-width:460px;">
+    <div class="eyebrow">⏸ Pondering Break</div>
+    <h2 class="game-title" style="font-size:36px;">"HMMMM..."</h2>
+    <p class="subtitle" style="margin-bottom:22px;">Kevin is contemplating a crisp 42-foot orange-lined shaft.</p>
+    <button class="primary-btn" id="resumeBtn">RESUME JUMPING</button>
+  </div>
+</div>
+
+<!-- GAME OVER OVERLAY -->
+<div id="gameOverOverlay" class="overlay hidden">
+  <div class="modal-card">
+    <div class="eyebrow" id="rankBadge">🏆 Certified Hole Connoisseur</div>
+    <h2 class="game-title" style="font-size:38px;">OUT OF <span>ORANGE JUICE!</span></h2>
+    <p class="subtitle" id="gameOverLine">"Second star to the right... and find me another 45-footer!"</p>
+
+    <div class="stats-grid">
+      <div class="stat-item">
+        <div class="stat-k">FINAL SCORE</div>
+        <div class="stat-v" id="goScore">0</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-k">10–50FT HOLES CONQUERED</div>
+        <div class="stat-v" id="goHoles">0</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-k">DEEPEST LEGAL DIVE</div>
+        <div class="stat-v" id="goDeepest">0 ft</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-k">ORANGES &amp; "HMM..." FINDS</div>
+        <div class="stat-v" id="goOranges">0</div>
+      </div>
+    </div>
+
+    <button class="primary-btn" id="restartBtn">🍊 JUMP AGAIN! [SPACE]</button>
+  </div>
+</div>
+
+<script>
+(() => {
+  'use strict';
+
+  // =========================================================================
+  // CONSTANTS & CONFIGURATION
+  // =========================================================================
+  const PX_PER_FT = 22; // 10ft = 220px, 50ft = 1100px
+  const MIN_LEGAL_FT = 10;
+  const MAX_LEGAL_FT = 50;
+  const GRAVITY = 1580;
+
+  const ZONES = [
+    { name: 'Zone 1 • Tangerine Meadows', skyTop: '#0d1b36', skyMid: '#23294d', skyBot: '#c2410c', hill1: '#1d352d', hill2: '#152925', grass: '#ea580c', grassTop: '#fb923c' },
+    { name: 'Zone 2 • Apricot Lagoon',    skyTop: '#091f2e', skyMid: '#1d3c52', skyBot: '#ea580c', hill1: '#1b3b3b', hill2: '#12292b', grass: '#d97706', grassTop: '#fbbf24' },
+    { name: 'Zone 3 • Blood-Orange Rock', skyTop: '#1a0b1e', skyMid: '#3b152a', skyBot: '#dc2626', hill1: '#2d1928', hill2: '#1e101c', grass: '#c2410c', grassTop: '#f97316' },
+    { name: 'Zone 4 • Never-Orange Star', skyTop: '#090d1f', skyMid: '#281c45', skyBot: '#f97316', hill1: '#231c3d', hill2: '#17122b', grass: '#ea580c', grassTop: '#fde047' }
+  ];
+
+  // =========================================================================
+  // WEB AUDIO SYNTHESIZER (Zero External Assets, 100% Procedural)
+  // =========================================================================
+  class SoundEngine {
+    constructor() {
+      this.ctx = null;
+      this.muted = false;
+      this.musicTimer = 0;
+      this.noteIdx = 0;
+      this.crocTickToggle = false;
+    }
+
+    init() {
+      if (!this.ctx) {
+        const AC = window.AudioContext || window.webkitAudioContext;
+        if (AC) this.ctx = new AC();
+      }
+      if (this.ctx && this.ctx.state === 'suspended') {
+        this.ctx.resume();
+      }
+    }
+
+    tone(freq, dur, type = 'triangle', vol = 0.16, slideTo = null, delay = 0) {
+      if (this.muted || !this.ctx) return;
+      const t0 = this.ctx.currentTime + delay;
+      const osc = this.ctx.createOscillator();
+      const gain = this.ctx.createGain();
+      osc.type = type;
+      osc.frequency.setValueAtTime(freq, t0);
+      if (slideTo) {
+        osc.frequency.exponentialRampToValueAtTime(Math.max(20, slideTo), t0 + dur);
+      }
+      gain.gain.setValueAtTime(0.0001, t0);
+      gain.gain.linearRampToValueAtTime(vol, t0 + 0.012);
+      gain.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+      osc.connect(gain);
+      gain.connect(this.ctx.destination);
+      osc.start(t0);
+      osc.stop(t0 + dur + 0.02);
+    }
+
+    jump() {
+      this.tone(260, 0.16, 'sine', 0.18, 560);
+    }
+
+    pixieSparkle() {
+      const notes = [880, 1174, 1396, 1760];
+      const f = notes[Math.floor(Math.random() * notes.length)];
+      this.tone(f, 0.08, 'sine', 0.05, f * 1.15);
+    }
+
+    pickup(combo = 1) {
+      const base = 523.25 * Math.min(1.8, 1 + (combo - 1) * 0.08);
+      this.tone(base, 0.09, 'triangle', 0.16, base * 1.25);
+      this.tone(base * 1.5, 0.12, 'sine', 0.12, base * 1.75, 0.05);
+    }
+
+    hmmPonder() {
+      // Expressive rising vocal-like "Hmmmm...?"
+      this.tone(165, 0.42, 'sawtooth', 0.08, 235);
+      this.tone(330, 0.42, 'triangle', 0.14, 470);
+      this.tone(660, 0.25, 'sine', 0.07, 880, 0.18);
+    }
+
+    holeEnter() {
+      this.tone(420, 0.22, 'sine', 0.14, 170);
+    }
+
+    holeClear(depthFt) {
+      const isFifty = depthFt === 50;
+      const chord = isFifty ? [523.25, 659.25, 783.99, 1046.5, 1318.5] : [440, 554.37, 659.25, 880];
+      chord.forEach((n, i) => {
+        this.tone(n, 0.22, 'triangle', 0.16, n * 1.02, i * 0.055);
+      });
+      if (depthFt >= 45) {
+        // Peter Pan crow! "Cock-a-doodle-doo!"
+        this.tone(587, 0.1, 'square', 0.07, 659, 0.28);
+        this.tone(659, 0.09, 'square', 0.07, 587, 0.39);
+        this.tone(784, 0.1, 'square', 0.08, 880, 0.49);
+        this.tone(1046, 0.34, 'sawtooth', 0.09, 980, 0.61);
+      }
+    }
+
+    badHole() {
+      this.tone(210, 0.18, 'sawtooth', 0.16, 135);
+      this.tone(135, 0.28, 'sawtooth', 0.16, 82, 0.16);
+    }
+
+    hurt() {
+      this.tone(160, 0.22, 'square', 0.15, 65);
+    }
+
+    boundarySaved() {
+      this.tone(587.33, 0.1, 'triangle', 0.15, 783.99);
+      this.tone(880, 0.18, 'triangle', 0.15, 1174.66, 0.09);
+    }
+
+    crocTick(distFactor) {
+      this.crocTickToggle = !this.crocTickToggle;
+      const f = this.crocTickToggle ? 920 : 680;
+      this.tone(f, 0.045, 'square', 0.09 * distFactor, f * 0.8);
+    }
+
+    updateMusic(dt, inShaft, fever) {
+      if (this.muted || !this.ctx) return;
+      const stepDur = fever ? 0.16 : (inShaft ? 0.20 : 0.26);
+      this.musicTimer += dt;
+      if (this.musicTimer >= stepDur) {
+        this.musicTimer -= stepDur;
+        // Cheerful Neverland adventurous marimba-like motif in D major / Mixolydian
+        const melody = [
+          293.66, 369.99, 440.00, 587.33, 554.37, 440.00, 369.99, 440.00,
+          329.63, 392.00, 493.88, 587.33, 659.25, 587.33, 493.88, 392.00
+        ];
+        const f = melody[this.noteIdx % melody.length] * (fever ? 1.25 : 1);
+        this.tone(f, stepDur * 0.72, 'sine', 0.035);
+        if (this.noteIdx % 4 === 0) {
+          this.tone(f * 0.5, stepDur * 1.4, 'triangle', 0.03);
+        }
+        this.noteIdx++;
+      }
+    }
+  }
+
+  const sfx = new SoundEngine();
+
+  // =========================================================================
+  // DOM ELEMENTS
+  // =========================================================================
+  const canvas = document.getElementById('gameCanvas');
+  const ctx = canvas.getContext('2d');
+  if (!ctx.roundRect) {
+    ctx.roundRect = function (x, y, w, h) {
+      this.rect(x, y, w, h);
+    };
+  }
+
+  const hud = document.getElementById('hud');
+  const heartsRow = document.getElementById('heartsRow');
+  const dustBar = document.getElementById('dustBar');
+  const zoneLabel = document.getElementById('zoneLabel');
+  const hmmHudTag = document.getElementById('hmmHudTag');
+  const feverBanner = document.getElementById('feverBanner');
+  const scoreVal = document.getElementById('scoreVal');
+  const holesVal = document.getElementById('holesVal');
+  const comboVal = document.getElementById('comboVal');
+  const bestVal = document.getElementById('bestVal');
+  const ponderBtn = document.getElementById('ponderBtn');
+  const muteBtn = document.getElementById('muteBtn');
+  const pauseBtn = document.getElementById('pauseBtn');
+
+  const startOverlay = document.getElementById('startOverlay');
+  const perkOverlay = document.getElementById('perkOverlay');
+  const perksGrid = document.getElementById('perksGrid');
+  const pauseOverlay = document.getElementById('pauseOverlay');
+  const gameOverOverlay = document.getElementById('gameOverOverlay');
+
+  const hmmInput = document.getElementById('hmmInput');
+  const startBtn = document.getElementById('startBtn');
+  const resumeBtn = document.getElementById('resumeBtn');
+  const restartBtn = document.getElementById('restartBtn');
+
+  let W = window.innerWidth;
+  let H = window.innerHeight;
+  let dpr = Math.min(window.devicePixelRatio || 1, 2);
+
+  function resize() {
+    W = window.innerWidth;
+    H = window.innerHeight;
+    dpr = Math.min(window.devicePixelRatio || 1, 2);
+    canvas.width = Math.floor(W * dpr);
+    canvas.height = Math.floor(H * dpr);
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  }
+  window.addEventListener('resize', resize);
+  resize();
+
+  // =========================================================================
+  // INPUT HANDLING
+  // =========================================================================
+  const keys = { left: false, right: false, jump: false, down: false };
+  let jumpJustPressed = false;
+
+  function isTypingInInput() {
+    const el = document.activeElement;
+    return el && (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA');
+  }
+
+  window.addEventListener('keydown', (e) => {
+    if (isTypingInInput()) {
+      if (e.key === 'Enter') {
+        elBlurAndStart();
+      }
+      return;
+    }
+
+    if (['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Space', ' '].includes(e.key)) {
+      e.preventDefault();
+    }
+
+    const k = e.key.toLowerCase();
+    if (k === 'a' || e.key === 'ArrowLeft') keys.left = true;
+    if (k === 'd' || e.key === 'ArrowRight') keys.right = true;
+    if (k === 's' || e.key === 'ArrowDown') keys.down = true;
+    if (k === 'w' || e.key === 'ArrowUp' || e.key === ' ') {
+      if (!keys.jump) jumpJustPressed = true;
+      keys.jump = true;
+      if (game.mode === 'gameover') startGame();
+    }
+    if (k === 'h' || k === 'e' || e.key === 'Shift') {
+      triggerPonder();
+    }
+    if (k === 'p' || e.key === 'Escape') {
+      togglePause();
+    }
+    if (k === 'm') {
+      toggleMute();
+    }
+    if (game.mode === 'perk' && ['1', '2', '3'].includes(k)) {
+      const idx = parseInt(k, 10) - 1;
+      if (game.currentChoices[idx]) applyPerk(game.currentChoices[idx]);
+    }
+  });
+
+  window.addEventListener('keyup', (e) => {
+    const k = e.key.toLowerCase();
+    if (k === 'a' || e.key === 'ArrowLeft') keys.left = false;
+    if (k === 'd' || e.key === 'ArrowRight') keys.right = false;
+    if (k === 's' || e.key === 'ArrowDown') keys.down = false;
+    if (k === 'w' || e.key === 'ArrowUp' || e.key === ' ') keys.jump = false;
+  });
+
+  window.addEventListener('contextmenu', (e) => {
+    if (game.mode === 'playing') {
+      e.preventDefault();
+      triggerPonder();
+    }
+  });
+
+  // Touch bindings
+  function bindHold(btnId, prop) {
+    const btn = document.getElementById(btnId);
+    if (!btn) return;
+    const on = (e) => {
+      e.preventDefault();
+      sfx.init();
+      if (prop === 'jump' && !keys.jump) jumpJustPressed = true;
+      keys[prop] = true;
+    };
+    const off = (e) => {
+      e.preventDefault();
+      keys[prop] = false;
+    };
+    btn.addEventListener('pointerdown', on);
+    btn.addEventListener('pointerup', off);
+    btn.addEventListener('pointerleave', off);
+    btn.addEventListener('pointercancel', off);
+  }
+  bindHold('tLeft', 'left');
+  bindHold('tRight', 'right');
+  bindHold('tDown', 'down');
+  bindHold('tJump', 'jump');
+
+  // "Hmm..." preset chips
+  document.querySelectorAll('.hmm-chip').forEach((chip) => {
+    chip.addEventListener('click', () => {
+      hmmInput.value = chip.dataset.val;
+    });
+  });
+
+  function elBlurAndStart() {
+    if (document.activeElement) document.activeElement.blur();
+    startGame();
+  }
+
+  startBtn.addEventListener('click', () => {
+    sfx.init();
+    elBlurAndStart();
+  });
+
+  restartBtn.addEventListener('click', () => {
+    sfx.init();
+    startGame();
+  });
+
+  resumeBtn.addEventListener('click', () => togglePause());
+  pauseBtn.addEventListener('click', () => togglePause());
+  ponderBtn.addEventListener('click', () => {
+    sfx.init();
+    triggerPonder();
+  });
+  muteBtn.addEventListener('click', () => toggleMute());
+
+  function toggleMute() {
+    sfx.init();
+    sfx.muted = !sfx.muted;
+    muteBtn.textContent = sfx.muted ? '🔇' : '🔊';
+  }
+
+  function togglePause() {
+    if (game.mode === 'playing') {
+      game.mode = 'paused';
+      pauseOverlay.classList.remove('hidden');
+    } else if (game.mode === 'paused') {
+      game.mode = 'playing';
+      pauseOverlay.classList.add('hidden');
+      lastTime = performance.now();
+    }
+  }
+
+  // =========================================================================
+  // WORLD & GAME STATE
+  // =========================================================================
+  let bestScore = Number(localStorage.getItem('kevin_tighe_best_v1') || 0);
+  bestVal.textContent = bestScore.toLocaleString();
+
+  const stars = Array.from({ length: 85 }, () => ({
+    x: Math.random(),
+    y: Math.random() * 0.62,
+    r: 0.8 + Math.random() * 2.1,
+    twinkle: Math.random() * Math.PI * 2,
+    orange: Math.random() < 0.35
+  }));
+
+  const game = {
+    mode: 'menu', // 'menu' | 'playing' | 'paused' | 'perk' | 'gameover'
+    time: 0,
+    score: 0,
+    combo: 1,
+    holesCleared: 0,
+    nextPerkAt: 4,
+    deepestLegal: 0,
+    orangesGrabbed: 0,
+    pondersUsed: 0,
+    fourthLove: 'Pondering "Hmm..."',
+    feverTimer: 0,
+    ponderSlowTimer: 0,
+    shake: 0,
+    camX: 0,
+    camY: 0,
+    generatedUntilX: 0,
+    lastPlateauY: 420,
+    segments: [],   // terrain segments: flat plateaus & smooth cosine connectors
+    holes: [],      // hole shafts
+    items: [],      // oranges, pixie orbs, thimbles, custom 4th-love pickups
+    crocs: [],      // Tick-Tock Crocodiles
+    cannonballs: [],// Captain Hook drab cannonballs
+    particles: [],
+    popups: [],
+    sonarWaves: [],
+    currentChoices: []
+  };
+
+  const player = {
+    x: 180,
+    y: 340,
+    vx: 0,
+    vy: 0,
+    w: 28,
+    h: 52,
+    facing: 1,
+    onGround: false,
+    coyote: 0,
+    inHole: null,         // reference to current hole when below rimY
+    launchingHole: null,  // geyser propulsion out of hole
+    enteredDeepFt: 0,     // tracks deepest feet reached in a >50ft hole for escape bonus
+    cannonball: false,
+    hearts: 4,
+    maxHearts: 4,
+    invuln: 0,
+    dust: 100,
+    maxDust: 100,
+    dustRegen: 13,
+    flyPower: 1,
+    ponderCd: 0,
+    ponderMaxCd: 4.5,
+    ponderRadius: 680,
+    ponderPoseTimer: 0,
+    magnetRange: 95,
+    bootSmash: false,
+    deepConnoisseur: false,
+    quip: '',
+    quipTimer: 0,
+    animTime: 0,
+    trailHistory: []
+  };
+
+  // =========================================================================
+  // PERK DEFINITIONS
+  // =========================================================================
+  const ALL_PERKS = [
+    {
+      id: 'zest',
+      icon: '🧡',
+      title: 'Tangerine Vitality',
+      desc: '+1 Max Heart & restore 2 Hearts immediately!',
+      apply: () => {
+        player.maxHearts = Math.min(7, player.maxHearts + 1);
+        player.hearts = Math.min(player.maxHearts, player.hearts + 2);
+      }
+    },
+    {
+      id: 'pixie',
+      icon: '✨',
+      title: 'Second Star Pixie Dust',
+      desc: '+35% Max Pixie Dust, faster refill & stronger Peter Pan flight!',
+      apply: () => {
+        player.maxDust += 35;
+        player.dust = player.maxDust;
+        player.dustRegen += 6;
+        player.flyPower += 0.18;
+      }
+    },
+    {
+      id: 'ponder',
+      icon: '🤔',
+      title: 'Profound "Hmm..."',
+      desc: 'Wider Ponder Sonar reveals holes screen-wide + strong Orange Magnet!',
+      apply: () => {
+        player.ponderRadius += 360;
+        player.ponderMaxCd = Math.max(2.0, player.ponderMaxCd - 1.1);
+        player.magnetRange += 110;
+      }
+    },
+    {
+      id: 'boots',
+      icon: '🥾',
+      title: 'Safety-Orange Cavalier Boots',
+      desc: 'Hold Down (Cannonball) to smash right through shaft roots & stun Crocs!',
+      apply: () => {
+        player.bootSmash = true;
+      }
+    },
+    {
+      id: 'connoisseur',
+      icon: '📏',
+      title: '35ft–50ft Connoisseur',
+      desc: 'Holes 35ft–50ft deep grant +65% bonus points & trigger mini Orange Fever!',
+      apply: () => {
+        player.deepConnoisseur = true;
+      }
+    }
+  ];
+
+  // =========================================================================
+  // QUIPS & PERSONALITY
+  // =========================================================================
+  function sayQuip(text, duration = 2.4) {
+    player.quip = text;
+    player.quipTimer = duration;
+  }
+
+  function addPopup(x, y, text, color = '#fb923c', size = 18) {
+    game.popups.push({ x, y, vy: -52, text, color, size, life: 1.35, maxLife: 1.35 });
+  }
+
+  function burstParticles(x, y, count, colors, speed = 240, gravityScale = 0.5) {
+    for (let i = 0; i < count; i++) {
+      const ang = Math.random() * Math.PI * 2;
+      const spd = (0.25 + Math.random() * 0.85) * speed;
+      game.particles.push({
+        x,
+        y,
+        vx: Math.cos(ang) * spd,
+        vy: Math.sin(ang) * spd - 40,
+        r: 2.5 + Math.random() * 4.5,
+        color: colors[Math.floor(Math.random() * colors.length)],
+        life: 0.45 + Math.random() * 0.55,
+        maxLife: 1.0,
+        grav: gravityScale
+      });
+    }
+  }
+
+  // =========================================================================
+  // PROCEDURAL TERRAIN & HOLE GENERATOR
+  // =========================================================================
+  function getZoneIndex() {
+    return Math.min(ZONES.length - 1, Math.floor(game.holesCleared / 4));
+  }
+
+  function groundHeightAt(x) {
+    for (let i = 0; i < game.segments.length; i++) {
+      const s = game.segments[i];
+      if (x >= s.x1 && x <= s.x2) {
+        if (s.y1 === s.y2) return s.y1;
+        const t = (x - s.x1) / (s.x2 - s.x1);
+        const mu = (1 - Math.cos(t * Math.PI)) * 0.5;
+        return s.y1 * (1 - mu) + s.y2 * mu;
+      }
+    }
+    return 420;
+  }
+
+  function findHoleAtX(x, margin = 0) {
+    for (let i = 0; i < game.holes.length; i++) {
+      const h = game.holes[i];
+      if (x > h.x - h.w * 0.5 + margin && x < h.x + h.w * 0.5 - margin) {
+        return h;
+      }
+    }
+    return null;
+  }
+
+  function generateWorldAhead() {
+    while (game.generatedUntilX < player.x + W * 2.2) {
+      const startX = game.generatedUntilX;
+      const prevY = game.lastPlateauY;
+      const nextY = Math.max(290, Math.min(500, prevY + (Math.random() - 0.5) * 110));
+
+      // Connector hill slope (with collectibles & occasional Tick-Tock Crocodile)
+      const hillLen = 210 + Math.random() * 170;
+      game.segments.push({ x1: startX, x2: startX + hillLen, y1: prevY, y2: nextY });
+
+      // Arc of floating oranges / pixie dust over hill
+      const arcCount = 3 + Math.floor(Math.random() * 3);
+      for (let i = 0; i < arcCount; i++) {
+        const frac = (i + 0.5) / arcCount;
+        const ix = startX + hillLen * frac;
+        const iy = groundHeightAt(ix) - 55 - Math.sin(frac * Math.PI) * 65;
+        game.items.push({
+          x: ix,
+          y: iy,
+          kind: i === Math.floor(arcCount / 2) && Math.random() < 0.28 ? 'dust' : 'orange',
+          collected: false,
+          bob: Math.random() * Math.PI * 2
+        });
+      }
+
+      // Plateau for a Hole!
+      const platStart = startX + hillLen;
+      const holeW = 128 + Math.floor(Math.random() * 24);
+      const padLeft = 115 + Math.random() * 85;
+      const padRight = 115 + Math.random() * 95;
+      const platLen = padLeft + holeW + padRight;
+      game.segments.push({ x1: platStart, x2: platStart + platLen, y1: nextY, y2: nextY });
+
+      const holeX = platStart + padLeft + holeW * 0.5;
+      const hole = createNextHole(holeX, nextY, holeW);
+      game.holes.push(hole);
+
+      // Spawn Tick-Tock Crocodile on wider run-ups in Zone 1+
+      if (game.holes.length > 2 && Math.random() < (0.35 + getZoneIndex() * 0.1)) {
+        const patrolMin = platStart + 18;
+        const patrolMax = holeX - holeW * 0.5 - 24;
+        if (patrolMax - patrolMin > 75) {
+          game.crocs.push({
+            x: (patrolMin + patrolMax) * 0.5,
+            y: nextY,
+            minX: patrolMin,
+            maxX: patrolMax,
+            vx: 68 + getZoneIndex() * 14,
+            stunTimer: 0,
+            jawPhase: Math.random() * Math.PI * 2,
+            tickTimer: 0
+          });
+        }
+      }
+
+      game.lastPlateauY = nextY;
+      game.generatedUntilX = platStart + platLen;
+    }
+
+    // Prune far-behind entities to keep 60fps silky forever
+    const cutoff = player.x - W * 1.4;
+    game.segments = game.segments.filter((s) => s.x2 > cutoff);
+    game.holes = game.holes.filter((h) => h.x + h.w > cutoff);
+    game.items = game.items.filter((it) => !it.collected && it.x > cutoff);
+    game.crocs = game.crocs.filter((c) => c.maxX > cutoff);
+  }
+
+  function createNextHole(x, rimY, w) {
+    const holeIndex = game.holes.length;
+    const z = getZoneIndex();
+
+    // Guarantee the very first 2 holes are welcoming, juicy 10–50ft holes!
+    let category = 'legal';
+    const roll = Math.random();
+    if (holeIndex >= 2) {
+      if (roll < 0.64) category = 'legal';
+      else if (roll < 0.82) category = 'shallow';
+      else category = 'deep';
+    }
+
+    let depthFt = 25;
+    if (category === 'legal') {
+      const special = Math.random();
+      if (special < 0.14) depthFt = 50;      // Exact 50ft Holy Grail!
+      else if (special < 0.24) depthFt = 10; // Exact 10ft Minimum Legal!
+      else depthFt = 11 + Math.floor(Math.random() * 39); // 11..49 ft
+    } else if (category === 'shallow') {
+      depthFt = 3 + Math.floor(Math.random() * 7); // 3..9 ft
+    } else {
+      depthFt = 53 + Math.floor(Math.random() * 29); // 53..81 ft
+    }
+
+    // Mystery ("??? ft") chance increases slightly with zones — encourages "Hmm..." pondering!
+    const mystery = holeIndex >= 2 && Math.random() < (0.25 + z * 0.08);
+
+    // Peter Pan Loose Shadow occasionally dances beside a prime legal hole!
+    const hasShadow = category === 'legal' && holeIndex >= 1 && Math.random() < 0.24;
+
+    const depthPx = depthFt * PX_PER_FT;
+    const obstacles = [];
+
+    // Populate subterranean collectibles & root ledges inside shaft
+    if (category === 'legal' || category === 'deep') {
+      const maxPopulateFt = Math.min(depthFt - 4, 48);
+      const numItems = Math.max(2, Math.floor(maxPopulateFt / 4.5));
+      for (let i = 1; i <= numItems; i++) {
+        const ft = (i / (numItems + 1)) * maxPopulateFt;
+        const waveX = Math.sin(i * 1.15) * (w * 0.27);
+        let kind = 'orange';
+        if (i === numItems && Math.random() < 0.45) kind = 'fourth';
+        else if (i % 4 === 0) kind = 'thimble';
+        else if (i % 3 === 0) kind = 'dust';
+
+        game.items.push({
+          x: x + waveX,
+          y: rimY + ft * PX_PER_FT,
+          kind,
+          collected: false,
+          bob: i * 0.6
+        });
+      }
+
+      // Subterranean root/cutlass hazards in holes >= 22ft
+      if (depthFt >= 22 && holeIndex >= 1) {
+        const obsCount = Math.floor((Math.min(depthFt, 50) - 14) / 13);
+        for (let k = 0; k < obsCount; k++) {
+          const ft = 13 + k * 12 + Math.random() * 4;
+          const side = (k + holeIndex) % 2 === 0 ? -1 : 1;
+          obstacles.push({
+            y: rimY + ft * PX_PER_FT,
+            side, // -1 left wall, +1 right wall
+            len: w * (0.40 + Math.min(0.1, z * 0.025)),
+            smashed: false
+          });
+        }
+      }
+    }
+
+    return {
+      x,
+      rimY,
+      w,
+      depthFt,
+      depthPx,
+      category,
+      mystery,
+      revealed: !mystery,
+      hasShadow,
+      sealed: false,
+      sealLabel: '',
+      obstacles
+    };
+  }
+
+  // =========================================================================
+  // "HMM..." PONDER MECHANIC
+  // =========================================================================
+  function triggerPonder() {
+    if (game.mode !== 'playing') return;
+    if (player.ponderCd > 0) return;
+
+    player.ponderCd = player.ponderMaxCd;
+    player.ponderPoseTimer = 0.85;
+    game.pondersUsed++;
+    game.ponderSlowTimer = 1.4;
+    sfx.hmmPonder();
+
+    game.sonarWaves.push({
+      x: player.x,
+      y: player.y - 24,
+      r: 10,
+      maxR: player.ponderRadius,
+      alpha: 1
+    });
+
+    let revealedCount = 0;
+    game.holes.forEach((h) => {
+      const dist = Math.hypot(h.x - player.x, h.rimY - player.y);
+      if (dist <= player.ponderRadius && !h.revealed) {
+        h.revealed = true;
+        revealedCount++;
+        const tag = h.category === 'legal'
+          ? `HMM: ${h.depthFt}FT! GOOD HOLE!`
+          : (h.category === 'shallow' ? `HMM: ${h.depthFt}FT (TOO SHALLOW!)` : `HMM: ${h.depthFt}FT (TOO DEEP!)`);
+        const col = h.category === 'legal' ? '#4ade80' : (h.category === 'shallow' ? '#94a3b8' : '#fb7185');
+        addPopup(h.x, h.rimY - 58, tag, col, 16);
+      }
+    });
+
+    if (revealedCount > 0) {
+      const pts = revealedCount * 75 * game.combo;
+      addScore(pts);
+      sayQuip(`Hmmmm... ${revealedCount} mystery hole${revealedCount > 1 ? 's' : ''} measured!`, 2.2);
+    } else {
+      const lines = [
+        `Hmmmm... orange, Peter Pan, and ${game.fourthLove}!`,
+        `Hmm... anything between 10ft and 50ft will do nicely.`,
+        `Hmmmm... is that a 45-footer up ahead?`,
+        `Hmm... Captain Hook definitely hates the color orange.`
+      ];
+      sayQuip(lines[Math.floor(Math.random() * lines.length)], 2.1);
+    }
+  }
+
+  // =========================================================================
+  // GAME LIFECYCLE (START, PERKS, DAMAGE, GAME OVER)
+  // =========================================================================
+  function startGame() {
+    const customVal = (hmmInput.value || '').trim();
+    game.fourthLove = customVal.length > 0 ? customVal : 'Pondering "Hmm..."';
+    hmmHudTag.textContent = `🤔 Loves: ${game.fourthLove}`;
+
+    game.mode = 'playing';
+    game.time = 0;
+    game.score = 0;
+    game.combo = 1;
+    game.holesCleared = 0;
+    game.nextPerkAt = 4;
+    game.deepestLegal = 0;
+    game.orangesGrabbed = 0;
+    game.pondersUsed = 0;
+    game.feverTimer = 0;
+    game.ponderSlowTimer = 0;
+    game.shake = 0;
+
+    game.segments = [{ x1: -300, x2: 420, y1: 420, y2: 420 }];
+    game.holes = [];
+    game.items = [];
+    game.crocs = [];
+    game.cannonballs = [];
+    game.particles = [];
+    game.popups = [];
+    game.sonarWaves = [];
+    game.generatedUntilX = 420;
+    game.lastPlateauY = 420;
+
+    Object.assign(player, {
+      x: 150,
+      y: 420,
+      vx: 0,
+      vy: 0,
+      facing: 1,
+      onGround: true,
+      coyote: 0.12,
+      inHole: null,
+      launchingHole: null,
+      enteredDeepFt: 0,
+      cannonball: false,
+      hearts: 4,
+      maxHearts: 4,
+      invuln: 0,
+      dust: 100,
+      maxDust: 100,
+      dustRegen: 14,
+      flyPower: 1,
+      ponderCd: 0,
+      ponderMaxCd: 4.5,
+      ponderRadius: 680,
+      ponderPoseTimer: 0,
+      magnetRange: 95,
+      bootSmash: false,
+      deepConnoisseur: false,
+      quip: '',
+      quipTimer: 0,
+      trailHistory: []
+    });
+
+    generateWorldAhead();
+
+    game.camX = player.x - W * 0.3;
+    game.camY = player.y - H * 0.56;
+
+    startOverlay.classList.add('hidden');
+    perkOverlay.classList.add('hidden');
+    pauseOverlay.classList.add('hidden');
+    gameOverOverlay.classList.add('hidden');
+    hud.classList.remove('hidden');
+
+    sayQuip(`Time to find some 10ft to 50ft holes! Cock-a-doodle-doo!`, 3.0);
+    updateHud();
+    lastTime = performance.now();
+  }
+
+  function addScore(pts) {
+    const mult = game.feverTimer > 0 ? 2 : 1;
+    game.score += Math.round(pts * mult);
+    if (game.score > bestScore) {
+      bestScore = game.score;
+      localStorage.setItem('kevin_tighe_best_v1', String(bestScore));
+    }
+  }
+
+  function hurtPlayer(reasonQuip) {
+    if (player.invuln > 0 || game.feverTimer > 0) return;
+    player.hearts--;
+    player.invuln = 1.6;
+    game.combo = 1;
+    game.shake = 12;
+    sfx.hurt();
+    burstParticles(player.x, player.y - 25, 18, ['#fb7185', '#f97316', '#fde047'], 260);
+    if (reasonQuip) sayQuip(reasonQuip, 2.5);
+
+    if (player.hearts <= 0) {
+      triggerGameOver();
+    }
+  }
+
+  function openPerkModal() {
+    game.mode = 'perk';
+    keys.left = keys.right = keys.jump = keys.down = false;
+
+    // Pick 3 random distinct perks
+    const shuffled = [...ALL_PERKS].sort(() => Math.random() - 0.5);
+    game.currentChoices = shuffled.slice(0, 3);
+    perksGrid.innerHTML = '';
+
+    game.currentChoices.forEach((perk, i) => {
+      const div = document.createElement('div');
+      div.className = 'perk-card';
+      div.innerHTML = `
+        <div class="perk-icon">${perk.icon}</div>
+        <div class="perk-title">[${i + 1}] ${perk.title}</div>
+        <div class="perk-desc">${perk.desc}</div>
+      `;
+      div.addEventListener('click', () => applyPerk(perk));
+      perksGrid.appendChild(div);
+    });
+
+    perkOverlay.classList.remove('hidden');
+  }
+
+  function applyPerk(perk) {
+    perk.apply();
+    sfx.holeClear(30);
+    perkOverlay.classList.add('hidden');
+    game.mode = 'playing';
+    sayQuip(`Ooooh, ${perk.title}! Very orange!`, 2.2);
+    lastTime = performance.now();
+  }
+
+  function triggerGameOver() {
+    game.mode = 'gameover';
+    hud.classList.add('hidden');
+
+    document.getElementById('goScore').textContent = game.score.toLocaleString();
+    document.getElementById('goHoles').textContent = String(game.holesCleared);
+    document.getElementById('goDeepest').textContent = game.deepestLegal > 0 ? `${game.deepestLegal} ft` : 'None yet!';
+    document.getElementById('goOranges').textContent = String(game.orangesGrabbed);
+
+    let rank = '🌱 Puddle Skeptic';
+    if (game.holesCleared >= 15) rank = '👑 Grandmaster of the 50ft Orange Pan';
+    else if (game.holesCleared >= 9) rank = '🍊 Certified Neverland Hole Legend';
+    else if (game.holesCleared >= 4) rank = '🧢 10–50ft Connoisseur';
+    document.getElementById('rankBadge').textContent = rank;
+
+    const summaryLines = [
+      `"A man needs three things: orange, Peter Pan, ${game.fourthLove}, and a crisp 42-foot hole."`,
+      `"Never grow up—and NEVER jump into a 9-foot ditch!"`,
+      `"Hmm... I bet the next hole was an exact 50-footer!"`
+    ];
+    document.getElementById('gameOverLine').textContent = summaryLines[Math.floor(Math.random() * summaryLines.length)];
+
+    gameOverOverlay.classList.remove('hidden');
+  }
+
+  // =========================================================================
+  // MAIN SIMULATION STEP
+  // =========================================================================
+  function update(rawDt) {
+    if (game.mode !== 'playing') return;
+
+    // Time dilation when pondering "Hmm..."
+    const timeScale = game.ponderSlowTimer > 0 ? 0.65 : 1.0;
+    if (game.ponderSlowTimer > 0) game.ponderSlowTimer = Math.max(0, game.ponderSlowTimer - rawDt);
+    const dt = Math.min(0.033, rawDt) * timeScale;
+
+    game.time += dt;
+    player.animTime += dt;
+    if (player.invuln > 0) player.invuln = Math.max(0, player.invuln - rawDt);
+    if (player.ponderCd > 0) player.ponderCd = Math.max(0, player.ponderCd - rawDt);
+    if (player.ponderPoseTimer > 0) player.ponderPoseTimer = Math.max(0, player.ponderPoseTimer - rawDt);
+    if (player.quipTimer > 0) player.quipTimer = Math.max(0, player.quipTimer - rawDt);
+    if (game.feverTimer > 0) game.feverTimer = Math.max(0, game.feverTimer - rawDt);
+    if (game.shake > 0) game.shake = Math.max(0, game.shake - rawDt * 28);
+
+    sfx.updateMusic(rawDt, Boolean(player.inHole), game.feverTimer > 0);
+    generateWorldAhead();
+
+    // -----------------------------------------------------------------------
+    // 1. GEYSER LAUNCH OUT OF HOLE (Guaranteed smooth exit for 10ft–50ft!)
+    // -----------------------------------------------------------------------
+    if (player.launchingHole) {
+      const lh = player.launchingHole;
+      player.x += (lh.x - player.x) * Math.min(1, dt * 10);
+      player.vy = -1180;
+      player.y += player.vy * dt;
+      player.cannonball = false;
+
+      if (Math.random() < 0.75) {
+        burstParticles(player.x + (Math.random() - 0.5) * 26, player.y + 8, 2, ['#f97316', '#fbbf24', '#fef08a'], 90, -0.2);
+      }
+
+      if (player.y <= lh.rimY - 135) {
+        lh.sealed = true;
+        player.launchingHole = null;
+        player.inHole = null;
+        player.vy = -290;
+        player.vx = player.facing * 260;
+
+        if (game.holesCleared >= game.nextPerkAt) {
+          game.nextPerkAt += 5;
+          openPerkModal();
+          return;
+        }
+      }
+    } else {
+      // ---------------------------------------------------------------------
+      // 2. ACTIVE MOVEMENT (SURFACE + SHAFT DIVE + PETER PAN FLIGHT)
+      // ---------------------------------------------------------------------
+      const moveAccel = player.onGround ? 2200 : 1550;
+      const maxSpeed = (game.feverTimer > 0 ? 430 : 355);
+      let inputDir = (keys.right ? 1 : 0) - (keys.left ? 1 : 0);
+
+      if (inputDir !== 0) {
+        player.facing = inputDir;
+        player.vx += inputDir * moveAccel * dt;
+        if (Math.abs(player.vx) > maxSpeed) player.vx = inputDir * maxSpeed;
+      } else {
+        const drag = player.onGround ? 14 : 5;
+        player.vx *= Math.max(0, 1 - drag * dt);
+        if (Math.abs(player.vx) < 4) player.vx = 0;
+      }
+
+      // Coyote jump
+      if (player.onGround) player.coyote = 0.11;
+      else player.coyote = Math.max(0, player.coyote - dt);
+
+      if (jumpJustPressed && player.coyote > 0 && !player.inHole) {
+        player.vy = -610;
+        player.onGround = false;
+        player.coyote = 0;
+        jumpJustPressed = false;
+        sfx.jump();
+        burstParticles(player.x, player.y, 8, ['#fb923c', '#fed7aa'], 140);
+      } else if (keys.jump && !player.onGround && (player.dust > 1 || game.feverTimer > 0)) {
+        // PETER PAN PIXIE DUST FLIGHT!
+        const inIllegalEmergency = player.inHole && player.inHole.category === 'deep';
+        const cost = game.feverTimer > 0 ? 0 : (inIllegalEmergency ? 18 : 34);
+        player.dust = Math.max(0, player.dust - cost * dt);
+        const liftTarget = inIllegalEmergency ? -420 : -265 * player.flyPower;
+        player.vy = Math.max(liftTarget, player.vy - 2250 * player.flyPower * dt);
+        player.cannonball = false;
+
+        if (Math.random() < 0.55) {
+          sfx.pixieSparkle();
+          burstParticles(player.x - player.facing * 10, player.y - 18, 1, ['#fde047', '#fb923c', '#ffffff'], 95, 0.15);
+        }
+      }
+
+      jumpJustPressed = false;
+
+      // Orange Cannonball Fast-Dive
+      if (keys.down && !player.onGround && !keys.jump) {
+        player.cannonball = true;
+        player.vy = Math.max(player.vy + 2400 * dt, 760);
+        if (Math.random() < 0.6) {
+          burstParticles(player.x, player.y - 20, 1, ['#ea580c', '#f97316', '#fde047'], 110, -0.1);
+        }
+      } else if (!keys.down) {
+        player.cannonball = false;
+      }
+
+      // Gravity
+      player.vy = Math.min(1050, player.vy + GRAVITY * dt);
+
+      // Regenerate Pixie Dust passively on surface
+      if (player.onGround || game.feverTimer > 0) {
+        player.dust = Math.min(player.maxDust, player.dust + (player.dustRegen * 2.1) * dt);
+      } else if (!keys.jump) {
+        player.dust = Math.min(player.maxDust, player.dust + (player.dustRegen * 0.45) * dt);
+      }
+
+      // Integrate X & clamp left boundary
+      player.x += player.vx * dt;
+      if (player.x < game.camX + 26) {
+        player.x = game.camX + 26;
+        if (player.vx < 0) player.vx = 0;
+      }
+
+      // Check whether player is aligned over an UNSEALED hole opening
+      const overHole = findHoleAtX(player.x, 12);
+
+      if (!player.inHole) {
+        player.y += player.vy * dt;
+
+        if (overHole && !overHole.sealed && player.y > overHole.rimY + 4) {
+          // ENTERED A HOLE SHAFT!
+          player.inHole = overHole;
+          player.onGround = false;
+          player.enteredDeepFt = 0;
+          overHole.revealed = true;
+          sfx.holeEnter();
+
+          if (overHole.hasShadow) {
+            overHole.hasShadow = false;
+            game.feverTimer = 10.0;
+            player.dust = player.maxDust;
+            addPopup(overHole.x, overHole.rimY - 50, '🔥 SHADOW CAUGHT! ORANGE FEVER! 🔥', '#fde047', 20);
+            sayQuip(`Caught my shadow! PURE ORANGE PETER PAN POWER!`, 2.6);
+          } else if (overHole.category === 'legal') {
+            sayQuip(
+              overHole.depthFt === 50
+                ? `FIFTY FEET?! HOLD MY ORANGE CAP!!`
+                : `Ooooh, a ${overHole.depthFt}-footer! Right in the 10–50ft sweet spot!`,
+              2.2
+            );
+          } else if (overHole.category === 'deep') {
+            sayQuip(`WAIT—${overHole.depthFt} FT?! HOLD SPACE TO FLY OUT BEFORE 50FT!`, 2.6);
+            // Give a small emergency pixie dust top-up so skillful escape is ALWAYS possible!
+            player.dust = Math.max(player.dust, 45);
+          }
+        } else {
+          // Normal surface terrain collision
+          const gy = groundHeightAt(player.x);
+          if (player.y >= gy && player.vy >= 0 && (!overHole || overHole.sealed)) {
+            player.y = gy;
+            player.vy = 0;
+            player.onGround = true;
+            player.cannonball = false;
+          } else {
+            player.onGround = false;
+          }
+        }
+      } else {
+        // -------------------------------------------------------------------
+        // 3. INSIDE A HOLE SHAFT!
+        // -------------------------------------------------------------------
+        const h = player.inHole;
+        const leftWall = h.x - h.w * 0.5 + 14;
+        const rightWall = h.x + h.w * 0.5 - 14;
+        if (player.x < leftWall) { player.x = leftWall; player.vx = 0; }
+        if (player.x > rightWall) { player.x = rightWall; player.vx = 0; }
+
+        player.y += player.vy * dt;
+        const curFt = (player.y - h.rimY) / PX_PER_FT;
+        if (curFt > player.enteredDeepFt) player.enteredDeepFt = curFt;
+
+        // Did Kevin fly back out the top of the hole?
+        if (player.y <= h.rimY) {
+          player.inHole = null;
+          if (h.category === 'deep' && player.enteredDeepFt >= 10) {
+            // Skillful escape from an illegal >50ft abyss!
+            h.sealed = true;
+            h.sealLabel = `✓ REJECTED ${h.depthFt}FT!`;
+            const bonus = 300 * game.combo;
+            addScore(bonus);
+            sfx.boundarySaved();
+            addPopup(h.x, h.rimY - 50, `BOUNDARIES RESPECTED! +${bonus}`, '#4ade80', 19);
+            sayQuip(`Nice try, ${h.depthFt}-footer! 50ft is my hard limit!`, 2.5);
+          }
+        } else {
+          // Check subterranean root/cutlass obstacles
+          for (let i = 0; i < h.obstacles.length; i++) {
+            const ob = h.obstacles[i];
+            if (ob.smashed) continue;
+            const oy = ob.y;
+            if (Math.abs((player.y - 24) - oy) < 20) {
+              const hitLeft = ob.side === -1 && (player.x - 12) < (h.x - h.w * 0.5 + ob.len);
+              const hitRight = ob.side === 1 && (player.x + 12) > (h.x + h.w * 0.5 - ob.len);
+              if (hitLeft || hitRight) {
+                if (player.cannonball && player.bootSmash) {
+                  ob.smashed = true;
+                  addScore(100);
+                  sfx.pickup(2);
+                  burstParticles(player.x, oy, 12, ['#f97316', '#a16207', '#fde047'], 200);
+                  addPopup(player.x, oy - 20, 'BOOT SMASH! +100', '#fde047', 15);
+                } else {
+                  ob.smashed = true;
+                  hurtPlayer(`Ow! Subterranean root in my orange tunic!`);
+                }
+              }
+            }
+          }
+
+          // Check shaft bottom OR 50ft illegal limit!
+          if (h.category === 'deep' && curFt >= MAX_LEGAL_FT) {
+            // Crossed 50ft in an illegal >50ft hole!
+            sfx.badHole();
+            hurtPlayer(`${h.depthFt} FEET?! Over 50ft violates everything I stand for!`);
+            h.sealLabel = `✗ ${h.depthFt}FT (TOO DEEP!)`;
+            player.launchingHole = h;
+          } else if (player.y >= h.rimY + h.depthPx) {
+            player.y = h.rimY + h.depthPx;
+
+            if (h.category === 'shallow') {
+              // Landed in a pathetic <10ft ditch!
+              sfx.badHole();
+              hurtPlayer(`${h.depthFt} FEET?! That's a glorified pothole! Come back at 10ft!`);
+              h.sealLabel = `✗ ${h.depthFt}FT (MEH)`;
+              addPopup(h.x, h.rimY - 35, `${h.depthFt}FT?! TOO SHALLOW!`, '#94a3b8', 18);
+              player.launchingHole = h;
+            } else if (h.category === 'legal') {
+              // GLORIOUS 10FT–50FT TOUCHDOWN!!
+              game.holesCleared++;
+              if (h.depthFt > game.deepestLegal) game.deepestLegal = h.depthFt;
+
+              let basePts = h.depthFt * 20;
+              if (h.depthFt === 50) basePts += 1000;
+              else if (h.depthFt === 10) basePts += 250;
+              if (player.cannonball) basePts = Math.round(basePts * 1.45);
+              if (player.deepConnoisseur && h.depthFt >= 35) {
+                basePts = Math.round(basePts * 1.65);
+                game.feverTimer = Math.max(game.feverTimer, 4.5);
+              }
+
+              const totalPts = basePts * game.combo;
+              addScore(totalPts);
+              game.combo = Math.min(12, game.combo + 1);
+              player.dust = player.maxDust;
+              game.shake = h.depthFt === 50 ? 16 : 9;
+              sfx.holeClear(h.depthFt);
+
+              burstParticles(h.x, player.y - 10, 32, ['#f97316', '#fbbf24', '#fde047', '#fff7ed'], 340, 0.25);
+
+              if (h.depthFt === 50) {
+                addPopup(h.x, h.rimY - 60, `★ 50 FT HOLY GRAIL!! +${totalPts} ★`, '#fde047', 23);
+                sayQuip(`FIFTY FEET EXACTLY!! COCK-A-DOODLE-DOOOOO!!`, 3.0);
+              } else if (h.depthFt === 10) {
+                addPopup(h.x, h.rimY - 50, `10 FT MINIMUM LEGAL! +${totalPts}`, '#fb923c', 19);
+                sayQuip(`10 feet on the nose! Barely legal, still glorious!`, 2.4);
+              } else {
+                addPopup(h.x, h.rimY - 50, `${h.depthFt} FT JUMPED! +${totalPts}`, '#fb923c', 20);
+                sayQuip(`Ahhh, ${h.depthFt} feet of pure orange perfection!`, 2.2);
+              }
+
+              h.sealLabel = `✓ ${h.depthFt}FT JUMPED!`;
+              player.launchingHole = h;
+            }
+          }
+        }
+      }
+    }
+
+    // -----------------------------------------------------------------------
+    // 4. COLLECTIBLES & MAGNET
+    // -----------------------------------------------------------------------
+    const magR = game.ponderSlowTimer > 0 ? player.magnetRange * 2.3 : player.magnetRange;
+    for (let i = 0; i < game.items.length; i++) {
+      const it = game.items[i];
+      if (it.collected) continue;
+      const dx = player.x - it.x;
+      const dy = (player.y - 26) - it.y;
+      const dist = Math.hypot(dx, dy);
+
+      if (dist < magR) {
+        it.x += (dx / Math.max(1, dist)) * 460 * dt;
+        it.y += (dy / Math.max(1, dist)) * 460 * dt;
+      }
+
+      if (dist < 30) {
+        it.collected = true;
+        game.orangesGrabbed++;
+        sfx.pickup(game.combo);
+        burstParticles(it.x, it.y, 9, ['#fb923c', '#fde047', '#fff'], 160);
+
+        if (it.kind === 'orange') {
+          const pts = 50 * game.combo;
+          addScore(pts);
+          player.dust = Math.min(player.maxDust, player.dust + 10);
+          addPopup(it.x, it.y - 14, `+${pts} 🍊`, '#fb923c', 15);
+        } else if (it.kind === 'dust') {
+          player.dust = Math.min(player.maxDust, player.dust + 38);
+          addScore(40 * game.combo);
+          addPopup(it.x, it.y - 14, `PIXIE DUST! ✨`, '#fde047', 15);
+        } else if (it.kind === 'thimble') {
+          const pts = 150 * game.combo;
+          addScore(pts);
+          addPopup(it.x, it.y - 14, `PAN THIMBLE! +${pts}`, '#fde047', 16);
+        } else if (it.kind === 'fourth') {
+          const pts = 250 * game.combo;
+          addScore(pts);
+          player.dust = player.maxDust;
+          addPopup(it.x, it.y - 18, `${game.fourthLove.toUpperCase()}! +${pts}`, '#4ade80', 17);
+          sayQuip(`YES!! ${game.fourthLove} right inside a hole!!`, 2.4);
+        }
+      }
+    }
+
+    // -----------------------------------------------------------------------
+    // 5. TICK-TOCK CROCODILES & CAPTAIN HOOK CANNONBALLS
+    // -----------------------------------------------------------------------
+    for (let i = 0; i < game.crocs.length; i++) {
+      const c = game.crocs[i];
+      if (c.stunTimer > 0) {
+        c.stunTimer = Math.max(0, c.stunTimer - dt);
+        continue;
+      }
+      c.x += c.vx * dt;
+      if (c.x < c.minX) { c.x = c.minX; c.vx = Math.abs(c.vx); }
+      if (c.x > c.maxX) { c.x = c.maxX; c.vx = -Math.abs(c.vx); }
+      c.jawPhase += dt * 7;
+
+      const distToPlayer = Math.hypot(c.x - player.x, c.y - player.y);
+      if (distToPlayer < 420) {
+        c.tickTimer += rawDt;
+        if (c.tickTimer >= 0.48) {
+          c.tickTimer = 0;
+          sfx.crocTick(1 - distToPlayer / 450);
+        }
+      }
+
+      if (!player.inHole && !player.launchingHole && Math.abs(player.x - c.x) < 34 && Math.abs(player.y - c.y) < 30) {
+        if (player.vy > 80 && (player.cannonball || player.y < c.y - 8)) {
+          // Bounce off Tick-Tock Crocodile!
+          c.stunTimer = 3.2;
+          player.vy = -560;
+          const pts = 200 * game.combo;
+          addScore(pts);
+          sfx.pickup(3);
+          addPopup(c.x, c.y - 45, `TICK-TOCK BONK! +${pts}`, '#4ade80', 17);
+          burstParticles(c.x, c.y - 16, 14, ['#4ade80', '#fb923c', '#fde047'], 220);
+        } else {
+          hurtPlayer(`TICK-TOCK CROCODILE! Watch the orange boots!`);
+        }
+      }
+    }
+
+    // Captain Hook's galleon cannonballs in Zone 2+ (index >= 1)
+    if (getZoneIndex() >= 1 && !player.inHole && Math.random() < dt * (0.28 + getZoneIndex() * 0.12)) {
+      const targetX = player.x + 180 + Math.random() * 260;
+      const targetY = groundHeightAt(targetX);
+      game.cannonballs.push({
+        x: targetX - 120,
+        y: game.camY - 40,
+        tx: targetX,
+        ty: targetY,
+        vy: 380,
+        done: false
+      });
+    }
+
+    for (let i = game.cannonballs.length - 1; i >= 0; i--) {
+      const cb = game.cannonballs[i];
+      cb.x += (cb.tx - cb.x) * dt * 1.8;
+      cb.y += cb.vy * dt;
+      cb.vy += 420 * dt;
+      if (Math.hypot(cb.x - player.x, cb.y - (player.y - 24)) < 28) {
+        hurtPlayer(`Ugh! A drab non-orange cannonball from Captain Hook!`);
+        cb.done = true;
+      } else if (cb.y >= cb.ty) {
+        burstParticles(cb.x, cb.ty, 10, ['#94a3b8', '#a855f7', '#f97316'], 170);
+        cb.done = true;
+      }
+      if (cb.done) game.cannonballs.splice(i, 1);
+    }
+
+    // -----------------------------------------------------------------------
+    // 6. SHADOW TRAIL, PARTICLES, POPUPS, SONAR WAVES & CAMERA
+    // -----------------------------------------------------------------------
+    player.trailHistory.unshift({ x: player.x, y: player.y, facing: player.facing });
+    if (player.trailHistory.length > 16) player.trailHistory.pop();
+
+    for (let i = game.sonarWaves.length - 1; i >= 0; i--) {
+      const sw = game.sonarWaves[i];
+      sw.r += 980 * rawDt;
+      sw.alpha = Math.max(0, 1 - sw.r / sw.maxR);
+      if (sw.r >= sw.maxR) game.sonarWaves.splice(i, 1);
+    }
+
+    for (let i = game.particles.length - 1; i >= 0; i--) {
+      const p = game.particles[i];
+      p.x += p.vx * rawDt;
+      p.y += p.vy * rawDt;
+      p.vy += GRAVITY * p.grav * rawDt;
+      p.life -= rawDt;
+      if (p.life <= 0) game.particles.splice(i, 1);
+    }
+
+    for (let i = game.popups.length - 1; i >= 0; i--) {
+      const pop = game.popups[i];
+      pop.y += pop.vy * rawDt;
+      pop.vy *= 0.96;
+      pop.life -= rawDt;
+      if (pop.life <= 0) game.popups.splice(i, 1);
+    }
+
+    // Smooth smart camera: looks ahead horizontally on surface, looks ahead DOWNWARD in shafts!
+    const targetCamX = player.inHole
+      ? player.inHole.x - W * 0.5
+      : player.x - W * 0.30 + player.vx * 0.22;
+
+    const targetCamY = player.inHole
+      ? (player.launchingHole ? player.y - H * 0.55 : player.y - H * 0.34)
+      : player.y - H * 0.60;
+
+    game.camX += (targetCamX - game.camX) * Math.min(1, rawDt * 6.5);
+    game.camY += (targetCamY - game.camY) * Math.min(1, rawDt * 7.5);
+
+    updateHud();
+  }
+
+  function updateHud() {
+    const zIdx = getZoneIndex();
+    zoneLabel.textContent = ZONES[zIdx].name;
+
+    let heartsStr = '';
+    for (let i = 0; i < player.maxHearts; i++) {
+      heartsStr += i < player.hearts ? '🧡' : '🖤';
+    }
+    heartsRow.textContent = heartsStr;
+
+    dustBar.style.width = `${Math.round((player.dust / player.maxDust) * 100)}%`;
+    feverBanner.style.display = game.feverTimer > 0 ? 'block' : 'none';
+
+    scoreVal.textContent = game.score.toLocaleString();
+    holesVal.textContent = String(game.holesCleared);
+    comboVal.textContent = `x${game.combo}${game.feverTimer > 0 ? ' (2X!)' : ''}`;
+    bestVal.textContent = bestScore.toLocaleString();
+
+    if (player.ponderCd > 0.05) {
+      ponderBtn.classList.add('cooldown');
+      ponderBtn.textContent = `🤔 Hmm... (${player.ponderCd.toFixed(1)}s)`;
+    } else {
+      ponderBtn.classList.remove('cooldown');
+      ponderBtn.textContent = `🤔 "Hmm..." [H]`;
+    }
+  }
+
+  // =========================================================================
+  // RENDERING PIPELINE (Rich Neverland Parallax + Subterranean Cross-Section)
+  // =========================================================================
+  function render() {
+    const z = ZONES[getZoneIndex()];
+
+    // 1. Twilight Orange Neverland Sky Gradient
+    const skyGrad = ctx.createLinearGradient(0, 0, 0, H);
+    skyGrad.addColorStop(0, z.skyTop);
+    skyGrad.addColorStop(0.58, z.skyMid);
+    skyGrad.addColorStop(1, z.skyBot);
+    ctx.fillStyle = skyGrad;
+    ctx.fillRect(0, 0, W, H);
+
+    // 2. Twinkling Stars & "Second Star to the Right" (Blazing Orange!)
+    for (let i = 0; i < stars.length; i++) {
+      const s = stars[i];
+      const sx = ((s.x * W * 1.5 - game.camX * 0.05) % W + W) % W;
+      const sy = s.y * H;
+      const alpha = 0.45 + 0.55 * Math.sin(game.time * 2.6 + s.twinkle);
+      ctx.fillStyle = s.orange ? `rgba(251, 146, 60, ${alpha})` : `rgba(255, 247, 237, ${alpha})`;
+      ctx.beginPath();
+      ctx.arc(sx, sy, s.r, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    // Iconic "Second Star to the Right"
+    const starX = W * 0.80;
+    const starY = H * 0.16;
+    const starGlow = ctx.createRadialGradient(starX, starY, 2, starX, starY, 68);
+    starGlow.addColorStop(0, 'rgba(255, 237, 213, 0.95)');
+    starGlow.addColorStop(0.35, 'rgba(249, 115, 22, 0.55)');
+    starGlow.addColorStop(1, 'rgba(249, 115, 22, 0)');
+    ctx.fillStyle = starGlow;
+    ctx.beginPath();
+    ctx.arc(starX, starY, 68, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.strokeStyle = '#ffedd5';
+    ctx.lineWidth = 2.5;
+    const flare = 20 + Math.sin(game.time * 3) * 4;
+    ctx.beginPath();
+    ctx.moveTo(starX - flare, starY); ctx.lineTo(starX + flare, starY);
+    ctx.moveTo(starX, starY - flare); ctx.lineTo(starX, starY + flare);
+    ctx.stroke();
+
+    // Captain Hook's Flying Pirate Ship silhouette in distance
+    const shipX = ((W * 0.65 - game.camX * 0.12 + game.time * 18) % (W + 260)) - 130;
+    const shipY = H * 0.22 + Math.sin(game.time * 1.4) * 10 - Math.max(0, game.camY - 120) * 0.08;
+    drawPirateGalleonSilhouette(shipX, shipY);
+
+    // Distant Neverland Mountains Parallax
+    drawParallaxHills(0.16, H * 0.66, 95, z.hill1);
+    drawParallaxHills(0.30, H * 0.76, 65, z.hill2);
+
+    // Camera transform + screen shake
+    ctx.save();
+    const sx = game.shake > 0 ? (Math.random() - 0.5) * game.shake : 0;
+    const sy = game.shake > 0 ? (Math.random() - 0.5) * game.shake : 0;
+    ctx.translate(-game.camX + sx, -game.camY + sy);
+
+    // 3. Draw Solid Earth Body & Subterranean Strata
+    drawEarthAndHoles(z);
+
+    // 4. Draw Collectibles
+    drawItems();
+
+    // 5. Draw Tick-Tock Crocodiles & Hook Cannonballs
+    drawCrocs();
+    drawCannonballs();
+
+    // 6. Draw Kevin's Peter Pan Detached Shadow & Kevin Tighe Himself!
+    drawPlayerShadowCompanion();
+    drawKevinTighe();
+
+    // 7. Sonar Ponder Waves, Particles & Floating Score Popups
+    drawEffects();
+
+    // 8. Live Subterranean Depth Gauge beside Kevin while diving in a hole!
+    if (player.inHole) {
+      drawLiveShaftHud(player.inHole);
+    }
+
+    ctx.restore();
+
+    // Fever golden-orange screen aura
+    if (game.feverTimer > 0) {
+      ctx.save();
+      ctx.strokeStyle = `rgba(251, 146, 60, ${0.35 + 0.25 * Math.sin(game.time * 9)})`;
+      ctx.lineWidth = 14;
+      ctx.strokeRect(0, 0, W, H);
+      ctx.restore();
+    }
+  }
+
+  function drawPirateGalleonSilhouette(x, y) {
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.fillStyle = 'rgba(15, 23, 42, 0.55)';
+    // Hull
+    ctx.beginPath();
+    ctx.moveTo(-42, 0);
+    ctx.lineTo(44, 0);
+    ctx.lineTo(30, 18);
+    ctx.lineTo(-30, 18);
+    ctx.closePath();
+    ctx.fill();
+    // Masts & Sails
+    ctx.fillRect(-3, -38, 4, 38);
+    ctx.fillRect(-24, -28, 3, 28);
+    ctx.beginPath();
+    ctx.arc(8, -22, 16, -Math.PI * 0.5, Math.PI * 0.5);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.arc(-16, -15, 11, -Math.PI * 0.5, Math.PI * 0.5);
+    ctx.fill();
+    ctx.restore();
+  }
+
+  function drawParallaxHills(factor, baseY, amp, color) {
+    ctx.fillStyle = color;
+    ctx.beginPath();
+    ctx.moveTo(0, H);
+    for (let sx = 0; sx <= W + 40; sx += 40) {
+      const wx = sx + game.camX * factor;
+      const hy = baseY - (game.camY - 180) * factor * 0.45
+        + Math.sin(wx * 0.0032) * amp
+        + Math.cos(wx * 0.0071) * (amp * 0.42);
+      ctx.lineTo(sx, hy);
+    }
+    ctx.lineTo(W, H);
+    ctx.closePath();
+    ctx.fill();
+  }
+
+  function drawEarthAndHoles(z) {
+    const startX = game.camX - 80;
+    const endX = game.camX + W + 80;
+    const deepBottom = game.camY + H + 1500;
+
+    // Draw main earth cross-section polygon
+    const earthGrad = ctx.createLinearGradient(0, 360, 0, 1650);
+    earthGrad.addColorStop(0, '#431407');
+    earthGrad.addColorStop(0.25, '#29150e');
+    earthGrad.addColorStop(0.7, '#1a0f18');
+    earthGrad.addColorStop(1, '#090612');
+
+    ctx.fillStyle = earthGrad;
+    ctx.beginPath();
+    ctx.moveTo(startX, deepBottom);
+    for (let x = startX; x <= endX; x += 14) {
+      ctx.lineTo(x, groundHeightAt(x));
+    }
+    ctx.lineTo(endX, groundHeightAt(endX));
+    ctx.lineTo(endX, deepBottom);
+    ctx.closePath();
+    ctx.fill();
+
+    // Subtle geological strata lines
+    ctx.strokeStyle = 'rgba(251, 146, 60, 0.08)';
+    ctx.lineWidth = 2;
+    for (let ft = 10; ft <= 60; ft += 10) {
+      const ly = 420 + ft * PX_PER_FT;
+      if (ly > game.camY - 50 && ly < game.camY + H + 50) {
+        ctx.beginPath();
+        ctx.moveTo(startX, ly);
+        ctx.lineTo(endX, ly);
+        ctx.stroke();
+      }
+    }
+
+    // Orange-tinted Neverland turf crust along surface (skipping open hole mouths)
+    ctx.lineWidth = 10;
+    ctx.strokeStyle = z.grass;
+    ctx.beginPath();
+    let penDown = false;
+    for (let x = startX; x <= endX; x += 8) {
+      const h = findHoleAtX(x, 0);
+      if (h && !h.sealed) {
+        penDown = false;
+      } else {
+        const y = groundHeightAt(x);
+        if (!penDown) {
+          ctx.moveTo(x, y);
+          penDown = true;
+        } else {
+          ctx.lineTo(x, y);
+        }
+      }
+    }
+    ctx.stroke();
+
+    // Top highlight grass rim
+    ctx.lineWidth = 3.5;
+    ctx.strokeStyle = z.grassTop;
+    ctx.stroke();
+
+    // Draw every visible Hole Shaft!
+    for (let i = 0; i < game.holes.length; i++) {
+      const h = game.holes[i];
+      if (h.x + h.w < startX || h.x - h.w > endX) continue;
+      drawSingleHole(h);
+    }
+  }
+
+  function drawSingleHole(h) {
+    const left = h.x - h.w * 0.5;
+    const right = h.x + h.w * 0.5;
+    const bottom = h.rimY + h.depthPx;
+
+    // Carve interior shaft background
+    const shaftGrad = ctx.createLinearGradient(0, h.rimY, 0, bottom);
+    if (h.category === 'legal') {
+      shaftGrad.addColorStop(0, '#1e130c');
+      shaftGrad.addColorStop(0.7, '#2d1608');
+      shaftGrad.addColorStop(1, '#5c2409');
+    } else if (h.category === 'shallow') {
+      shaftGrad.addColorStop(0, '#1f2937');
+      shaftGrad.addColorStop(1, '#334155');
+    } else {
+      shaftGrad.addColorStop(0, '#1e130c');
+      shaftGrad.addColorStop(0.55, '#2a1026');
+      shaftGrad.addColorStop(1, '#3b0724');
+    }
+    ctx.fillStyle = shaftGrad;
+    ctx.fillRect(left, h.rimY - 2, h.w, h.depthPx + 4);
+
+    // Exact 50ft Holy Grail golden-orange light pillar!
+    if (h.revealed && h.depthFt === 50 && !h.sealed) {
+      const beam = ctx.createLinearGradient(0, h.rimY - 160, 0, bottom);
+      beam.addColorStop(0, 'rgba(251, 191, 36, 0)');
+      beam.addColorStop(0.2, 'rgba(249, 115, 22, 0.22)');
+      beam.addColorStop(1, 'rgba(253, 224, 71, 0.42)');
+      ctx.fillStyle = beam;
+      ctx.fillRect(left + 8, h.rimY - 160, h.w - 16, h.depthPx + 160);
+    }
+
+    // Shaft Walls & Chalk Tape-Measure Marks every 5ft!
+    ctx.strokeStyle = h.category === 'legal' ? '#c2410c' : '#475569';
+    ctx.lineWidth = 4;
+    ctx.beginPath();
+    ctx.moveTo(left, h.rimY); ctx.lineTo(left, bottom);
+    ctx.moveTo(right, h.rimY); ctx.lineTo(right, bottom);
+    ctx.stroke();
+
+    ctx.font = 'bold 12px "Segoe UI", sans-serif';
+    ctx.textAlign = 'left';
+    for (let ft = 5; ft <= h.depthFt; ft += 5) {
+      const my = h.rimY + ft * PX_PER_FT;
+      if (my < game.camY - 20 || my > game.camY + H + 20) continue;
+      const isTenStep = ft % 10 === 0;
+      ctx.strokeStyle = ft === 50 ? '#fb7185' : (isTenStep ? 'rgba(253, 186, 116, 0.65)' : 'rgba(255,255,255,0.22)');
+      ctx.lineWidth = isTenStep ? 2 : 1;
+      ctx.beginPath();
+      ctx.moveTo(left + 2, my);
+      ctx.lineTo(left + (isTenStep ? 16 : 9), my);
+      ctx.stroke();
+
+      if (isTenStep && h.revealed) {
+        ctx.fillStyle = ft === 50 ? '#fda4af' : '#fdba74';
+        ctx.fillText(`${ft}ft`, left + 19, my + 4);
+      }
+    }
+
+    // 50FT LEGAL KEVIN BOUNDARY TAPE inside >50ft holes!
+    if (h.depthFt > MAX_LEGAL_FT) {
+      const limitY = h.rimY + MAX_LEGAL_FT * PX_PER_FT;
+      ctx.save();
+      ctx.strokeStyle = '#fb7185';
+      ctx.lineWidth = 3;
+      ctx.setLineDash([8, 6]);
+      ctx.beginPath();
+      ctx.moveTo(left, limitY);
+      ctx.lineTo(right, limitY);
+      ctx.stroke();
+      ctx.fillStyle = '#fda4af';
+      ctx.font = '900 12px "Segoe UI", sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('⚠ 50FT KEVIN LIMIT ⚠', h.x, limitY - 6);
+      ctx.restore();
+    }
+
+    // Subterranean Root Ledges inside shaft
+    for (let i = 0; i < h.obstacles.length; i++) {
+      const ob = h.obstacles[i];
+      if (ob.smashed) continue;
+      ctx.fillStyle = '#78350f';
+      ctx.strokeStyle = '#f59e0b';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      if (ob.side === -1) {
+        ctx.roundRect(left, ob.y - 8, ob.len, 16, [0, 8, 8, 0]);
+      } else {
+        ctx.roundRect(right - ob.len, ob.y - 8, ob.len, 16, [8, 0, 0, 8]);
+      }
+      ctx.fill();
+      ctx.stroke();
+    }
+
+    // Shaft Bottom Pad
+    if (h.category === 'legal') {
+      // Glowing Orange Citrus Trampoline Geyser!
+      const padGrad = ctx.createLinearGradient(left, bottom - 16, right, bottom);
+      padGrad.addColorStop(0, '#ea580c');
+      padGrad.addColorStop(0.5, '#fde047');
+      padGrad.addColorStop(1, '#ea580c');
+      ctx.fillStyle = padGrad;
+      ctx.beginPath();
+      ctx.roundRect(left + 4, bottom - 14, h.w - 8, 16, 8);
+      ctx.fill();
+    } else if (h.category === 'shallow') {
+      // Unimpressive muddy rock bottom
+      ctx.fillStyle = '#64748b';
+      ctx.fillRect(left + 2, bottom - 8, h.w - 4, 10);
+    }
+
+    // Mystery Mist if unrevealed ("??? ft")
+    if (!h.revealed && !h.sealed) {
+      const mist = ctx.createLinearGradient(0, h.rimY, 0, h.rimY + 140);
+      mist.addColorStop(0, 'rgba(124, 58, 237, 0.35)');
+      mist.addColorStop(0.5, 'rgba(249, 115, 22, 0.55)');
+      mist.addColorStop(1, 'rgba(15, 23, 42, 0.96)');
+      ctx.fillStyle = mist;
+      ctx.fillRect(left + 2, h.rimY, h.w - 4, Math.min(h.depthPx, 175));
+    }
+
+    // Sealed Hole Lid (once cleared or rejected!)
+    if (h.sealed) {
+      ctx.fillStyle = h.category === 'legal' ? '#ea580c' : '#475569';
+      ctx.fillRect(left - 4, h.rimY - 5, h.w + 8, 10);
+      ctx.fillStyle = '#ffedd5';
+      ctx.font = '900 12px "Segoe UI", sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText(h.sealLabel, h.x, h.rimY - 12);
+      return;
+    }
+
+    // Wooden Signpost beside every Hole Rim showing Depth!
+    const signX = left - 26;
+    const signY = h.rimY;
+    ctx.fillStyle = '#78350f';
+    ctx.fillRect(signX - 3, signY - 46, 6, 46);
+
+    let badgeBg = '#ea580c';
+    let badgeBorder = '#fed7aa';
+    let label = `${h.depthFt} FT`;
+
+    if (!h.revealed) {
+      badgeBg = '#6d28d9';
+      badgeBorder = '#fdba74';
+      label = '??? FT';
+    } else if (h.category === 'shallow') {
+      badgeBg = '#334155';
+      badgeBorder = '#94a3b8';
+    } else if (h.category === 'deep') {
+      badgeBg = '#9f1239';
+      badgeBorder = '#fda4af';
+    } else if (h.depthFt === 50) {
+      badgeBg = '#d97706';
+      badgeBorder = '#fef08a';
+      label = '★ 50 FT ★';
+    }
+
+    ctx.fillStyle = badgeBg;
+    ctx.strokeStyle = badgeBorder;
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.roundRect(signX - 36, signY - 68, 72, 26, 7);
+    ctx.fill();
+    ctx.stroke();
+
+    ctx.fillStyle = '#ffffff';
+    ctx.font = '900 13px "Segoe UI", sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText(label, signX, signY - 50);
+
+    // Peter Pan Loose Shadow dancing on the right rim of special holes!
+    if (h.hasShadow) {
+      const sx = right + 22;
+      const sy = h.rimY;
+      const dance = Math.sin(game.time * 8) * 5;
+      ctx.save();
+      ctx.translate(sx, sy + dance);
+      ctx.fillStyle = 'rgba(10, 12, 22, 0.92)';
+      ctx.strokeStyle = '#fb923c';
+      ctx.lineWidth = 1.8;
+      ctx.beginPath();
+      ctx.arc(0, -38, 9, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+      ctx.fillRect(-6, -29, 12, 18);
+      // Little orange flag pointing into the hole!
+      ctx.strokeStyle = '#fde047';
+      ctx.beginPath();
+      ctx.moveTo(-8, -24);
+      ctx.lineTo(-24, -44);
+      ctx.stroke();
+      ctx.fillStyle = '#f97316';
+      ctx.beginPath();
+      ctx.moveTo(-24, -44);
+      ctx.lineTo(-8, -38);
+      ctx.lineTo(-22, -32);
+      ctx.closePath();
+      ctx.fill();
+      ctx.restore();
+    }
+  }
+
+  function drawItems() {
+    for (let i = 0; i < game.items.length; i++) {
+      const it = game.items[i];
+      if (it.collected) continue;
+      if (it.x < game.camX - 40 || it.x > game.camX + W + 40) continue;
+      if (it.y < game.camY - 40 || it.y > game.camY + H + 40) continue;
+
+      const by = it.y + Math.sin(game.time * 4 + it.bob) * 4;
+      ctx.save();
+      ctx.translate(it.x, by);
+
+      if (it.kind === 'orange') {
+        // Juicy Glowing Orange with green Peter Pan leaf!
+        ctx.fillStyle = 'rgba(249, 115, 22, 0.28)';
+        ctx.beginPath();
+        ctx.arc(0, 0, 16, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.fillStyle = '#f97316';
+        ctx.beginPath();
+        ctx.arc(0, 0, 10.5, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.fillStyle = '#fdba74';
+        ctx.beginPath();
+        ctx.arc(-3, -3, 3.2, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.fillStyle = '#22c55e';
+        ctx.beginPath();
+        ctx.ellipse(3, -11, 5, 2.6, -0.4, 0, Math.PI * 2);
+        ctx.fill();
+      } else if (it.kind === 'dust') {
+        // Sparkling Pixie Dust Star Orb
+        ctx.fillStyle = 'rgba(253, 224, 71, 0.35)';
+        ctx.beginPath();
+        ctx.arc(0, 0, 16, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.fillStyle = '#fef08a';
+        ctx.rotate(game.time * 3);
+        ctx.fillRect(-6, -6, 12, 12);
+      } else if (it.kind === 'thimble') {
+        // Peter Pan's Golden-Orange "Kiss" Thimble
+        ctx.fillStyle = '#fbbf24';
+        ctx.strokeStyle = '#fff7ed';
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.moveTo(-7, 8);
+        ctx.lineTo(-5, -8);
+        ctx.lineTo(5, -8);
+        ctx.lineTo(7, 8);
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+      } else if (it.kind === 'fourth') {
+        // Special Glowing 4th-Obsession Treasure!
+        ctx.fillStyle = 'rgba(74, 222, 128, 0.28)';
+        ctx.beginPath();
+        ctx.arc(0, 0, 20, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = '#fb923c';
+        ctx.strokeStyle = '#fde047';
+        ctx.lineWidth = 2.5;
+        ctx.beginPath();
+        ctx.arc(0, 0, 12, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+        ctx.fillStyle = '#fff';
+        ctx.font = '900 12px "Segoe UI", sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText('★', 0, 4);
+      }
+      ctx.restore();
+    }
+  }
+
+  function drawCrocs() {
+    for (let i = 0; i < game.crocs.length; i++) {
+      const c = game.crocs[i];
+      if (c.x < game.camX - 80 || c.x > game.camX + W + 80) continue;
+      ctx.save();
+      ctx.translate(c.x, c.y);
+      const dir = c.vx >= 0 ? 1 : -1;
+      ctx.scale(dir, 1);
+
+      // Crocodile body
+      ctx.fillStyle = c.stunTimer > 0 ? '#64748b' : '#15803d';
+      ctx.beginPath();
+      ctx.roundRect(-28, -18, 46, 18, 7);
+      ctx.fill();
+
+      // Snapping upper jaw
+      const jawAng = c.stunTimer > 0 ? 0 : Math.abs(Math.sin(c.jawPhase)) * 0.42;
+      ctx.save();
+      ctx.translate(14, -12);
+      ctx.rotate(-jawAng);
+      ctx.fillStyle = '#16a34a';
+      ctx.fillRect(0, -6, 22, 8);
+      ctx.fillStyle = '#fff';
+      ctx.fillRect(5, 2, 3, 4);
+      ctx.fillRect(13, 2, 3, 4);
+      ctx.restore();
+
+      // Lower jaw
+      ctx.fillStyle = '#166534';
+      ctx.fillRect(14, -8, 20, 6);
+
+      // Glowing Alarm Clock in belly! ("Tick-Tock!")
+      ctx.fillStyle = '#fef08a';
+      ctx.strokeStyle = '#ea580c';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.arc(-4, -9, 6.5, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+
+      ctx.restore();
+    }
+  }
+
+  function drawCannonballs() {
+    for (let i = 0; i < game.cannonballs.length; i++) {
+      const cb = game.cannonballs[i];
+      // Warning reticle on ground
+      ctx.strokeStyle = 'rgba(244, 63, 94, 0.7)';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.ellipse(cb.tx, cb.ty, 18, 5, 0, 0, Math.PI * 2);
+      ctx.stroke();
+
+      // Drab purple-grey pirate cannonball
+      ctx.fillStyle = '#334155';
+      ctx.strokeStyle = '#a855f7';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.arc(cb.x, cb.y, 12, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+    }
+  }
+
+  function drawPlayerShadowCompanion() {
+    if (player.trailHistory.length < 6) return;
+    const ghost = player.trailHistory[Math.min(10, player.trailHistory.length - 1)];
+    ctx.save();
+    ctx.translate(ghost.x - ghost.facing * 10, ghost.y);
+    ctx.scale(ghost.facing, 1);
+    ctx.globalAlpha = game.feverTimer > 0 ? 0.55 : 0.28;
+    ctx.fillStyle = game.feverTimer > 0 ? '#fb923c' : '#090d16';
+    ctx.beginPath();
+    ctx.arc(0, -40, 9, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillRect(-7, -30, 14, 20);
+    // Feather silhouette
+    ctx.beginPath();
+    ctx.moveTo(-4, -47);
+    ctx.lineTo(-18, -58);
+    ctx.lineTo(-2, -43);
+    ctx.fill();
+    ctx.restore();
+  }
+
+  function drawKevinTighe() {
+    if (player.invuln > 0 && Math.floor(player.invuln * 14) % 2 === 0) {
+      ctx.globalAlpha = 0.45;
+    }
+
+    ctx.save();
+    ctx.translate(player.x, player.y);
+
+    if (player.cannonball) {
+      // Blazing Spinning Orange Cannonball Pose!
+      ctx.save();
+      ctx.translate(0, -24);
+      ctx.rotate(game.time * 22 * player.facing);
+      const grad = ctx.createRadialGradient(-4, -4, 3, 0, 0, 22);
+      grad.addColorStop(0, '#fef08a');
+      grad.addColorStop(0.5, '#f97316');
+      grad.addColorStop(1, '#c2410c');
+      ctx.fillStyle = grad;
+      ctx.beginPath();
+      ctx.arc(0, 0, 20, 0, Math.PI * 2);
+      ctx.fill();
+      // Feather sticking out while spinning!
+      ctx.fillStyle = '#ea580c';
+      ctx.beginPath();
+      ctx.moveTo(10, -14);
+      ctx.lineTo(28, -24);
+      ctx.lineTo(16, -6);
+      ctx.fill();
+      ctx.restore();
+    } else {
+      ctx.save();
+      ctx.scale(player.facing, 1);
+
+      const speedRatio = Math.min(1, Math.abs(player.vx) / 300);
+      const runPhase = player.animTime * 13;
+      const flying = !player.onGround && keys.jump && (player.dust > 1 || game.feverTimer > 0);
+      const pondering = player.ponderPoseTimer > 0;
+
+      if (flying) {
+        ctx.translate(0, -22);
+        ctx.rotate(0.26);
+        ctx.translate(0, 22);
+      }
+
+      // Legs (Burnt-Orange Tights + Cavalier Boots)
+      const legSwing = player.onGround ? Math.sin(runPhase) * 9 * speedRatio : (flying ? 6 : 3);
+      ctx.strokeStyle = '#9a3412';
+      ctx.lineWidth = 6;
+      ctx.lineCap = 'round';
+
+      // Back leg
+      ctx.beginPath();
+      ctx.moveTo(-2, -16);
+      ctx.lineTo(-4 - legSwing, -3);
+      ctx.stroke();
+
+      // Front leg
+      ctx.beginPath();
+      ctx.moveTo(2, -16);
+      ctx.lineTo(4 + legSwing, flying ? -7 : -3);
+      ctx.stroke();
+
+      // Safety-Orange Boots
+      ctx.fillStyle = '#ea580c';
+      ctx.fillRect(-8 - legSwing, -5, 9, 5);
+      ctx.fillRect(0 + legSwing, (flying ? -9 : -5), 9, 5);
+
+      // Notched Orange Peter Pan Tunic!
+      ctx.fillStyle = '#f97316';
+      ctx.beginPath();
+      ctx.moveTo(-11, -35);
+      ctx.lineTo(11, -35);
+      ctx.lineTo(14, -15);
+      ctx.lineTo(7, -18);
+      ctx.lineTo(2, -14);
+      ctx.lineTo(-4, -18);
+      ctx.lineTo(-10, -14);
+      ctx.lineTo(-13, -17);
+      ctx.closePath();
+      ctx.fill();
+
+      // Belt & Golden Buckle
+      ctx.fillStyle = '#7c2d12';
+      ctx.fillRect(-11, -23, 22, 4);
+      ctx.fillStyle = '#fbbf24';
+      ctx.fillRect(2, -24, 6, 6);
+
+      // Arms
+      ctx.strokeStyle = '#fdba74';
+      ctx.lineWidth = 5;
+      ctx.beginPath();
+      if (pondering) {
+        // Chin-stroking "Hmm..." pose!
+        ctx.moveTo(4, -32);
+        ctx.lineTo(13, -27);
+        ctx.lineTo(7, -38);
+      } else if (flying) {
+        // Heroic Peter Pan hands-on-hips / superman pose!
+        ctx.moveTo(-4, -32);
+        ctx.lineTo(-11, -24);
+        ctx.moveTo(5, -32);
+        ctx.lineTo(17, -40);
+      } else {
+        ctx.moveTo(0, -32);
+        ctx.lineTo(-legSwing * 0.9, -20);
+      }
+      ctx.stroke();
+
+      // Head
+      ctx.fillStyle = '#fed7aa';
+      ctx.beginPath();
+      ctx.arc(0, -43, 9.5, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Expressive Eyes & Grin (or squinting "Hmm..." brow!)
+      ctx.fillStyle = '#1e293b';
+      ctx.beginPath();
+      ctx.arc(4, -44, 1.7, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.strokeStyle = '#7c2d12';
+      ctx.lineWidth = 1.6;
+      ctx.beginPath();
+      if (pondering) {
+        ctx.moveTo(1, -48);
+        ctx.lineTo(7, -47);
+        ctx.moveTo(2, -39);
+        ctx.lineTo(6, -39);
+      } else {
+        ctx.arc(3, -40, 3.2, 0.1, Math.PI * 0.85);
+      }
+      ctx.stroke();
+
+      // Iconic Orange Peter Pan Pointed Cap + Blazing Feather!
+      ctx.fillStyle = '#ea580c';
+      ctx.beginPath();
+      ctx.moveTo(-12, -47);
+      ctx.lineTo(13, -48);
+      ctx.lineTo(-5, -60);
+      ctx.closePath();
+      ctx.fill();
+
+      // Swaying Scarlet-Gold Feather
+      const sway = Math.sin(game.time * 7) * 3;
+      ctx.fillStyle = '#fde047';
+      ctx.beginPath();
+      ctx.moveTo(-5, -55);
+      ctx.quadraticCurveTo(-18, -68 + sway, -24, -63 + sway);
+      ctx.quadraticCurveTo(-14, -56 + sway, -4, -51);
+      ctx.fill();
+
+      ctx.restore();
+    }
+
+    // "Tinker-Tang" — Kevin's Orbiting Orange Pixie Companion!
+    const px = Math.cos(game.time * 4.2) * 26;
+    const py = -52 + Math.sin(game.time * 6.4) * 8;
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.78)';
+    const wing = 4 + Math.abs(Math.sin(game.time * 28)) * 5;
+    ctx.beginPath();
+    ctx.ellipse(px - 4, py - 3, wing, 3, -0.5, 0, Math.PI * 2);
+    ctx.ellipse(px + 4, py - 3, wing, 3, 0.5, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.fillStyle = '#fb923c';
+    ctx.beginPath();
+    ctx.arc(px, py, 4.2, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.restore();
+    ctx.globalAlpha = 1;
+
+    // Speech Quip Bubble above Kevin!
+    if (player.quipTimer > 0 && player.quip) {
+      ctx.save();
+      const alpha = Math.min(1, player.quipTimer * 2.5);
+      ctx.globalAlpha = alpha;
+      ctx.font = '800 13px "Segoe UI", sans-serif';
+      const tw = ctx.measureText(player.quip).width;
+      const bw = tw + 22;
+      const bx = player.x - bw * 0.5;
+      const by = player.y - 96;
+
+      ctx.fillStyle = 'rgba(12, 18, 34, 0.92)';
+      ctx.strokeStyle = '#fb923c';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.roundRect(bx, by, bw, 28, 10);
+      ctx.fill();
+      ctx.stroke();
+
+      ctx.fillStyle = '#ffedd5';
+      ctx.textAlign = 'center';
+      ctx.fillText(player.quip, player.x, by + 18);
+      ctx.restore();
+    }
+  }
+
+  function drawLiveShaftHud(h) {
+    const curFt = Math.max(0, Math.min(h.depthFt, (player.y - h.rimY) / PX_PER_FT));
+    const gx = h.x + h.w * 0.5 + 18;
+    const gy = player.y - 36;
+
+    ctx.save();
+    ctx.fillStyle = 'rgba(12, 18, 34, 0.9)';
+    ctx.strokeStyle = curFt > 50 ? '#fb7185' : (curFt >= 10 ? '#fb923c' : '#94a3b8');
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.roundRect(gx, gy, 134, 44, 10);
+    ctx.fill();
+    ctx.stroke();
+
+    ctx.fillStyle = '#fdba74';
+    ctx.font = '800 12px "Segoe UI", sans-serif';
+    ctx.textAlign = 'left';
+    ctx.fillText('LIVE HOLE DEPTH', gx + 10, gy + 16);
+
+    ctx.fillStyle = '#ffffff';
+    ctx.font = '900 16px "Segoe UI", sans-serif';
+    ctx.fillText(`${curFt.toFixed(1)} / ${h.depthFt} ft`, gx + 10, gy + 35);
+    ctx.restore();
+  }
+
+  function drawEffects() {
+    // Ponder Sonar Rings
+    for (let i = 0; i < game.sonarWaves.length; i++) {
+      const sw = game.sonarWaves[i];
+      ctx.save();
+      ctx.strokeStyle = `rgba(251, 146, 60, ${sw.alpha * 0.85})`;
+      ctx.lineWidth = 4;
+      ctx.beginPath();
+      ctx.arc(sw.x, sw.y, sw.r, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.restore();
+    }
+
+    // Particles
+    for (let i = 0; i < game.particles.length; i++) {
+      const p = game.particles[i];
+      ctx.globalAlpha = Math.max(0, p.life / p.maxLife);
+      ctx.fillStyle = p.color;
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    ctx.globalAlpha = 1;
+
+    // Popups
+    for (let i = 0; i < game.popups.length; i++) {
+      const pop = game.popups[i];
+      ctx.save();
+      ctx.globalAlpha = Math.max(0, Math.min(1, pop.life / pop.maxLife * 1.4));
+      ctx.font = `900 ${pop.size}px "Segoe UI", sans-serif`;
+      ctx.textAlign = 'center';
+      ctx.strokeStyle = '#090d16';
+      ctx.lineWidth = 4;
+      ctx.strokeText(pop.text, pop.x, pop.y);
+      ctx.fillStyle = pop.color;
+      ctx.fillText(pop.text, pop.x, pop.y);
+      ctx.restore();
+    }
+  }
+
+  // =========================================================================
+  // MAIN ANIMATION LOOP (Also animates Start Screen backdrop!)
+  // =========================================================================
+  let lastTime = performance.now();
+
+  // Initialize preview world for the Start Screen background
+  game.segments = [{ x1: -300, x2: 420, y1: 420, y2: 420 }];
+  game.generatedUntilX = 420;
+  generateWorldAhead();
+
+  function frame(now) {
+    const rawDt = Math.min(0.05, Math.max(0.001, (now - lastTime) / 1000));
+    lastTime = now;
+
+    if (game.mode === 'playing') {
+      update(rawDt);
+    } else if (game.mode === 'menu') {
+      game.time += rawDt;
+      player.animTime += rawDt;
+      player.x = 220 + Math.sin(game.time * 0.9) * 90;
+      player.y = 350 + Math.sin(game.time * 2.2) * 18;
+      player.onGround = false;
+      game.camX = player.x - W * 0.35;
+      game.camY = 140;
+    }
+
+    render();
+    requestAnimationFrame(frame);
+  }
+
+  requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>
