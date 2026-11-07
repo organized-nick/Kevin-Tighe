@@ -1070,8 +1070,8 @@ const starCore = new THREE.Mesh(
   new THREE.MeshBasicMaterial({ color: 0xfff7ed })
 );
 const starHalo = new THREE.Mesh(
-  new THREE.SphereGeometry(6.8, 24, 24),
-  new THREE.MeshBasicMaterial({ color: 0xff7700, transparent: true, opacity: 0.32 })
+  new THREE.SphereGeometry(5.2, 24, 24),
+  new THREE.MeshBasicMaterial({ color: 0xff9900, transparent: true, opacity: 0.22, blending: THREE.AdditiveBlending })
 );
 secondStarGroup.add(starCore, starHalo);
 scene.add(secondStarGroup);
@@ -1568,7 +1568,7 @@ function spawnRing(lx, ly, kind = 'ring') {
 function generateWorldAhead() {
   while (game.generatedUntilX < player.x + 2600) {
     const startX = game.generatedUntilX;
-    const groundY = 420 + Math.round((Math.random() - 0.5) * 3) * 26;
+    const groundY = 420;
     const runLen = 360 + Math.floor(Math.random() * 140);
     const holeW = 148;
     const afterLen = 180;
