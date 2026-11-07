@@ -644,12 +644,20 @@ harness.test('T5-AUD-03: Architectural audit of musicGain, ambientGain and Never
 });
 
 harness.test('T5-AUD-04: Architectural layout audit: verification of src/core/input.js presence', async (page) => {
-  // Check filesystem directly for src/core/input.js
-  const inputJsPath = path.resolve(__dirname, '../kevin-tighe-lakeside/src/core/input.js');
-  const exists = fs.existsSync(inputJsPath);
+  // Check filesystem directly for src/core/input.js across candidate paths
+  const candidates = [
+    path.resolve(__dirname, '../src/core/input.js'),
+    path.resolve(__dirname, '../kevin-tighe-lakeside/src/core/input.js'),
+    path.resolve(process.cwd(), 'src/core/input.js'),
+    path.resolve(process.cwd(), 'kevin-tighe-lakeside/src/core/input.js'),
+    path.resolve(process.cwd(), '../src/core/input.js'),
+    path.resolve(process.cwd(), '../kevin-tighe-lakeside/src/core/input.js')
+  ];
+  const inputJsPath = candidates.find(p => fs.existsSync(p));
+  const exists = Boolean(inputJsPath);
 
   if (!exists) {
-    throw new Error(`CONFIRMED ARCHITECTURAL OMISSION: "kevin-tighe-lakeside/src/core/input.js" is specified in PROJECT.md (line 142) but is completely MISSING from the file system!`);
+    throw new Error(`CONFIRMED ARCHITECTURAL OMISSION: "src/core/input.js" is specified in PROJECT.md (line 142) but is completely MISSING from the file system! Checked paths: ${candidates.join(', ')}`);
   }
 });
 

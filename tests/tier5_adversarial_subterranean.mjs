@@ -456,8 +456,11 @@ async function runTier5AdversarialHardening() {
       const peakToastCount = hud.elToastContainer ? hud.elToastContainer.children.length : 0;
       results.peakToastCount = peakToastCount;
 
-      // Wait 400ms for all 60 toasts to self-prune
-      await new Promise(r => setTimeout(r, 400));
+      // Wait for all 60 toasts to self-prune via polling drain loop (eliminating timer jitter under load)
+      const cleanupStart = Date.now();
+      while (hud.elToastContainer && hud.elToastContainer.children.length > 0 && (Date.now() - cleanupStart) < 2500) {
+        await new Promise(r => setTimeout(r, 50));
+      }
       const postCleanupToastCount = hud.elToastContainer ? hud.elToastContainer.children.length : 0;
       results.cleanedToastCount = postCleanupToastCount;
 

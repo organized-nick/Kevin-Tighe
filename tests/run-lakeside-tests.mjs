@@ -67,13 +67,20 @@ async function main() {
   const startTime = Date.now();
   const results = [];
 
-  for (const suite of SUITES) {
+  for (let i = 0; i < SUITES.length; i++) {
+    const suite = SUITES[i];
     const res = await runCommand(suite.name, suite.script);
     results.push(res);
     if (res.code !== 0) {
       console.error(`\n❌ [FAILED] Suite: ${res.name} (exit code ${res.code})`);
     } else {
       console.log(`\n✅ [PASSED] Suite: ${res.name}`);
+    }
+
+    // Inter-suite cooldown delay: allow OS TCP sockets to recycle cleanly out of TIME_WAIT and browser processes to detach
+    if (i < SUITES.length - 1) {
+      console.log(`\n⏳ Inter-suite cooldown: waiting 2,000ms for OS TCP sockets to recycle...`);
+      await new Promise((resolve) => setTimeout(resolve, 2000));
     }
   }
 
