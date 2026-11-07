@@ -175,6 +175,55 @@ export class AudioSystem {
     this.musicGain = null;
     this.ambientGain = null;
     this.isMusicPlaying = false;
+    this.musicVolume = 0.18;
+    this.ambientVolume = 0.12;
+    this.musicTimer = null;
+    this.ambientOscillators = [];
+    this.melodyIndex = 0;
+
+    // Neverland Mixolydian Chime Notes (D Mixolydian: D, E, F#, G, A, B, C, D)
+    this.neverlandMelody = [
+      { note: 293.66, dur: 0.55, pause: 600 },  // D4
+      { note: 369.99, dur: 0.55, pause: 600 },  // F#4
+      { note: 440.00, dur: 0.55, pause: 600 },  // A4
+      { note: 523.25, dur: 0.90, pause: 1100 }, // C5 (Flatted 7th Mixolydian signature)
+      { note: 493.88, dur: 0.55, pause: 600 },  // B4
+      { note: 440.00, dur: 0.55, pause: 600 },  // A4
+      { note: 369.99, dur: 0.55, pause: 600 },  // F#4
+      { note: 293.66, dur: 1.10, pause: 1400 }, // D4
+      { note: 392.00, dur: 0.55, pause: 600 },  // G4
+      { note: 440.00, dur: 0.55, pause: 600 },  // A4
+      { note: 587.33, dur: 0.95, pause: 1200 }, // D5 (High celestial bell)
+      { note: 523.25, dur: 0.70, pause: 800 },  // C5
+      { note: 440.00, dur: 1.20, pause: 1800 }  // A4
+    ];
+
+    if (typeof window !== 'undefined' && (window.AudioContext || window.webkitAudioContext)) {
+      try {
+        const AudioCtx = window.AudioContext || window.webkitAudioContext;
+        this.audioCtx = new AudioCtx();
+        this.synth.audioCtx = this.audioCtx;
+        this.initAudioNodes();
+      } catch (e) {}
+    }
+  }
+
+  initAudioNodes() {
+    if (!this.audioCtx) return;
+    if (!this.musicGain) {
+      try {
+        this.musicGain = this.audioCtx.createGain();
+        this.musicGain.gain.setValueAtTime(this.muted ? 0.0 : this.musicVolume, this.audioCtx.currentTime);
+        this.musicGain.connect(this.audioCtx.destination);
+      } catch (e) {}
+    }
+    if (!this.ambientGain) {
+      try {
+        this.ambientGain = this.audioCtx.createGain();
+        this.ambientGain.gain.setValueAtTime(this.muted ? 0.0 : this.ambientVolume, this.audioCtx.currentTime);
+        this.ambientGain.connect(this.audioCtx.destination);
+      } catch (e) {}
+    }
   }
 
   ensureContext() {
@@ -183,17 +232,138 @@ export class AudioSystem {
       this.audioCtx = new AudioCtx();
       this.synth.audioCtx = this.audioCtx;
     }
+    this.initAudioNodes();
     if (this.audioCtx && this.audioCtx.state === 'suspended') {
       this.audioCtx.resume().catch(() => {});
     }
     return this.audioCtx;
   }
 
+  startMusic() {
+    this.ensureContext();
+    if (this.isMusicPlaying) return;
+    this.isMusicPlaying = true;
+    this.startAmbientShimmer();
+    this.scheduleNextChime();
+  }
+
+  playMusic() {
+    this.startMusic();
+  }
+
+  stopMusic() {
+    this.isMusicPlaying = false;
+    if (this.musicTimer) {
+      clearTimeout(this.musicTimer);
+      this.musicTimer = null;
+    }
+    this.stopAmbientShimmer();
+  }
+
+  scheduleNextChime() {
+    if (!this.isMusicPlaying) return;
+    const step = this.neverlandMelody[this.melodyIndex % this.neverlandMelody.length];
+    this.melodyIndex++;
+
+    this.playChimeNote(step.note, step.dur);
+
+    this.musicTimer = setTimeout(() => {
+      this.scheduleNextChime();
+    }, step.pause);
+  }
+
+  playChimeNote(freq, duration) {
+    if (this.muted || !this.audioCtx || !this.musicGain) return;
+    try {
+      const ctx = this.audioCtx;
+      const now = ctx.currentTime;
+
+      // Pure bell fundamental
+      const osc1 = ctx.createOscillator();
+      osc1.type = 'sine';
+      osc1.frequency.setValueAtTime(freq, now);
+
+      // Shimmering overtone
+      const osc2 = ctx.createOscillator();
+      osc2.type = 'triangle';
+      osc2.frequency.setValueAtTime(freq * 2.0, now);
+
+      const noteGain = ctx.createGain();
+      noteGain.gain.setValueAtTime(0.0001, now);
+      noteGain.gain.exponentialRampToValueAtTime(0.2, now + 0.03);
+      noteGain.gain.exponentialRampToValueAtTime(0.0001, now + duration);
+
+      osc1.connect(noteGain);
+      osc2.connect(noteGain);
+      noteGain.connect(this.musicGain);
+
+      osc1.start(now);
+      osc2.start(now);
+      osc1.stop(now + duration + 0.05);
+      osc2.stop(now + duration + 0.05);
+    } catch (e) {}
+  }
+
+  startAmbientShimmer() {
+    if (!this.audioCtx || !this.ambientGain) return;
+    try {
+      this.stopAmbientShimmer();
+      const ctx = this.audioCtx;
+      const now = ctx.currentTime;
+
+      // Low peaceful water drone (G3 / 196Hz)
+      const droneOsc = ctx.createOscillator();
+      droneOsc.type = 'sine';
+      droneOsc.frequency.setValueAtTime(196.0, now);
+
+      // Resonant water wave filter
+      const filter = ctx.createBiquadFilter();
+      filter.type = 'lowpass';
+      filter.frequency.setValueAtTime(500, now);
+
+      droneOsc.connect(filter);
+      filter.connect(this.ambientGain);
+      droneOsc.start(now);
+
+      this.ambientOscillators = [droneOsc];
+    } catch (e) {}
+  }
+
+  stopAmbientShimmer() {
+    if (this.ambientOscillators && this.ambientOscillators.length) {
+      this.ambientOscillators.forEach((osc) => {
+        try {
+          osc.stop();
+          osc.disconnect();
+        } catch (e) {}
+      });
+      this.ambientOscillators = [];
+    }
+  }
+
+  setMusicVolume(vol) {
+    this.musicVolume = Math.max(0.0, Math.min(1.0, vol));
+    if (this.musicGain && this.audioCtx) {
+      this.musicGain.gain.setValueAtTime(this.muted ? 0.0 : this.musicVolume, this.audioCtx.currentTime);
+    }
+  }
+
+  setAmbientVolume(vol) {
+    this.ambientVolume = Math.max(0.0, Math.min(1.0, vol));
+    if (this.ambientGain && this.audioCtx) {
+      this.ambientGain.gain.setValueAtTime(this.muted ? 0.0 : this.ambientVolume, this.audioCtx.currentTime);
+    }
+  }
+
   setMuted(muted) {
     this.muted = !!muted;
     this.synth.muted = this.muted;
+    const now = this.audioCtx ? this.audioCtx.currentTime : 0;
     if (this.musicGain) {
-      this.musicGain.gain.setValueAtTime(this.muted ? 0.0 : 0.18, (this.audioCtx ? this.audioCtx.currentTime : 0));
+      this.musicGain.gain.setValueAtTime(this.muted ? 0.0 : this.musicVolume, now);
+    }
+    if (this.ambientGain) {
+      this.ambientGain.gain.setValueAtTime(this.muted ? 0.0 : this.ambientVolume, now);
     }
   }
 

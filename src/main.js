@@ -8,6 +8,7 @@ import { CONFIG } from './config.js';
 import { Engine } from './core/engine.js';
 import { TextureManager } from './core/textures.js';
 import { AudioSystem } from './core/audio.js';
+import { InputManager } from './core/input.js';
 import { LightingSystem } from './world/lighting.js';
 import { WorldManager } from './world/landmarks.js';
 import { CharacterController } from './character/controller.js';
@@ -148,6 +149,7 @@ class Game {
     this.goldenFeverManager = this.goldenFever;
     this.sonarSystem = this.sonar;
     this.cameraRig = this.character ? this.character.thirdPersonCamera : null;
+    this.input = this.character ? this.character.input : null;
 
     // 10. Initialize Pickups (22 citrus orbs + 4 landmark bonus items)
     this.pickupManager = new PickupManager(
@@ -241,6 +243,7 @@ class Game {
 
     if (this.audio) {
       this.audio.ensureContext();
+      this.audio.startMusic();
     }
 
     const startOverlay = document.getElementById('startOverlay');

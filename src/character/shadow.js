@@ -107,12 +107,12 @@ export class RunawayShadow {
    * @param {Function} [terrainElevationFn] - Function(x, z) => height
    */
   update(dt, kevinPos, terrainElevationFn) {
-    if (!kevinPos) return;
+    if (!kevinPos || typeof dt !== 'number' || !Number.isFinite(dt) || dt <= 0) return;
 
     this.time += dt;
 
     // 1. Playful horizontal position lag (T1-R2-05-D: shadowPos += (charPos - shadowPos) * lag)
-    const lagStep = Math.min(1.0, this.lagFactor * (dt ? dt * 30.0 : 1.0));
+    const lagStep = Math.min(1.0, this.lagFactor * dt * 30.0);
     this.mesh.position.x += (kevinPos.x - this.mesh.position.x) * lagStep;
     this.mesh.position.z += (kevinPos.z - this.mesh.position.z) * lagStep;
 
@@ -126,7 +126,7 @@ export class RunawayShadow {
     const targetY = targetSurfaceY + this.groundY;
 
     // Smooth elevation interpolation across dock planks and beach
-    const elevationStep = Math.min(1.0, 0.5 * (dt ? dt * 30.0 : 1.0));
+    const elevationStep = Math.min(1.0, 0.5 * dt * 30.0);
     this.mesh.position.y += (targetY - this.mesh.position.y) * elevationStep;
 
     // 3. Altitude-dependent scale & opacity scaling

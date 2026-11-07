@@ -23,8 +23,8 @@ export class ThirdPersonCamera {
     this.minDistance = (CONFIG.CAMERA && CONFIG.CAMERA.MIN_DISTANCE) || 3.5; // 3.5m unobstructed zoom limit
     this.minCollisionDistance = (CONFIG.CAMERA && CONFIG.CAMERA.MIN_COLLISION_DISTANCE) || 0.4; // 0.4m obstacle contraction limit
     this.maxDistance = (CONFIG.CAMERA && CONFIG.CAMERA.MAX_DISTANCE) || 22.0; // 22.0m
-    this.targetDistance = (CONFIG.CAMERA && CONFIG.CAMERA.DEFAULT_DISTANCE) || 9.0; // 9.0m
-    this.currentDistance = this.targetDistance;
+    this._targetDistance = (CONFIG.CAMERA && CONFIG.CAMERA.DEFAULT_DISTANCE) || 9.0; // 9.0m
+    this.currentDistance = this._targetDistance;
 
     // Pitch clamped strictly between -85 deg and +85 deg (-1.4835 to +1.4835 rad)
     this.minPitch = (-85 * Math.PI) / 180;
@@ -105,16 +105,32 @@ export class ThirdPersonCamera {
       }
     });
 
-    // Zoom via mouse wheel
-    this.domElement.addEventListener('wheel', (e) => {
-      e.preventDefault();
+    // Zoom via mouse wheel with NaN/non-finite sanitization
+    this.handleWheel = (e) => {
+      if (e && typeof e.preventDefault === 'function') {
+        e.preventDefault();
+      }
+      if (!e || typeof e.deltaY !== 'number' || !Number.isFinite(e.deltaY) || Number.isNaN(e.deltaY)) {
+        return;
+      }
       const zoomStep = e.deltaY * 0.015;
       this.targetDistance = THREE.MathUtils.clamp(
         this.targetDistance + zoomStep,
         this.minDistance,
         this.maxDistance
       );
-    }, { passive: false });
+    };
+    this.domElement.addEventListener('wheel', this.handleWheel, { passive: false });
+  }
+
+  get targetDistance() {
+    return this._targetDistance;
+  }
+
+  set targetDistance(val) {
+    if (typeof val === 'number' && Number.isFinite(val) && !Number.isNaN(val)) {
+      this._targetDistance = THREE.MathUtils.clamp(val, this.minDistance, this.maxDistance);
+    }
   }
 
   update(dt, targetPosition, targetVelocity = null) {

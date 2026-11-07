@@ -21,6 +21,7 @@ import { ThirdPersonCamera } from './camera.js';
 import { FlightSystem } from './flight.js';
 import { FairyCompanion } from './fairy.js';
 import { RunawayShadow } from './shadow.js';
+import { InputManager } from '../core/input.js';
 
 export class CharacterController {
   constructor(engine, worldManager, textureManager, options = {}) {
@@ -75,15 +76,9 @@ export class CharacterController {
       collidables
     );
 
-    // 6. Input State
-    this.keys = {
-      forward: false,
-      backward: false,
-      left: false,
-      right: false,
-      jump: false,
-      sprint: false
-    };
+    // 6. Input Manager & Keys State
+    this.input = options.inputManager || new InputManager({ domElement: engine.renderer.domElement });
+    this.keys = this.input.keys;
 
     this.initInputListeners();
   }
@@ -94,54 +89,36 @@ export class CharacterController {
 
   set pixieDust(val) {
     if (this.flight) {
+      if (typeof val !== 'number' || Number.isNaN(val) || !Number.isFinite(val)) {
+        return;
+      }
       this.flight.pixieDust = Math.max(0, Math.min(100.0, val));
     }
   }
 
   initInputListeners() {
-    window.addEventListener('keydown', (e) => {
-      const target = e.target;
-      if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA')) return;
+    if (!this.input) return;
 
-      const code = e.code;
-      if (code === 'KeyW' || code === 'ArrowUp') this.keys.forward = true;
-      if (code === 'KeyS' || code === 'ArrowDown') this.keys.backward = true;
-      if (code === 'KeyA' || code === 'ArrowLeft') this.keys.left = true;
-      if (code === 'KeyD' || code === 'ArrowRight') this.keys.right = true;
-      if (code === 'ShiftLeft' || code === 'ShiftRight') this.keys.sprint = true;
-
-      if (code === 'Space') {
-        e.preventDefault();
-        if (!this.keys.jump) {
-          this.jumpJustPressed = true;
-        }
-        this.keys.jump = true;
-
-        // Space held while airborne activates Peter Pan flight
-        if (!this.isGrounded && this.pixieDust > 0) {
-          this.setFlight(true);
-        }
-      }
-
-      if (code === 'KeyH' || code === 'KeyE') {
-        this.triggerSonar();
+    this.input.on('jump', () => {
+      this.jumpJustPressed = true;
+      // Space held while airborne activates Peter Pan flight
+      if (!this.isGrounded && this.pixieDust > 0) {
+        this.setFlight(true);
       }
     });
 
-    window.addEventListener('keyup', (e) => {
-      const code = e.code;
-      if (code === 'KeyW' || code === 'ArrowUp') this.keys.forward = false;
-      if (code === 'KeyS' || code === 'ArrowDown') this.keys.backward = false;
-      if (code === 'KeyA' || code === 'ArrowLeft') this.keys.left = false;
-      if (code === 'KeyD' || code === 'ArrowRight') this.keys.right = false;
-      if (code === 'ShiftLeft' || code === 'ShiftRight') this.keys.sprint = false;
-
-      if (code === 'Space') {
-        this.keys.jump = false;
-        if (this.isFlying) {
-          this.setFlight(false);
-        }
+    this.input.on('jumpRelease', () => {
+      if (this.isFlying) {
+        this.setFlight(false);
       }
+    });
+
+    this.input.on('sonar', () => {
+      this.triggerSonar();
+    });
+
+    this.input.on('flight', () => {
+      this.setFlight(!this.isFlying);
     });
   }
 
@@ -160,8 +137,8 @@ export class CharacterController {
     // 2. Wooden Dock Collision
     // Dock extends at X in [-2.0, 2.0], Z in [6.0, 30.0], Deck elevation = 0.85m
     if (x >= -2.0 && x <= 2.0 && z >= 6.0 && z <= 30.0) {
-      // Opening for M3 Dockside Plunge Pit (Z in [21.0, 23.2])
-      const inPlungePitOpening = (z >= 21.0 && z <= 23.2);
+      // Opening for M3 Dockside Plunge Pit (radius 1.6m centered at Z = 22.0: Z in [20.4, 23.6])
+      const inPlungePitOpening = (z >= 20.4 && z <= 23.6);
       if (!inPlungePitOpening) {
         groundY = Math.max(groundY, 0.85);
       }

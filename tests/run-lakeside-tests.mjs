@@ -27,6 +27,10 @@ const SUITES = [
   {
     name: 'Challenger M3: Adversarial Stress & 50.0ft Boundary Enforcement',
     script: path.join(__dirname, 'challenger_m3_stress.mjs')
+  },
+  {
+    name: 'Phase 2: Tier 5 Adversarial Coverage Hardening (White-Box Invariants)',
+    script: path.join(__dirname, 'tier5_adversarial_subterranean.mjs')
   }
 ];
 
