@@ -1,5 +1,5 @@
 {
-  "timestamp": "2026-11-07T07:15:02.990Z",
+  "timestamp": "2026-11-07T07:28:31.249Z",
   "targetUrl": "http://localhost:8097?autostart=1",
   "landmarks": {
     "lake": {
@@ -541,11 +541,11 @@
     },
     "porchLantern": {
       "type": "PointLight",
-      "intensity": 1.345042579453862
+      "intensity": 1.3153116223673518
     },
     "dockLantern": {
       "type": "PointLight",
-      "intensity": 1.0230028249447187
+      "intensity": 1.0708860360655816
     },
     "enclosureResults": {
       "lake": {

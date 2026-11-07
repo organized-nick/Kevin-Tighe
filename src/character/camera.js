@@ -20,7 +20,8 @@ export class ThirdPersonCamera {
     this.obstacles = obstacleObjects;
 
     // Camera settings from CONFIG
-    this.minDistance = (CONFIG.CAMERA && CONFIG.CAMERA.MIN_DISTANCE) || 3.5; // 3.5m
+    this.minDistance = (CONFIG.CAMERA && CONFIG.CAMERA.MIN_DISTANCE) || 3.5; // 3.5m unobstructed zoom limit
+    this.minCollisionDistance = (CONFIG.CAMERA && CONFIG.CAMERA.MIN_COLLISION_DISTANCE) || 0.4; // 0.4m obstacle contraction limit
     this.maxDistance = (CONFIG.CAMERA && CONFIG.CAMERA.MAX_DISTANCE) || 22.0; // 22.0m
     this.targetDistance = (CONFIG.CAMERA && CONFIG.CAMERA.DEFAULT_DISTANCE) || 9.0; // 9.0m
     this.currentDistance = this.targetDistance;
@@ -44,13 +45,21 @@ export class ThirdPersonCamera {
     this.mouseSensitivity = 0.0035;
 
     this.raycaster = new THREE.Raycaster();
-    this.raycaster.near = 0.2;
+    this.raycaster.near = (CONFIG.CAMERA && CONFIG.CAMERA.NEAR) || 0.1;
 
     this.initInputListeners();
   }
 
   setObstacles(obstacleArray) {
     this.obstacles = obstacleArray || [];
+  }
+
+  setPitch(pitchRad) {
+    this.pitch = THREE.MathUtils.clamp(pitchRad, this.minPitch, this.maxPitch);
+  }
+
+  setYaw(yawRad) {
+    this.yaw = yawRad;
   }
 
   initInputListeners() {
@@ -95,6 +104,9 @@ export class ThirdPersonCamera {
   }
 
   update(dt, targetPosition) {
+    // Enforce pitch bounds strictly [-85 deg, +85 deg] (-1.4835 to +1.4835 rad)
+    this.pitch = THREE.MathUtils.clamp(this.pitch, this.minPitch, this.maxPitch);
+
     if (!targetPosition) return;
 
     // 1. Compute Focus Point (Kevin's chest/head)
@@ -125,9 +137,10 @@ export class ThirdPersonCamera {
 
       const intersects = this.raycaster.intersectObjects(this.obstacles, true);
       if (intersects.length > 0) {
-        // Nearest solid hit with a 0.35m safety margin
+        // Nearest solid hit with a 0.35m safety margin, contracting down to safe collision minimum
         const hitDist = intersects[0].distance;
-        effectiveDist = Math.max(this.minDistance, hitDist - 0.35);
+        const safeMin = Math.min(this.minCollisionDistance, Math.max(0.02, hitDist * 0.5));
+        effectiveDist = Math.max(safeMin, hitDist - 0.35);
       }
     }
 

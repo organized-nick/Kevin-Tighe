@@ -170,6 +170,13 @@ export class CharacterController {
       groundY = Math.max(groundY, 2.35);
     }
 
+    // 4. Bluffs Overlook Plateau Collision (+22m elevation)
+    // Modeled in src/world/bluffs.js at (-45.0, 21.1, 0.0), top deck at Y = 22.0m
+    // Bounds: width 10m (X: -50 to -40), depth 12m (Z: -6 to 6)
+    if (x >= -50.0 && x <= -40.0 && z >= -6.0 && z <= 6.0) {
+      groundY = Math.max(groundY, 22.0);
+    }
+
     return groundY;
   }
 
@@ -226,6 +233,7 @@ export class CharacterController {
   setFlight(active) {
     if (active && this.pixieDust > 0) {
       this.isFlying = true;
+      this.isGrounded = false; // Disengage ground state to prevent frame-1 cancellation in grounded takeoffs
       this.state = 'flying';
       this.flight.setFlight(true);
       // Upward flight arrest if falling (T3-PAIR-01)
@@ -265,6 +273,19 @@ export class CharacterController {
   teleport(x, y, z) {
     this.position.set(x, y, z);
     this.velocity.set(0, 0, 0);
+
+    // Immediately latch grounded state if placed at or on ground elevation
+    const groundY = this.getGroundElevation(x, z);
+    this.isGrounded = Math.abs(y - groundY) < 0.2 || y <= groundY;
+    if (this.isGrounded) {
+      if (this.isFlying) {
+        this.setFlight(false);
+      }
+      if (this.state === 'flying' || this.state === 'falling' || this.state === 'jumping') {
+        this.state = 'idle';
+      }
+    }
+
     this.avatar.group.position.copy(this.position);
     this.thirdPersonCamera.update(0.016, this.position);
 
@@ -317,7 +338,9 @@ export class CharacterController {
     this.velocity.z = moveZ * planarSpeed;
 
     // Check steep slope sliding (T2-BND-18: steep bluff slopes > 50 deg trigger downward sliding)
-    if (this.isGrounded) {
+    const currentGroundY = this.getGroundElevation(this.position.x, this.position.z);
+    const onGround = this.isGrounded || Math.abs(this.position.y - currentGroundY) < 0.2;
+    if (onGround) {
       const slope = this.getSlopeAt(this.position.x, this.position.z);
       if (slope.angleDeg > 50.0) {
         const slideForce = (slope.angleDeg / 90.0) * 12.0;
@@ -338,7 +361,7 @@ export class CharacterController {
 
     // 4. Vertical Physics, Jump & Pixie Dust Flight
     if (this.isFlying) {
-      this.flight.update(dt, this.isGrounded, this.keys.jump, this.velocity, this.position);
+      this.flight.update(dt, this.isGrounded, (this.keys.jump || this.isFlying), this.velocity, this.position);
       this.isFlying = this.flight.isFlying;
 
       if (!this.isFlying && !this.isGrounded) {
@@ -352,9 +375,9 @@ export class CharacterController {
       // Terminal Velocity Clamp (-25.0 m/s per Tier 2 spec T2-BND-19)
       this.velocity.y = Math.max(-25.0, this.velocity.y);
 
-      // Jump impulse (vy = 9.5 m/s >= 7.0 required by T1-R2-03-B)
+      // Jump impulse (vy = 9.0 m/s >= 7.0 required by T1-R2-03-B)
       if (this.isGrounded && this.jumpJustPressed) {
-        const impulse = (CONFIG.PHYSICS && CONFIG.PHYSICS.JUMP_IMPULSE) || 9.5;
+        const impulse = (CONFIG.PHYSICS && CONFIG.PHYSICS.JUMP_IMPULSE) || 9.0;
         this.velocity.y = impulse;
         this.isGrounded = false;
         if (this.audioSystem) {
@@ -377,6 +400,11 @@ export class CharacterController {
 
     // 6. Ground Surface Collision Detection
     const groundElevation = this.getGroundElevation(this.position.x, this.position.z);
+
+    // Continuous slope stepping: snap small ground drops (<= 0.15m) when grounded and moving downward
+    if (this.isGrounded && !this.isFlying && this.velocity.y <= 0 && this.position.y > groundElevation && (this.position.y - groundElevation) <= 0.15) {
+      this.position.y = groundElevation;
+    }
 
     if (this.position.y <= groundElevation) {
       const wasAirborne = !this.isGrounded;

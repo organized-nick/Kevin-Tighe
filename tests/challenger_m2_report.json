@@ -1,0 +1,184 @@
+{
+  "timestamp": "2026-11-07T07:25:11.940Z",
+  "targetUrl": "http://localhost:8097?autostart=1",
+  "phases": {
+    "boot": {
+      "version": "1.0.0-m2",
+      "ready": true,
+      "hasCharacter": true,
+      "hasScene": true,
+      "hasRenderer": true,
+      "charPos": {
+        "x": 0,
+        "y": 0.85,
+        "z": 10
+      },
+      "charState": "idle",
+      "pixieDust": 100,
+      "oranges": 1,
+      "score": 50
+    },
+    "flight": {
+      "initialDust": 100,
+      "initialIsFlying": true,
+      "fellToZero": false,
+      "finalDepletedDust": 100,
+      "stateAtZero": null,
+      "isFlyingAtZero": null,
+      "flightAttemptWhenEmpty": true,
+      "reached100": false,
+      "clampedAt100": false,
+      "finalRechargedDust": 1.6,
+      "snapshotsSample": [
+        {
+          "timeSec": "0.11",
+          "dust": 100,
+          "isFlying": true,
+          "state": "flying",
+          "y": 18
+        },
+        {
+          "timeSec": "3.37",
+          "dust": 100,
+          "isFlying": true,
+          "state": "flying",
+          "y": 18
+        },
+        {
+          "timeSec": "6.55",
+          "dust": 100,
+          "isFlying": false,
+          "state": "jumping",
+          "y": 18.4
+        }
+      ],
+      "rechargeSample": [
+        {
+          "timeSec": "0.11",
+          "dust": 0,
+          "isGrounded": true
+        },
+        {
+          "timeSec": "4.17",
+          "dust": 0,
+          "isGrounded": true
+        },
+        {
+          "timeSec": "8.22",
+          "dust": 1.6,
+          "isGrounded": true
+        }
+      ]
+    },
+    "particles": {
+      "particleMeshPresent": true,
+      "activeDuringFlight": true,
+      "activeCountDuringFlight": 0,
+      "activeAfterFlight": false,
+      "activeCountAfterFlight": 0,
+      "initialGeometries": 133,
+      "postStressGeometries": 133,
+      "initialTextures": 33,
+      "postStressTextures": 33,
+      "geometryLeak": 0,
+      "textureLeak": 0
+    },
+    "fairy": {
+      "fairyGroupPresent": true,
+      "lightProps": {
+        "present": true,
+        "color": 16498468,
+        "intensity": 1.2,
+        "distance": 6
+      },
+      "wingFlutterObserved": false,
+      "bounds": {
+        "minRelX": 0.8272391092722597,
+        "maxRelX": 0.8272391092722597,
+        "minRelY": 1.892667722808266,
+        "maxRelY": 1.892667722808266,
+        "minRelZ": -1.2512695377457401,
+        "maxRelZ": -1.2512695377457401
+      },
+      "teleportDistance": 2.414992983211387
+    },
+    "shadow": {
+      "shadowPresent": true,
+      "isDetached": true,
+      "hasHorizontalLag": true,
+      "shadowPosXImmediately": 0,
+      "caughtUp": false,
+      "shadowPosXAfterSettle": 0,
+      "shadowYOnDock": 0.87,
+      "shadowYOnPorch": 2.37,
+      "shadowYOnBeach": 0.37999999999999995,
+      "shadowYDuringHighFlight": 0.87,
+      "shadowScaleDuringHighFlight": 2.30842,
+      "shadowOpacityDuringHighFlight": 0.13847999999999983
+    },
+    "pickups": {
+      "pickupGroupPresent": true,
+      "initialHudOranges": "1",
+      "initialHudScore": "50",
+      "orangesAfterCollect1": 0,
+      "scoreAfterCollect1": 0,
+      "hudOrangesAfterCollect1": "0",
+      "hudScoreAfterCollect1": "0",
+      "orangesAfterDoubleCheck": 0,
+      "scoreAfterDoubleCheck": 0,
+      "orangesAfterAirborneCollect": 0,
+      "scoreAfterAirborneCollect": 0,
+      "flightStateAfterCollect": "flying",
+      "orangesAfterBonus": 0,
+      "scoreAfterBonus": 0,
+      "toastVisible": false,
+      "toastText": ""
+    },
+    "sonar": {
+      "sonarGroupPresent": true,
+      "trigger1Success": true,
+      "stateDuringTrigger": "flying",
+      "trigger2Throttled": true,
+      "waveCountImmediately": 1,
+      "tagCountImmediately": 4,
+      "waveRadii": [
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1
+      ],
+      "waveExpanded": false,
+      "tagSpritesCount": 4,
+      "trigger3SuccessAfterCooldown": true
+    },
+    "contextHealth": {
+      "contextLost": false,
+      "glError": 0,
+      "telemetryErrors": 0,
+      "lastError": null
+    }
+  },
+  "verdict": "FAIL",
+  "failures": [
+    "Flight gauge did not deplete to 0% (ended at 100).",
+    "isFlying remained true when pixie dust reached 0%.",
+    "Expected state 'falling' when fuel exhausted, got 'null'.",
+    "Adversarial: Flight successfully activated when pixie dust was 0%!",
+    "Ground recharge failed to reach 100% (reached 1.6%).",
+    "Pixie dust exceeded 100.0% clamp during ground recharge: 1.6",
+    "Active particle count was 0 during flight.",
+    "Expected 1 orange after collection, got 0",
+    "Expected 50 score after collecting 1 orange, got 0",
+    "HUD #hudOranges did not update to '1' (got '0')",
+    "HUD #hudScore did not update to '50' (got '0')",
+    "Double-collection bug detected! Pickup was re-collected on subsequent frame.",
+    "Airborne pickup collection failed: oranges=0",
+    "Expected score 350 after collecting bonus (+250) + 2 oranges (+100), got 0",
+    "Avatar did not enter 'pondering' state on sonar trigger: 'flying'",
+    "Sonar wave did not expand over time."
+  ]
+}
