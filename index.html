@@ -129,18 +129,36 @@
     <!-- Subterranean Depth HUD (Active when diving holes) -->
     <div id="subterraneanHud" class="sub-hud hidden">
       <div class="depth-gauge-container">
+        <div class="sub-hud-title">SUBTERRANEAN DEPTH</div>
         <div class="depth-readout">
           <span class="depth-num" id="liveDepthNum">0.0</span>
           <span class="depth-unit">FT</span>
         </div>
         <div class="depth-status-pill" id="liveDepthStatus">LEGAL ZONE</div>
         <div class="depth-scale-bar">
-          <div class="scale-zone zone-shallow" style="height: 20%;" title="0-10ft Shallow"></div>
-          <div class="scale-zone zone-legal" style="height: 60%;" title="10-50ft Sweet Spot"></div>
-          <div class="scale-zone zone-danger" style="height: 20%;" title="50ft+ Too Deep"></div>
+          <div class="scale-zone zone-shallow" style="height: 11.1%;" title="0-10ft Shallow Rejection"></div>
+          <div class="scale-zone zone-legal" style="height: 44.4%;" title="10-50ft Sweet Spot Safety Zone">
+            <div class="scale-tick" style="top: 25%;">20ft</div>
+            <div class="scale-tick" style="top: 50%;">30ft</div>
+            <div class="scale-tick" style="top: 75%;">40ft</div>
+          </div>
+          <div class="scale-grail-marker" title="50.0ft Holy Grail Pinnacle">⭐ 50ft ⭐</div>
+          <div class="scale-zone zone-danger" style="height: 44.4%;" title=">50ft Hazard Boundary Breach">
+            <span class="hazard-label">HAZARD &gt;50FT</span>
+          </div>
           <div class="depth-indicator-needle" id="depthNeedle" style="top: 0%;"></div>
         </div>
       </div>
+    </div>
+
+    <!-- 15s Golden Fever Top Banner -->
+    <div id="goldenFeverBanner" class="golden-fever-banner hidden">
+      <div class="fever-title">✨ 15s GOLDEN FEVER ACTIVATED! ✨</div>
+      <div class="fever-sub">2X RUNNING SPEED • 2X SCORE MULTIPLIER</div>
+      <div class="fever-bar-wrap">
+        <div id="feverProgressFill" class="fever-progress-fill" style="width: 100%;"></div>
+      </div>
+      <div id="feverCountdown" class="fever-timer">15.0s</div>
     </div>
 
     <!-- Bottom Action Prompts -->

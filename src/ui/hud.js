@@ -29,6 +29,11 @@ export class HUDManager {
     this.elDepthStatus = document.getElementById('liveDepthStatus');
     this.elDepthNeedle = document.getElementById('depthNeedle');
 
+    // Golden Fever Mode Banner
+    this.elGoldenFeverBanner = document.getElementById('goldenFeverBanner');
+    this.elFeverProgressFill = document.getElementById('feverProgressFill');
+    this.elFeverCountdown = document.getElementById('feverCountdown');
+
     // Prompts & Toasts
     this.elSonarPrompt = document.getElementById('sonarPrompt');
     this.elToastContainer = document.getElementById('toastContainer');
@@ -109,31 +114,54 @@ export class HUDManager {
       this.elDepthNum.textContent = depthFt.toFixed(1);
     }
 
-    // Position needle on 0-60ft scale
+    // Position needle on 0-90ft calibrated scale
     if (this.elDepthNeedle) {
-      const percentage = Math.max(0, Math.min(100, (depthFt / 60.0) * 100));
+      const percentage = Math.max(0, Math.min(100, (depthFt / 90.0) * 100));
       this.elDepthNeedle.style.top = `${percentage}%`;
     }
 
     // Status pill
     if (this.elDepthStatus) {
-      if (Math.abs(depthFt - 50.0) < 0.15) {
+      if (Math.abs(depthFt - 50.0) < 0.25) {
         this.elDepthStatus.textContent = '⭐ 50FT PINNACLE ⭐';
-        this.elDepthStatus.style.background = 'rgba(251, 191, 36, 0.3)';
+        this.elDepthStatus.style.background = 'rgba(251, 191, 36, 0.35)';
         this.elDepthStatus.style.color = '#ffd800';
       } else if (depthFt < 10.0) {
         this.elDepthStatus.textContent = 'TOO SHALLOW';
-        this.elDepthStatus.style.background = 'rgba(148, 163, 184, 0.2)';
+        this.elDepthStatus.style.background = 'rgba(148, 163, 184, 0.25)';
         this.elDepthStatus.style.color = '#94a3b8';
       } else if (depthFt <= 50.0) {
-        this.elDepthStatus.textContent = 'LEGAL ZONE';
-        this.elDepthStatus.style.background = 'rgba(16, 185, 129, 0.2)';
+        this.elDepthStatus.textContent = 'LEGAL ZONE (10-50FT)';
+        this.elDepthStatus.style.background = 'rgba(16, 185, 129, 0.25)';
         this.elDepthStatus.style.color = '#34d399';
       } else {
         this.elDepthStatus.textContent = 'HAZARD >50FT';
-        this.elDepthStatus.style.background = 'rgba(239, 68, 68, 0.3)';
+        this.elDepthStatus.style.background = 'rgba(239, 68, 68, 0.35)';
         this.elDepthStatus.style.color = '#ef4444';
       }
+    }
+  }
+
+  showGoldenFeverBanner(duration = 15.0) {
+    if (this.elGoldenFeverBanner) {
+      this.elGoldenFeverBanner.classList.remove('hidden');
+    }
+    this.updateGoldenFeverProgress(duration, duration);
+  }
+
+  updateGoldenFeverProgress(remaining, duration = 15.0) {
+    if (this.elFeverCountdown) {
+      this.elFeverCountdown.textContent = `${Math.max(0, remaining).toFixed(1)}s`;
+    }
+    if (this.elFeverProgressFill) {
+      const pct = Math.max(0, Math.min(100, (remaining / duration) * 100));
+      this.elFeverProgressFill.style.width = `${pct}%`;
+    }
+  }
+
+  hideGoldenFeverBanner() {
+    if (this.elGoldenFeverBanner) {
+      this.elGoldenFeverBanner.classList.add('hidden');
     }
   }
 

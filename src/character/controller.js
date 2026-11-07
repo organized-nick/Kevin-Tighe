@@ -48,6 +48,10 @@ export class CharacterController {
     this.jumpJustPressed = false;
     this.sonarSystem = options.sonarSystem || null;
     this.audioSystem = options.audioSystem || null;
+    this.subterraneanSystem = options.subterraneanSystem || null;
+
+    this.speedMultiplier = 1.0;
+    this.scoreMultiplier = 1.0;
 
     // 3. Subsystems: Flight, Fairy, Shadow
     this.flight = new FlightSystem(this.scene);
@@ -177,6 +181,11 @@ export class CharacterController {
       groundY = Math.max(groundY, 22.0);
     }
 
+    // 5. Subterranean Active Hole Shaft Floor Override
+    if (this.subterraneanSystem && typeof this.subterraneanSystem.getGroundOverride === 'function') {
+      groundY = this.subterraneanSystem.getGroundOverride(x, z, groundY);
+    }
+
     return groundY;
   }
 
@@ -244,7 +253,7 @@ export class CharacterController {
     } else {
       this.isFlying = false;
       this.flight.setFlight(false);
-      if (!this.isGrounded) {
+      if (!this.isGrounded && this.state !== 'in_hole') {
         this.state = 'falling';
       }
     }
@@ -299,6 +308,12 @@ export class CharacterController {
   }
 
   update(dt) {
+    // 0. Subterranean Hole Checks & Kinetics
+    if (this.subterraneanSystem) {
+      this.subterraneanSystem.checkHoleEntry(this.position, this.velocity);
+      this.subterraneanSystem.update(dt);
+    }
+
     // 1. Process Ponder Sonar Timer
     if (this.ponderTimer > 0) {
       this.ponderTimer -= dt;
@@ -331,7 +346,8 @@ export class CharacterController {
     const moveX = normStrafe * Math.cos(camYaw) + normFwd * Math.sin(camYaw);
     const moveZ = -normStrafe * Math.sin(camYaw) + normFwd * Math.cos(camYaw);
 
-    const speedTier = this.keys.sprint ? (CONFIG.PHYSICS.RUN_SPEED || 14.0) : (CONFIG.PHYSICS.WALK_SPEED || 8.5);
+    const baseSpeed = this.keys.sprint ? (CONFIG.PHYSICS.RUN_SPEED || 14.0) : (CONFIG.PHYSICS.WALK_SPEED || 8.5);
+    const speedTier = baseSpeed * (this.speedMultiplier || 1.0);
     const planarSpeed = inputLen > 0 ? speedTier : 0;
 
     this.velocity.x = moveX * planarSpeed;
@@ -360,7 +376,11 @@ export class CharacterController {
     }
 
     // 4. Vertical Physics, Jump & Pixie Dust Flight
-    if (this.isFlying) {
+    const isInHole = this.state === 'in_hole' || (this.subterraneanSystem && this.subterraneanSystem.phase !== 'inactive' && this.subterraneanSystem.phase !== 'rejected');
+
+    if (isInHole) {
+      // Subterranean vertical kinetics already integrated in subterraneanSystem.update(dt)
+    } else if (this.isFlying) {
       this.flight.update(dt, this.isGrounded, (this.keys.jump || this.isFlying), this.velocity, this.position);
       this.isFlying = this.flight.isFlying;
 
@@ -399,35 +419,44 @@ export class CharacterController {
     this.resolveObstacles(this.position);
 
     // 6. Ground Surface Collision Detection
-    const groundElevation = this.getGroundElevation(this.position.x, this.position.z);
+    if (!isInHole) {
+      const groundElevation = this.getGroundElevation(this.position.x, this.position.z);
 
-    // Continuous slope stepping: snap small ground drops (<= 0.15m) when grounded and moving downward
-    if (this.isGrounded && !this.isFlying && this.velocity.y <= 0 && this.position.y > groundElevation && (this.position.y - groundElevation) <= 0.15) {
-      this.position.y = groundElevation;
+      // Continuous slope stepping: snap small ground drops (<= 0.15m) when grounded and moving downward
+      if (this.isGrounded && !this.isFlying && this.velocity.y <= 0 && this.position.y > groundElevation && (this.position.y - groundElevation) <= 0.15) {
+        this.position.y = groundElevation;
+      }
+
+      if (this.position.y <= groundElevation) {
+        const wasAirborne = !this.isGrounded;
+        this.position.y = groundElevation;
+        this.velocity.y = 0;
+        this.isGrounded = true;
+
+        if (wasAirborne && this.audioSystem) {
+          this.audioSystem.playLandSound();
+        }
+
+        if (this.isFlying) {
+          this.setFlight(false);
+        }
+      } else {
+        this.isGrounded = false;
+      }
     }
 
-    if (this.position.y <= groundElevation) {
-      const wasAirborne = !this.isGrounded;
-      this.position.y = groundElevation;
-      this.velocity.y = 0;
-      this.isGrounded = true;
-
-      if (wasAirborne && this.audioSystem) {
-        this.audioSystem.playLandSound();
-      }
-
-      if (this.isFlying) {
-        this.setFlight(false);
-      }
-    } else {
-      this.isGrounded = false;
+    // 6b. Subterranean Hole Entry Check (when not already in subterranean mode)
+    if (!isInHole && this.subterraneanSystem) {
+      this.subterraneanSystem.checkHoleEntry(this.position, this.velocity);
     }
 
     // 7. Update Avatar Transform & Visual State
     this.avatar.group.position.copy(this.position);
 
     // Resolve state for HUD & tests
-    if (this.ponderTimer > 0) {
+    if (isInHole) {
+      this.state = 'in_hole';
+    } else if (this.ponderTimer > 0) {
       this.state = 'pondering';
     } else if (this.isFlying) {
       this.state = 'flying';
@@ -448,6 +477,6 @@ export class CharacterController {
     }
 
     // 9. Update Third-Person Follow/Orbit Camera
-    this.thirdPersonCamera.update(dt, this.position);
+    this.thirdPersonCamera.update(dt, this.position, this.velocity);
   }
 }

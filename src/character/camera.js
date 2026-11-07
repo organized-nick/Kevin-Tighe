@@ -47,7 +47,21 @@ export class ThirdPersonCamera {
     this.raycaster = new THREE.Raycaster();
     this.raycaster.near = (CONFIG.CAMERA && CONFIG.CAMERA.NEAR) || 0.1;
 
+    // Subterranean vertical shaft framing
+    this.isSubterranean = false;
+    this.subHole = null;
+    this.subLookTarget = new THREE.Vector3();
+
     this.initInputListeners();
+  }
+
+  setSubterraneanMode(active, holeData = null) {
+    this.isSubterranean = active;
+    this.subHole = holeData;
+  }
+
+  get subterraneanActive() {
+    return this.isSubterranean;
   }
 
   setObstacles(obstacleArray) {
@@ -103,11 +117,46 @@ export class ThirdPersonCamera {
     }, { passive: false });
   }
 
-  update(dt, targetPosition) {
+  update(dt, targetPosition, targetVelocity = null) {
     // Enforce pitch bounds strictly [-85 deg, +85 deg] (-1.4835 to +1.4835 rad)
     this.pitch = THREE.MathUtils.clamp(this.pitch, this.minPitch, this.maxPitch);
 
     if (!targetPosition) return;
+
+    // Subterranean Interior Shaft Framing
+    if (this.isSubterranean && this.subHole) {
+      const h = this.subHole;
+      const isAscending = targetVelocity ? (targetVelocity.y > 0) : (targetPosition.y > this.focusPoint.y);
+
+      // Clamped interior radial offset inside cylinder
+      const camR = Math.min(0.65, h.radius * 0.35);
+      const idealX = h.position.x + Math.sin(this.yaw) * camR;
+      const idealZ = h.position.z + Math.cos(this.yaw) * camR;
+
+      let idealY, targetY;
+      if (!isAscending) {
+        // Descent Framing: Camera above Kevin, looking downward along descent
+        idealY = targetPosition.y + 3.2;
+        targetY = targetPosition.y - 1.5;
+        this.pitch = -0.45;
+      } else {
+        // Ascent Framing: Camera below Kevin, looking upward toward sky opening
+        idealY = targetPosition.y - 2.6;
+        targetY = targetPosition.y + 2.5;
+        this.pitch = 0.55;
+      }
+
+      this.idealPosition.set(idealX, idealY, idealZ);
+      this.subLookTarget.set(h.position.x, targetY, h.position.z);
+
+      const lerpPos = 1.0 - Math.exp(-10.0 * dt);
+      const lerpTarget = 1.0 - Math.exp(-12.0 * dt);
+
+      this.camera.position.lerp(this.idealPosition, lerpPos);
+      this.focusPoint.lerp(this.subLookTarget, lerpTarget);
+      this.camera.lookAt(this.focusPoint);
+      return;
+    }
 
     // 1. Compute Focus Point (Kevin's chest/head)
     this.focusPoint.set(

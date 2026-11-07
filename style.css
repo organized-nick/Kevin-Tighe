@@ -425,26 +425,38 @@ kbd {
   right: 24px;
   top: 50%;
   transform: translateY(-50%);
-  background: rgba(15, 23, 42, 0.9);
+  background: rgba(15, 23, 42, 0.94);
   border: 2px solid #38bdf8;
-  border-radius: 16px;
-  padding: 16px;
-  width: 130px;
+  border-radius: 18px;
+  padding: 16px 14px;
+  width: 140px;
   text-align: center;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6);
+  box-shadow: 0 10px 32px rgba(0, 0, 0, 0.75), 0 0 20px rgba(56, 189, 248, 0.25);
+  backdrop-filter: blur(8px);
+  z-index: 25;
 }
 
 .sub-hud.hidden { display: none; }
 
+.sub-hud-title {
+  font-size: 10px;
+  font-weight: 900;
+  color: #38bdf8;
+  letter-spacing: 1px;
+  margin-bottom: 6px;
+}
+
 .depth-readout {
-  margin-bottom: 8px;
+  margin-bottom: 6px;
 }
 
 .depth-num {
-  font-size: 28px;
+  font-size: 32px;
   font-weight: 900;
   color: #ffd800;
   display: block;
+  line-height: 1.0;
+  font-family: monospace;
 }
 
 .depth-unit {
@@ -454,40 +466,173 @@ kbd {
 }
 
 .depth-status-pill {
-  font-size: 11px;
-  font-weight: 800;
-  padding: 4px 8px;
+  font-size: 10px;
+  font-weight: 900;
+  padding: 4px 6px;
   border-radius: 6px;
-  background: rgba(16, 185, 129, 0.2);
+  background: rgba(16, 185, 129, 0.25);
   color: #34d399;
-  margin-bottom: 12px;
+  border: 1px solid rgba(16, 185, 129, 0.5);
+  margin: 6px 0 12px 0;
+  transition: all 0.2s ease;
 }
 
+/* 0 to 90ft Calibrated Scale Bar */
 .depth-scale-bar {
   position: relative;
-  width: 14px;
-  height: 180px;
-  background: #1e293b;
-  border-radius: 7px;
+  width: 20px;
+  height: 220px;
+  background: #0f172a;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 10px;
   margin: 0 auto;
   overflow: hidden;
   display: flex;
   flex-direction: column;
 }
 
-.scale-zone.zone-shallow { background: #64748b; }
-.scale-zone.zone-legal   { background: #10b981; }
-.scale-zone.zone-danger  { background: #ef4444; }
+/* Shallow Zone (0-10ft) */
+.scale-zone.zone-shallow {
+  background: repeating-linear-gradient(
+    45deg,
+    #475569,
+    #475569 4px,
+    #334155 4px,
+    #334155 8px
+  );
+  border-bottom: 1px dashed #f59e0b;
+}
+
+/* Safety Zone (10-50ft) */
+.scale-zone.zone-legal {
+  position: relative;
+  background: linear-gradient(180deg, #10b981 0%, #059669 100%);
+  box-shadow: inset 0 0 10px rgba(16, 185, 129, 0.6);
+}
+
+.scale-tick {
+  position: absolute;
+  right: 2px;
+  font-size: 7px;
+  color: rgba(255, 255, 255, 0.8);
+  font-family: monospace;
+}
+
+/* Exact 50.0ft Holy Grail Hairline Marker */
+.scale-grail-marker {
+  position: absolute;
+  top: 55.5%; /* (50.0 / 90.0) * 100% */
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: #ffd700;
+  box-shadow: 0 0 8px #ffd700;
+  z-index: 5;
+  font-size: 7px;
+  color: #ffd700;
+  font-weight: 900;
+  line-height: 1;
+}
+
+/* Red Hazard Warning Bar (>50ft) */
+.scale-zone.zone-danger {
+  background: repeating-linear-gradient(
+    -45deg,
+    #ef4444,
+    #ef4444 6px,
+    #991b1b 6px,
+    #991b1b 12px
+  );
+  animation: hazardPulse 1.2s infinite ease-in-out;
+  box-shadow: inset 0 0 12px rgba(239, 68, 68, 0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.hazard-label {
+  font-size: 7px;
+  font-weight: 900;
+  color: #fff;
+  transform: rotate(-90deg);
+  white-space: nowrap;
+}
+
+@keyframes hazardPulse {
+  0%, 100% { filter: brightness(1.0); }
+  50% { filter: brightness(1.4); }
+}
 
 .depth-indicator-needle {
   position: absolute;
-  left: -4px;
-  width: 22px;
+  left: -5px;
+  width: 30px;
   height: 4px;
   background: #ffd800;
   border-radius: 2px;
-  box-shadow: 0 0 6px #ffd800;
-  transition: top 0.08s ease;
+  box-shadow: 0 0 8px #ffd800, 0 0 14px #f97316;
+  z-index: 10;
+  transition: top 0.06s linear;
+}
+
+/* Golden Fever Top Banner */
+.golden-fever-banner {
+  position: absolute;
+  top: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: linear-gradient(135deg, rgba(15, 23, 42, 0.95), rgba(30, 41, 59, 0.95));
+  border: 2px solid #ffd700;
+  border-radius: 16px;
+  padding: 12px 28px;
+  text-align: center;
+  box-shadow: 0 0 30px rgba(255, 215, 0, 0.6);
+  z-index: 50;
+  animation: bannerGlow 1.5s infinite alternate;
+}
+
+.golden-fever-banner.hidden { display: none; }
+
+.fever-title {
+  font-size: 18px;
+  font-weight: 900;
+  color: #ffd700;
+  letter-spacing: 1px;
+}
+
+.fever-sub {
+  font-size: 11px;
+  font-weight: 700;
+  color: #fed7aa;
+  margin: 4px 0 8px 0;
+}
+
+.fever-bar-wrap {
+  width: 220px;
+  height: 8px;
+  background: #0f172a;
+  border-radius: 4px;
+  margin: 0 auto 6px auto;
+  overflow: hidden;
+}
+
+.fever-progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #f59e0b, #ffd700, #fff);
+  border-radius: 4px;
+  transition: width 0.1s linear;
+}
+
+.fever-timer {
+  font-size: 13px;
+  font-weight: 900;
+  color: #ffd700;
+  font-family: monospace;
+}
+
+@keyframes bannerGlow {
+  from { box-shadow: 0 0 20px rgba(255, 215, 0, 0.4); }
+  to   { box-shadow: 0 0 40px rgba(255, 215, 0, 0.85); }
 }
 
 /* Bottom Bar Prompts */

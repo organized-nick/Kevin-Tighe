@@ -14,6 +14,10 @@ import { CharacterController } from './character/controller.js';
 import { SonarSystem } from './character/sonar.js';
 import { PickupManager } from './items/pickups.js';
 import { HUDManager } from './ui/hud.js';
+import { HoleManager } from './holes/holeManager.js';
+import { SubterraneanSystem } from './holes/subterranean.js';
+import { GeyserEmitter } from './holes/geyser.js';
+import { ConfettiFireworksEmitter, GoldenFeverManager } from './holes/celebrations.js';
 
 class Game {
   constructor() {
@@ -75,6 +79,22 @@ class Game {
     // 7. Initialize HUD Manager
     this.hud = new HUDManager();
 
+    // 7b. Initialize 4 Landmark Subterranean Holes & Emitters
+    this.holeManager = new HoleManager(this.engine.scene, this.textures);
+    this.geyserEmitter = new GeyserEmitter(this.engine.scene);
+    this.confettiEmitter = new ConfettiFireworksEmitter(this.engine.scene);
+
+    // 7c. Initialize Subterranean System
+    this.subterranean = new SubterraneanSystem(
+      null,
+      this.hud,
+      this.audio,
+      {
+        holeManager: this.holeManager,
+        geyserEmitter: this.geyserEmitter
+      }
+    );
+
     // 8. Initialize "Hmm..." Sonar System
     this.sonar = new SonarSystem({
       scene: this.engine.scene,
@@ -90,7 +110,7 @@ class Game {
           this.character.ponderTimer = 1.5;
         }
       },
-      holes: CONFIG.HOLES,
+      holes: this.holeManager.getHolesList(),
       synth: this.audio.synth,
       onTrigger: (scan) => {
         if (this.hud) {
@@ -104,8 +124,30 @@ class Game {
       this.engine,
       this.worldManager,
       this.textures,
-      { sonarSystem: this.sonar, audioSystem: this.audio }
+      {
+        sonarSystem: this.sonar,
+        audioSystem: this.audio,
+        subterraneanSystem: this.subterranean
+      }
     );
+    this.subterranean.controller = this.character;
+
+    // 9b. Initialize Golden Fever Manager & Attach Celebrations
+    this.goldenFever = new GoldenFeverManager(this.engine.scene, this.character, this.hud);
+    this.celebrations = {
+      confetti: this.confettiEmitter,
+      goldenFever: this.goldenFever
+    };
+    this.subterranean.setCelebrations(this.celebrations);
+
+    // Direct instance references for inspectability and tests
+    this.scene = this.engine.scene;
+    this.camera = this.engine.camera;
+    this.renderer = this.engine.renderer;
+    this.subterraneanSystem = this.subterranean;
+    this.goldenFeverManager = this.goldenFever;
+    this.sonarSystem = this.sonar;
+    this.cameraRig = this.character ? this.character.thirdPersonCamera : null;
 
     // 10. Initialize Pickups (22 citrus orbs + 4 landmark bonus items)
     this.pickupManager = new PickupManager(
@@ -275,6 +317,20 @@ class Game {
         this.sonar.update(dt);
       }
 
+      // 5b. Update Subterranean Systems & Celebrations
+      if (this.holeManager) {
+        this.holeManager.update(dt);
+      }
+      if (this.geyserEmitter) {
+        this.geyserEmitter.update(dt);
+      }
+      if (this.confettiEmitter) {
+        this.confettiEmitter.update(dt);
+      }
+      if (this.goldenFever) {
+        this.goldenFever.update(dt);
+      }
+
       // 6. Synchronize Game State & Update HUD
       if (this.character) {
         this.gameState.playerPos = this.character.position;
@@ -411,14 +467,33 @@ class Game {
 
       // Subterranean Holes API (Integrated with Holy Grail and Tiers)
       holes: {
-        list: CONFIG.HOLES,
-        enterHole: async (holeId) => {
-          const hole = CONFIG.HOLES.find(h => h.id === holeId) || CONFIG.HOLES[0];
-          let status = 'completed';
-          let fanfare = (Math.abs(hole.depthFt - 50.0) < 0.001);
-          if (hole.tier === 'shallow' || hole.depthFt < 10.0) status = 'rejected';
-          else if (hole.tier === 'deep' || hole.depthFt > 50.0) status = 'boundary_breach';
-          return { status, depth: hole.depthFt, fanfare };
+        list: this.holeManager.getHolesList(),
+        get activeHole() {
+          return self.subterranean ? self.subterranean.activeHole : null;
+        },
+        get subterraneanPhase() {
+          return self.subterranean ? self.subterranean.phase : 'inactive';
+        },
+        get currentDepthFt() {
+          return self.subterranean ? self.subterranean.depthFt : 0.0;
+        },
+        get goldenFeverActive() {
+          return self.goldenFever ? self.goldenFever.isActive : false;
+        },
+        get goldenFeverRemaining() {
+          return self.goldenFever ? self.goldenFever.timer : 0.0;
+        },
+        escapeMidShaft: () => {
+          if (self.subterranean) {
+            return self.subterranean.escapeMidShaft();
+          }
+          return false;
+        },
+        enterHole: (holeId) => {
+          if (self.subterranean) {
+            return self.subterranean.enterHole(holeId);
+          }
+          return null;
         }
       },
 

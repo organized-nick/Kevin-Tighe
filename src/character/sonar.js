@@ -40,19 +40,25 @@ export function evaluateSonarScan(origin, holes, scanRadius = 100.0) {
 
     // Exact boundary inclusion dist <= scanRadius (T2-BND-26 and T2-BND-27)
     if (dist <= scanRadius) {
-      let beaconColor = 0xff8800; // Sweet spot orange default
-      if (Math.abs(hole.depthFt - 50.0) < 0.001) {
-        beaconColor = 0xffd700; // 50ft Holy Grail radiant gold
+      let beaconColor = 0xff8800; // Bright Orange (10-50ft sweet spot)
+      let tierLabel = 'SWEET SPOT (10-50FT)';
+
+      if (Math.abs(hole.depthFt - 50.0) < 0.25) {
+        beaconColor = 0xffd700; // Radiant Gold (50.0ft Holy Grail)
+        tierLabel = '⭐ 50.0FT HOLY GRAIL! ⭐';
       } else if (hole.tier === HOLE_TIERS.SHALLOW || hole.depthFt < 10.0) {
-        beaconColor = 0xff4444; // Shallow red warning
+        beaconColor = 0xf59e0b; // Amber (<10ft shallow rejection)
+        tierLabel = 'TOO SHALLOW (<10FT)';
       } else if (hole.tier === HOLE_TIERS.DEEP || hole.depthFt > 50.0) {
-        beaconColor = 0xef4444; // Too deep hazard red
+        beaconColor = 0xff0055; // Neon Crimson (>50ft hazard abyss)
+        tierLabel = 'HAZARD (>50FT)';
       }
 
       detected.push({
         ...hole,
         distance: dist,
-        beaconColor
+        beaconColor,
+        tierLabel
       });
     }
   }
@@ -106,6 +112,17 @@ export class SonarSystem {
    */
   getCooldownRemaining(currentTime = Date.now()) {
     return Math.max(0, this.cooldownMs - (currentTime - this.lastTriggerTime));
+  }
+
+  /**
+   * Scan landmark holes and return detected items with colorHex
+   */
+  scanLandmarkHoles(origin = this.getOrigin(), scanRadius = 150.0) {
+    const detected = evaluateSonarScan(origin, this.holes, scanRadius);
+    return detected.map(d => ({
+      ...d,
+      colorHex: '#' + d.beaconColor.toString(16).padStart(6, '0')
+    }));
   }
 
   /**
@@ -280,18 +297,18 @@ export class SonarSystem {
 
       // Status Pill / Rule Tag
       ctx.font = 'bold 24px sans-serif';
-      if (Math.abs(hole.depthFt - 50.0) < 0.001) {
+      if (Math.abs(hole.depthFt - 50.0) < 0.25) {
         ctx.fillStyle = '#ffd700';
-        ctx.fillText('⭐ 50ft HOLY GRAIL PINNACLE! ⭐', 256, 186);
+        ctx.fillText('⭐ 50.0FT HOLY GRAIL! ⭐', 256, 186);
       } else if (hole.depthFt < 10.0) {
-        ctx.fillStyle = '#f87171';
-        ctx.fillText('TOO SHALLOW! (<10ft REJECTED)', 256, 186);
+        ctx.fillStyle = '#f59e0b';
+        ctx.fillText('TOO SHALLOW (<10FT)', 256, 186);
       } else if (hole.depthFt <= 50.0) {
-        ctx.fillStyle = '#34d399';
-        ctx.fillText('SWEET SPOT (10-50ft LEGAL)', 256, 186);
+        ctx.fillStyle = '#ff8800';
+        ctx.fillText('SWEET SPOT (10-50FT)', 256, 186);
       } else {
-        ctx.fillStyle = '#ef4444';
-        ctx.fillText('DANGER! (>50ft HAZARD)', 256, 186);
+        ctx.fillStyle = '#ff0055';
+        ctx.fillText('HAZARD (>50FT)', 256, 186);
       }
 
       const texture = new THREE.CanvasTexture(canvas);
