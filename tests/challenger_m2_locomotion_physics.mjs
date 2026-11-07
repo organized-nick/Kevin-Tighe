@@ -126,8 +126,9 @@ async function runChallengerLocomotionPhysicsAudit() {
       const game = window._gameInstance;
       const ctrl = game.character;
 
-      // 1. Dock Locomotion (Deck Y = 0.85m, Z in [6, 30])
-      ctrl.teleport(0.0, 0.85, 10.0);
+      // 1. Dock Locomotion (Deck Y = 0.85m, Z in [6, 30], walking forward along pier toward shore -Z)
+      ctrl.teleport(0.0, 0.85, 19.0);
+      ctrl.thirdPersonCamera.setYaw(0.0); // Camera at +Z looking -Z along pier
       ctrl.update(0.016);
       const dockStartPos = { ...ctrl.position };
       const dockGroundElev = ctrl.getGroundElevation(ctrl.position.x, ctrl.position.z);
@@ -143,6 +144,7 @@ async function runChallengerLocomotionPhysicsAudit() {
 
       // 2. Cabin Porch Locomotion (Deck Y = 2.35m, X in [20.25, 29.75], Z in [-11.0, -7.8])
       ctrl.teleport(25.0, 2.35, -9.5);
+      ctrl.thirdPersonCamera.setYaw(0.0);
       ctrl.update(0.016);
       const porchGroundElev = ctrl.getGroundElevation(ctrl.position.x, ctrl.position.z);
 
@@ -154,7 +156,8 @@ async function runChallengerLocomotionPhysicsAudit() {
       }
       ctrl.keys.right = false;
 
-      // Walk off porch edge towards lake (+Z, Z > -7.8)
+      // Face camera toward lake (+Z, yaw = PI) and walk forward off porch edge (+Z, Z > -7.8)
+      ctrl.thirdPersonCamera.setYaw(Math.PI);
       ctrl.keys.forward = true;
       let steppedDownToTerrain = false;
       let postStepY = ctrl.position.y;
@@ -167,7 +170,8 @@ async function runChallengerLocomotionPhysicsAudit() {
       }
       ctrl.keys.forward = false;
 
-      // 3. Shoreline & Terrain Following
+      // 3. Shoreline & Terrain Following (along golden sandbar spit at X=10, Z=8 -> +Z)
+      ctrl.thirdPersonCamera.setYaw(Math.PI);
       ctrl.teleport(10.0, ctrl.getGroundElevation(10.0, 8.0), 8.0);
       ctrl.update(0.016);
       ctrl.keys.forward = true;
@@ -181,7 +185,8 @@ async function runChallengerLocomotionPhysicsAudit() {
       }
       ctrl.keys.forward = false;
 
-      // Map boundary radius clamp: attempt sprint to +X
+      // Map boundary radius clamp: attempt sprint to +X (yaw = 0 => right = +X)
+      ctrl.thirdPersonCamera.setYaw(0.0);
       ctrl.teleport(75.0, 2.0, 0.0);
       ctrl.keys.right = true;
       for (let i = 0; i < 30; i++) {
@@ -190,8 +195,9 @@ async function runChallengerLocomotionPhysicsAudit() {
       ctrl.keys.right = false;
       const clampedBoundaryRadius = Math.hypot(ctrl.position.x, ctrl.position.z);
 
-      // 4. Rocky Bluffs Overlook Plateau (+22m elevation)
-      ctrl.teleport(-45.0, 22.0, 0.0);
+      // 4. Rocky Bluffs Overlook Plateau (+22m elevation, Z in [-6, 6] — walk south +Z away from shaft)
+      ctrl.thirdPersonCamera.setYaw(Math.PI);
+      ctrl.teleport(-45.0, 22.0, 0.5);
       ctrl.update(0.016);
       const bluffStartElev = ctrl.position.y;
 
@@ -202,10 +208,11 @@ async function runChallengerLocomotionPhysicsAudit() {
         minBluffY = Math.min(minBluffY, ctrl.position.y);
       }
       ctrl.keys.forward = false;
+      ctrl.thirdPersonCamera.setYaw(0.0);
 
       return {
         dockGroundElev,
-        dockDeltaZ: dockMovedPos.z - dockStartPos.z,
+        dockDeltaZ: dockStartPos.z - dockMovedPos.z,
         minDockY,
         porchGroundElev,
         minPorchY,
@@ -232,6 +239,84 @@ async function runChallengerLocomotionPhysicsAudit() {
 
     assert(landmarkLocomotion.bluffStartElev >= 21.0, `Bluffs plateau high elevation confirmed at Y >= 21m (actual: ${landmarkLocomotion.bluffStartElev.toFixed(2)}m)`, 'phase2_locomotion');
     assert(landmarkLocomotion.minBluffY >= 21.0, 'Overlook footing remains stable and solid at +22m elevation', 'phase2_locomotion');
+
+    // -------------------------------------------------------------------------
+    // Phase 2B: 360° Camera-Relative Directional Basis & Hold-Space Glide Audit
+    // -------------------------------------------------------------------------
+    console.log('\n[Phase 2B] Auditing 360° Camera-Relative WASD Basis & Hold-Space Jump-to-Glide...');
+    const directionAndGlideAudit = await page.evaluate(() => {
+      const game = window._gameInstance;
+      const ctrl = game.character;
+      const cam = ctrl.thirdPersonCamera;
+      const testYaws = [0, Math.PI / 2, Math.PI, -Math.PI / 2, 0.73, -2.18];
+      let minFwdDot = 1.0;
+      let maxBackDot = -1.0;
+      let minRightDot = 1.0;
+      let maxLeftDot = -1.0;
+
+      for (const yaw of testYaws) {
+        ctrl.teleport(25.0, 2.0, -2.0);
+        cam.setYaw(yaw);
+        cam.snapToTarget(ctrl.position);
+
+        // Extract actual Three.js camera world view direction projected onto XZ plane
+        const camWorldDir = game.camera.getWorldDirection(ctrl.position.clone().set(0, 0, 0));
+        const lenXZ = Math.hypot(camWorldDir.x, camWorldDir.z);
+        const fwdX = camWorldDir.x / lenXZ;
+        const fwdZ = camWorldDir.z / lenXZ;
+        // Right = Forward x Up = (fwdX, 0, fwdZ) x (0, 1, 0) = (-fwdZ, 0, fwdX)
+        const rightX = -fwdZ;
+        const rightZ = fwdX;
+
+        const measureDir = (keyName) => {
+          ctrl.keys.forward = false;
+          ctrl.keys.backward = false;
+          ctrl.keys.left = false;
+          ctrl.keys.right = false;
+          ctrl.keys[keyName] = true;
+          cam.setYaw(yaw);
+          ctrl.update(0.016);
+          ctrl.keys[keyName] = false;
+          const vLen = Math.hypot(ctrl.velocity.x, ctrl.velocity.z);
+          return { vx: ctrl.velocity.x / vLen, vz: ctrl.velocity.z / vLen };
+        };
+
+        const w = measureDir('forward');
+        const s = measureDir('backward');
+        const d = measureDir('right');
+        const a = measureDir('left');
+
+        minFwdDot = Math.min(minFwdDot, w.vx * fwdX + w.vz * fwdZ);
+        maxBackDot = Math.max(maxBackDot, s.vx * fwdX + s.vz * fwdZ);
+        minRightDot = Math.min(minRightDot, d.vx * rightX + d.vz * rightZ);
+        maxLeftDot = Math.max(maxLeftDot, a.vx * rightX + a.vz * rightZ);
+      }
+
+      // Test Hold-Space from Ground Jump -> Automatic Peter Pan Glide
+      ctrl.teleport(0.0, 0.85, 16.0);
+      ctrl.pixieDust = 100.0;
+      ctrl.keys.jump = true;
+      ctrl.jumpJustPressed = true;
+      let autoGlided = false;
+      for (let i = 0; i < 30; i++) {
+        ctrl.update(0.016);
+        if (ctrl.isFlying) {
+          autoGlided = true;
+          break;
+        }
+      }
+      ctrl.keys.jump = false;
+      ctrl.setFlight(false);
+      cam.setYaw(0.0);
+
+      return { minFwdDot, maxBackDot, minRightDot, maxLeftDot, autoGlided };
+    });
+
+    assert(directionAndGlideAudit.minFwdDot > 0.999, `W / Up moves strictly into camera view across all 360° yaw angles (min dot: ${directionAndGlideAudit.minFwdDot.toFixed(4)})`, 'phase2b_directions');
+    assert(directionAndGlideAudit.maxBackDot < -0.999, `S / Down moves strictly toward camera across all 360° yaw angles (max dot: ${directionAndGlideAudit.maxBackDot.toFixed(4)})`, 'phase2b_directions');
+    assert(directionAndGlideAudit.minRightDot > 0.999, `D / Right strafes strictly camera-right across all 360° yaw angles (min dot: ${directionAndGlideAudit.minRightDot.toFixed(4)})`, 'phase2b_directions');
+    assert(directionAndGlideAudit.maxLeftDot < -0.999, `A / Left strafes strictly camera-left across all 360° yaw angles (max dot: ${directionAndGlideAudit.maxLeftDot.toFixed(4)})`, 'phase2b_directions');
+    assert(directionAndGlideAudit.autoGlided === true, 'Holding Space from a ground jump smoothly engages Peter Pan Pixie Dust glide', 'phase2b_directions');
 
     // -------------------------------------------------------------------------
     // Phase 3: Rapid Key Inputs & Diagonal Normalization
@@ -593,11 +678,11 @@ async function runChallengerLocomotionPhysicsAudit() {
         cameraActualPos.y < 6.2
       );
 
-      // 3. Obstacle Collision: Prevent Character Walking into Cabin Walls
+      // 3. Obstacle Collision: Prevent Character Walking into Cabin Walls (yaw = 0 looks -Z directly at cabin wall Z = -11.0)
       ctrl.teleport(25.0, 2.0, -10.5);
       ctrl.keys.backward = false;
       ctrl.keys.forward = true;
-      cam.yaw = Math.PI;
+      cam.yaw = 0.0;
       for (let f = 0; f < 25; f++) {
         ctrl.update(0.033);
       }

@@ -1,5 +1,5 @@
 {
-  "timestamp": "2026-11-07T09:53:46.196Z",
+  "timestamp": "2026-11-07T17:43:06.414Z",
   "targetUrl": "http://localhost:8097?autostart=1",
   "sections": {
     "phase1_boot": {
@@ -22,6 +22,16 @@
         "Lake perimeter soft boundary clamp enforces radius <= 80m (actual: 80.00m)",
         "Bluffs plateau high elevation confirmed at Y >= 21m (actual: 22.00m)",
         "Overlook footing remains stable and solid at +22m elevation"
+      ],
+      "failed": []
+    },
+    "phase2b_directions": {
+      "passed": [
+        "W / Up moves strictly into camera view across all 360° yaw angles (min dot: 1.0000)",
+        "S / Down moves strictly toward camera across all 360° yaw angles (max dot: -1.0000)",
+        "D / Right strafes strictly camera-right across all 360° yaw angles (min dot: 1.0000)",
+        "A / Left strafes strictly camera-left across all 360° yaw angles (max dot: -1.0000)",
+        "Holding Space from a ground jump smoothly engages Peter Pan Pixie Dust glide"
       ],
       "failed": []
     },
@@ -57,8 +67,8 @@
     "phase5_slopes": {
       "passed": [
         "Gentle slope (10.2°) provides stable footing with zero passive slide",
-        "Bluff chasm features slopes exceeding 50 degrees (max detected: 56.9°)",
-        "Steep slope (55.8°) immediately induces downward sliding force (slide velocity: 7.43 m/s)",
+        "Bluff chasm features slopes exceeding 50 degrees (max detected: 60.7°)",
+        "Steep slope (54.5°) immediately induces downward sliding force (slide velocity: 7.27 m/s)",
         "Player automatically slides down steep bluff face (>50°) without manual input"
       ],
       "failed": []
@@ -92,8 +102,8 @@
     }
   },
   "assertions": {
-    "total": 48,
-    "passed": 48,
+    "total": 53,
+    "passed": 53,
     "failed": 0
   },
   "failures": [],

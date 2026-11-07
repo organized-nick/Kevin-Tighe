@@ -57,11 +57,12 @@
       </div>
 
       <div class="controls-guide">
-        <div class="ctrl-chip"><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> Move</div>
-        <div class="ctrl-chip"><kbd>MOUSE</kbd> Orbit Camera</div>
-        <div class="ctrl-chip"><kbd>SPACE</kbd> Jump / Hold for Flight</div>
-        <div class="ctrl-chip"><kbd>H</kbd> / <kbd>E</kbd> Sonar "Hmm..."</div>
-        <div class="ctrl-chip"><kbd>M</kbd> Mute Audio</div>
+        <div class="ctrl-chip"><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> / <kbd>↑↓←→</kbd> Move</div>
+        <div class="ctrl-chip"><kbd>SHIFT</kbd> Sprint</div>
+        <div class="ctrl-chip"><kbd>Q</kbd><kbd>E</kbd> / <kbd>DRAG</kbd> Orbit Camera</div>
+        <div class="ctrl-chip"><kbd>SPACE</kbd> Jump / Hold Glide (<kbd>F</kbd> Fly)</div>
+        <div class="ctrl-chip"><kbd>H</kbd> Sonar "Hmm..."</div>
+        <div class="ctrl-chip"><kbd>M</kbd> Mute</div>
       </div>
 
       <div class="obsession-select">
@@ -81,6 +82,7 @@
 
   <!-- In-Game HUD -->
   <div id="hud" class="hud-layer hidden">
+    <div class="hud-top-cluster">
     <!-- Top Stats Bar -->
     <div class="hud-top-bar">
       <div class="hud-stats-group">
@@ -112,15 +114,41 @@
       </div>
     </div>
 
-    <!-- Pixie Dust Flight Energy Meter -->
-    <div class="hud-dust-wrap">
-      <div class="dust-label">
-        <span>✨ PIXIE DUST (HOLD SPACE IN AIR TO GLIDE)</span>
-        <span id="hudDustVal">100%</span>
+    <!-- Top Sub-Row: Pixie Dust Meter + Live Hole Bearing Compass -->
+    <div class="hud-sub-row">
+      <div class="hud-dust-wrap">
+        <div class="dust-label">
+          <span>✨ PIXIE DUST (SPACE GLIDE • F FLY)</span>
+          <span id="hudDustVal">100%</span>
+        </div>
+        <div class="dust-track">
+          <div class="dust-fill" id="hudDustFill" style="width: 100%;"></div>
+        </div>
       </div>
-      <div class="dust-track">
-        <div class="dust-fill" id="hudDustFill" style="width: 100%;"></div>
+
+      <div class="hole-compass-bar" id="holeCompassBar" aria-label="Hole Waypoint Compass">
+        <div class="compass-pill sweet" data-hole="hole_dockside">
+          <span class="compass-arrow" id="dir_hole_dockside">▲</span>
+          <span class="compass-name">22ft Pier Pit</span>
+          <span class="compass-dist" id="dist_hole_dockside">--m</span>
+        </div>
+        <div class="compass-pill grail" data-hole="hole_pine_root">
+          <span class="compass-arrow" id="dir_hole_pine_root">↗</span>
+          <span class="compass-name">⭐ 50ft Grail</span>
+          <span class="compass-dist" id="dist_hole_pine_root">--m</span>
+        </div>
+        <div class="compass-pill shallow" data-hole="hole_shoreline">
+          <span class="compass-arrow" id="dir_hole_shoreline">↗</span>
+          <span class="compass-name">7.5ft Shallow</span>
+          <span class="compass-dist" id="dist_hole_shoreline">--m</span>
+        </div>
+        <div class="compass-pill deep" data-hole="hole_bluff_shaft">
+          <span class="compass-arrow" id="dir_hole_bluff_shaft">↖</span>
+          <span class="compass-name">82ft Bluff</span>
+          <span class="compass-dist" id="dist_hole_bluff_shaft">--m</span>
+        </div>
       </div>
+    </div>
     </div>
 
     <!-- Center Aim Reticle -->
@@ -163,12 +191,25 @@
 
     <!-- Bottom Action Prompts -->
     <div class="hud-bottom-bar">
+      <div class="action-prompt" id="movePrompt">
+        <span class="key-badge">WASD</span> Move • <span class="key-badge">Q / E</span> or <span class="key-badge">DRAG</span> Orbit
+      </div>
       <div class="action-prompt" id="sonarPrompt">
-        <span class="key-badge">H</span> Ponder "Hmm..." (Sonar Ping Nearby Holes)
+        <span class="key-badge">H</span> Ponder "Hmm..." Sonar
       </div>
       <div class="action-prompt" id="flightPrompt">
-        <span class="key-badge">SPACE</span> Peter Pan Pixie Dust Flight
+        <span class="key-badge">SPACE</span> Jump / Hold Glide (<span class="key-badge">F</span> Fly)
       </div>
+    </div>
+
+    <!-- Quick Controls Help Card (Toggled via ? Button) -->
+    <div id="helpPopover" class="help-popover hidden">
+      <div class="help-popover-title">🎮 CONTROLS &amp; LANDMARKS</div>
+      <div class="help-popover-row"><strong>W / A / S / D</strong> or <strong>Arrows</strong> — Camera-relative movement (<strong>Shift</strong> to sprint)</div>
+      <div class="help-popover-row"><strong>Mouse Drag</strong> or <strong>Q / E</strong> — Orbit camera (<strong>Wheel</strong> zoom, <strong>L</strong> or double-click mouse-look)</div>
+      <div class="help-popover-row"><strong>Space</strong> — Jump; keep holding <strong>Space</strong> in air to glide! (<strong>F</strong> toggle flight, <strong>C</strong> descend)</div>
+      <div class="help-popover-row"><strong>H</strong> / <strong>R</strong> — Ponder <em>"Hmm..."</em> sonar ping • <strong>M</strong> — Mute audio</div>
+      <div class="help-popover-note">Follow the top compass arrows &amp; glowing sky beams to all 4 holes (aim for <strong>10–50ft</strong> &amp; the <strong>50.0ft Gold Grail</strong>!).</div>
     </div>
   </div>
 

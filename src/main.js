@@ -70,7 +70,9 @@ class Game {
       legalHolesConquered: 0,
       pixieDust: 100.0,
       isFlying: false,
-      playerPos: { x: 0, y: 0.85, z: 10.0 },
+      playerPos: { x: 0, y: 0.85, z: 27.5 },
+      cameraYaw: 0,
+      holes: [],
       characterState: 'idle',
       fourthObsession: 'Cheddar Cheese Wedges',
       muted: false,
@@ -159,6 +161,10 @@ class Game {
     );
 
     // 11. UI & Contract Initialization
+    if (this.input) {
+      this.input.enabled = false;
+    }
+    this.gameState.holes = this.holeManager.getHolesList();
     this.initUI();
     this.initTestContract();
 
@@ -216,30 +222,70 @@ class Game {
       startBtn.addEventListener('click', () => this.startGame());
     }
 
-    // Spacebar starts game if on start overlay
+    // Spacebar starts game if on start overlay (unless typing 4th obsession)
     window.addEventListener('keydown', (e) => {
-      if (!this.gameState.started && e.code === 'Space') {
+      const target = e.target;
+      const isTyping = target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA');
+      if (!this.gameState.started && !isTyping && (e.code === 'Space' || e.code === 'Enter')) {
         e.preventDefault();
         this.startGame();
+      } else if (this.gameState.started && !isTyping && e.code === 'Slash' && e.shiftKey) {
+        e.preventDefault();
+        this.toggleHelpPopover();
       }
     });
 
-    // Mute toggle button
+    // Mute toggle helper (button + M key)
     const muteBtn = document.getElementById('muteBtn');
-    if (muteBtn) {
-      muteBtn.addEventListener('click', () => {
-        this.gameState.muted = !this.gameState.muted;
-        if (this.audio) {
-          this.audio.setMuted(this.gameState.muted);
-        }
+    const toggleMute = () => {
+      this.gameState.muted = !this.gameState.muted;
+      if (this.audio) {
+        this.audio.setMuted(this.gameState.muted);
+      }
+      if (muteBtn) {
         muteBtn.textContent = this.gameState.muted ? '🔇' : '🔊';
+      }
+    };
+
+    if (muteBtn) {
+      muteBtn.addEventListener('click', toggleMute);
+    }
+
+    if (this.input) {
+      this.input.on('mute', toggleMute);
+      this.input.on('pointerLock', () => {
+        if (this.cameraRig && typeof this.cameraRig.togglePointerLock === 'function') {
+          this.cameraRig.togglePointerLock();
+        }
       });
+    }
+
+    // Help popover button (?)
+    const helpBtn = document.getElementById('helpBtn');
+    if (helpBtn) {
+      helpBtn.addEventListener('click', () => this.toggleHelpPopover());
+    }
+  }
+
+  toggleHelpPopover() {
+    const popover = document.getElementById('helpPopover');
+    if (popover) {
+      popover.classList.toggle('hidden');
     }
   }
 
   startGame() {
     if (this.gameState.started) return;
     this.gameState.started = true;
+
+    if (this.input) {
+      this.input.reset();
+      this.input.enabled = true;
+    }
+    if (this.character) {
+      this.character.jumpJustPressed = false;
+      this.character.jumpBufferTimer = 0.0;
+    }
 
     if (this.audio) {
       this.audio.ensureContext();
@@ -290,7 +336,11 @@ class Game {
 
       // 3. Update Character Controller, locomotion, flight, camera
       if (this.character) {
-        this.character.update(dt);
+        if (this.gameState.started) {
+          this.character.update(dt);
+        } else if (this.character.thirdPersonCamera) {
+          this.character.thirdPersonCamera.update(dt, this.character.position, this.character.velocity);
+        }
       }
 
       // 4. Update Pickups & Proximity Collection
@@ -337,6 +387,7 @@ class Game {
       // 6. Synchronize Game State & Update HUD
       if (this.character) {
         this.gameState.playerPos = this.character.position;
+        this.gameState.cameraYaw = this.character.thirdPersonCamera ? this.character.thirdPersonCamera.yaw : 0;
         this.gameState.characterState = this.character.state;
         this.gameState.isFlying = this.character.isFlying;
         this.gameState.pixieDust = this.character.pixieDust;

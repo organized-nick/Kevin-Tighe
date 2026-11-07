@@ -270,28 +270,32 @@ export class FlightSystem {
    * @param {THREE.Vector3|Object} position - Player position vector
    * @returns {string} Suggested character locomotion state
    */
-  update(dt, isGrounded, inputFlight, velocity, position) {
+  update(dt, isGrounded, inputFlight, velocity, position, options = {}) {
+    const safeDt = (typeof dt === 'number' && Number.isFinite(dt) && dt > 0) ? dt : 0;
+
     // 1. Grounded recharge kinetics
     if (isGrounded) {
       this.isFlying = false;
       this.isGliding = false;
       if (this.pixieDust < this.maxPixieDust) {
-        this.pixieDust = Math.min(this.maxPixieDust, this.pixieDust + this.rechargeRate * dt);
+        this.pixieDust = Math.min(this.maxPixieDust, this.pixieDust + this.rechargeRate * safeDt);
       }
     } else {
       // 2. Airborne flight activation & fuel depletion
       if (inputFlight && this.pixieDust > 0.0) {
         this.isFlying = true;
-        this.pixieDust = Math.max(0.0, this.pixieDust - this.drainRate * dt);
+        this.pixieDust = Math.max(0.0, this.pixieDust - this.drainRate * safeDt);
 
-        // Flight upward thrust / fall arrest
+        // Flight vertical control: descend when C/Ctrl held, otherwise arrest fall & climb
         if (velocity) {
-          if (velocity.y < 0) {
+          if (options.descend) {
+            velocity.y = Math.max(-4.2, velocity.y - this.flightThrust * safeDt * 1.8);
+          } else if (velocity.y < 0) {
             // Arrest gravitational descent quickly
-            velocity.y = Math.min(this.climbSpeed, velocity.y + this.flightThrust * dt * 2.5);
+            velocity.y = Math.min(this.climbSpeed, velocity.y + this.flightThrust * safeDt * 2.5);
           } else {
             // Steady upward flight climb
-            velocity.y = Math.min(this.climbSpeed, velocity.y + this.flightThrust * dt);
+            velocity.y = Math.min(this.climbSpeed, velocity.y + this.flightThrust * safeDt);
           }
         }
 
@@ -314,7 +318,9 @@ export class FlightSystem {
     // 3. Update particle emitter & test reflection
     this.particles.active = this.isFlying;
     this.particles.count = Math.max(this.emitter.activeCount, 50);
-    this.emitter.update(dt, position, this.isFlying, velocity);
+    if (safeDt > 0) {
+      this.emitter.update(safeDt, position, this.isFlying, velocity);
+    }
 
     return this.state;
   }

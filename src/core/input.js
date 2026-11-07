@@ -6,7 +6,7 @@
 export class InputManager {
   constructor(options = {}) {
     this.domElement = options.domElement || (typeof window !== 'undefined' ? window : null);
-    
+
     // Core action keys dictionary matching game controller contract
     this.keys = {
       forward: false,
@@ -14,7 +14,10 @@ export class InputManager {
       left: false,
       right: false,
       jump: false,
-      sprint: false
+      sprint: false,
+      camLeft: false,
+      camRight: false,
+      descend: false
     };
 
     // Raw key set and event callbacks
@@ -26,6 +29,7 @@ export class InputManager {
     this.mouseDelta = { x: 0, y: 0 };
     this.isMouseDown = false;
     this.isPointerLocked = false;
+    this.enabled = true;
 
     // Bound handlers for clean disposal
     this._onKeyDown = this.handleKeyDown.bind(this);
@@ -33,6 +37,7 @@ export class InputManager {
     this._onMouseMove = this.handleMouseMove.bind(this);
     this._onMouseDown = this.handleMouseDown.bind(this);
     this._onMouseUp = this.handleMouseUp.bind(this);
+    this._onBlur = this.reset.bind(this);
 
     this.attach();
   }
@@ -45,6 +50,7 @@ export class InputManager {
     window.addEventListener('mousemove', this._onMouseMove);
     window.addEventListener('mousedown', this._onMouseDown);
     window.addEventListener('mouseup', this._onMouseUp);
+    window.addEventListener('blur', this._onBlur);
   }
 
   detach() {
@@ -55,20 +61,45 @@ export class InputManager {
     window.removeEventListener('mousemove', this._onMouseMove);
     window.removeEventListener('mousedown', this._onMouseDown);
     window.removeEventListener('mouseup', this._onMouseUp);
+    window.removeEventListener('blur', this._onBlur);
   }
 
   handleKeyDown(e) {
     const target = e.target;
     if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA')) return;
+    if (!this.enabled) return;
 
     const code = e.code;
     this.pressedKeys.add(code);
 
-    if (code === 'KeyW' || code === 'ArrowUp') this.keys.forward = true;
-    if (code === 'KeyS' || code === 'ArrowDown') this.keys.backward = true;
-    if (code === 'KeyA' || code === 'ArrowLeft') this.keys.left = true;
-    if (code === 'KeyD' || code === 'ArrowRight') this.keys.right = true;
-    if (code === 'ShiftLeft' || code === 'ShiftRight') this.keys.sprint = true;
+    if (code === 'KeyW' || code === 'ArrowUp') {
+      if (code === 'ArrowUp') e.preventDefault();
+      this.keys.forward = true;
+    }
+    if (code === 'KeyS' || code === 'ArrowDown') {
+      if (code === 'ArrowDown') e.preventDefault();
+      this.keys.backward = true;
+    }
+    if (code === 'KeyA' || code === 'ArrowLeft') {
+      if (code === 'ArrowLeft') e.preventDefault();
+      this.keys.left = true;
+    }
+    if (code === 'KeyD' || code === 'ArrowRight') {
+      if (code === 'ArrowRight') e.preventDefault();
+      this.keys.right = true;
+    }
+    if (code === 'ShiftLeft' || code === 'ShiftRight') {
+      this.keys.sprint = true;
+    }
+    if (code === 'KeyQ' || code === 'BracketLeft') {
+      this.keys.camLeft = true;
+    }
+    if (code === 'KeyE' || code === 'BracketRight') {
+      this.keys.camRight = true;
+    }
+    if (code === 'KeyC' || code === 'ControlLeft' || code === 'ControlRight') {
+      this.keys.descend = true;
+    }
 
     if (code === 'Space') {
       e.preventDefault();
@@ -78,7 +109,7 @@ export class InputManager {
       }
     }
 
-    if (code === 'KeyH' || code === 'KeyE') {
+    if (code === 'KeyH' || code === 'KeyR') {
       e.preventDefault();
       this.emit('sonar', e);
     }
@@ -88,6 +119,16 @@ export class InputManager {
       this.emit('flight', e);
     }
 
+    if (code === 'KeyM') {
+      e.preventDefault();
+      this.emit('mute', e);
+    }
+
+    if (code === 'KeyL') {
+      e.preventDefault();
+      this.emit('pointerLock', e);
+    }
+
     this.emit('keydown', e);
   }
 
@@ -95,11 +136,30 @@ export class InputManager {
     const code = e.code;
     this.pressedKeys.delete(code);
 
-    if (code === 'KeyW' || code === 'ArrowUp') this.keys.forward = false;
-    if (code === 'KeyS' || code === 'ArrowDown') this.keys.backward = false;
-    if (code === 'KeyA' || code === 'ArrowLeft') this.keys.left = false;
-    if (code === 'KeyD' || code === 'ArrowRight') this.keys.right = false;
-    if (code === 'ShiftLeft' || code === 'ShiftRight') this.keys.sprint = false;
+    if (code === 'KeyW' || code === 'ArrowUp') {
+      this.keys.forward = this.pressedKeys.has('KeyW') || this.pressedKeys.has('ArrowUp');
+    }
+    if (code === 'KeyS' || code === 'ArrowDown') {
+      this.keys.backward = this.pressedKeys.has('KeyS') || this.pressedKeys.has('ArrowDown');
+    }
+    if (code === 'KeyA' || code === 'ArrowLeft') {
+      this.keys.left = this.pressedKeys.has('KeyA') || this.pressedKeys.has('ArrowLeft');
+    }
+    if (code === 'KeyD' || code === 'ArrowRight') {
+      this.keys.right = this.pressedKeys.has('KeyD') || this.pressedKeys.has('ArrowRight');
+    }
+    if (code === 'ShiftLeft' || code === 'ShiftRight') {
+      this.keys.sprint = this.pressedKeys.has('ShiftLeft') || this.pressedKeys.has('ShiftRight');
+    }
+    if (code === 'KeyQ' || code === 'BracketLeft') {
+      this.keys.camLeft = this.pressedKeys.has('KeyQ') || this.pressedKeys.has('BracketLeft');
+    }
+    if (code === 'KeyE' || code === 'BracketRight') {
+      this.keys.camRight = this.pressedKeys.has('KeyE') || this.pressedKeys.has('BracketRight');
+    }
+    if (code === 'KeyC' || code === 'ControlLeft' || code === 'ControlRight') {
+      this.keys.descend = this.pressedKeys.has('KeyC') || this.pressedKeys.has('ControlLeft') || this.pressedKeys.has('ControlRight');
+    }
 
     if (code === 'Space') {
       this.keys.jump = false;
@@ -110,8 +170,8 @@ export class InputManager {
   }
 
   handleMouseMove(e) {
-    this.mouseDelta.x = e.movementX || (e.clientX - this.mousePosition.x);
-    this.mouseDelta.y = e.movementY || (e.clientY - this.mousePosition.y);
+    this.mouseDelta.x = e.movementX !== undefined ? e.movementX : (e.clientX - this.mousePosition.x);
+    this.mouseDelta.y = e.movementY !== undefined ? e.movementY : (e.clientY - this.mousePosition.y);
     this.mousePosition.x = e.clientX;
     this.mousePosition.y = e.clientY;
     this.emit('mousemove', e);
@@ -154,7 +214,7 @@ export class InputManager {
   }
 
   isPressed(codeOrAction) {
-    if (this.keys.hasOwnProperty(codeOrAction)) {
+    if (Object.prototype.hasOwnProperty.call(this.keys, codeOrAction)) {
       return this.keys[codeOrAction];
     }
     return this.pressedKeys.has(codeOrAction);

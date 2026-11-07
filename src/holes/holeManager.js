@@ -27,6 +27,7 @@ export class HoleManager {
 
     this.shaftOranges = [];
     this.pulsingLights = [];
+    this.beaconCrowns = [];
 
     this.initMeshes();
 
@@ -48,6 +49,60 @@ export class HoleManager {
     this.buildDocksideHole();
     this.buildPineRootHole();
     this.buildBluffHole();
+    this.buildWaypointBeacons();
+  }
+
+  /**
+   * Subtle vertical light pillars & floating crowns so players can orient to all 4 holes from across the lake.
+   */
+  buildWaypointBeacons() {
+    const beaconSpecs = [
+      { id: 'hole_shoreline', color: 0xf59e0b, height: 7.0, radius: 0.22, opacity: 0.16 },
+      { id: 'hole_dockside',  color: 0xff7a18, height: 9.0, radius: 0.26, opacity: 0.20 },
+      { id: 'hole_pine_root', color: 0xffd700, height: 22.0, radius: 0.42, opacity: 0.24, crown: true },
+      { id: 'hole_bluff_shaft', color: 0xef4444, height: 14.0, radius: 0.34, opacity: 0.20 }
+    ];
+
+    beaconSpecs.forEach((spec) => {
+      const hole = this.getHoleById(spec.id);
+      if (!hole) return;
+
+      const bGroup = new THREE.Group();
+      bGroup.position.set(hole.position.x, hole.position.y, hole.position.z);
+      bGroup.name = `HoleBeacon_${spec.id}`;
+
+      const beamGeo = new THREE.CylinderGeometry(spec.radius * 0.55, spec.radius * 1.35, spec.height, 16, 1, true);
+      beamGeo.translate(0, spec.height * 0.5 + 0.2, 0);
+      const beamMat = new THREE.MeshStandardMaterial({
+        color: spec.color,
+        emissive: spec.color,
+        emissiveIntensity: 1.4,
+        transparent: true,
+        opacity: spec.opacity,
+        depthWrite: false,
+        side: THREE.DoubleSide,
+        roughness: 0.3
+      });
+      const beamMesh = new THREE.Mesh(beamGeo, beamMat);
+      bGroup.add(beamMesh);
+
+      if (spec.crown) {
+        const crownGeo = new THREE.OctahedronGeometry(0.85, 0);
+        const crownMat = new THREE.MeshStandardMaterial({
+          color: 0xfff08a,
+          emissive: 0xffd700,
+          emissiveIntensity: 1.6,
+          roughness: 0.18,
+          metalness: 0.75
+        });
+        const crownMesh = new THREE.Mesh(crownGeo, crownMat);
+        crownMesh.position.y = spec.height + 1.2;
+        bGroup.add(crownMesh);
+        this.beaconCrowns.push(crownMesh);
+      }
+
+      this.group.add(bGroup);
+    });
   }
 
   // -------------------------------------------------------------------------
@@ -493,6 +548,11 @@ export class HoleManager {
       if (!item.collected && item.mesh) {
         item.mesh.rotation.y += dt * 2.0;
       }
+    });
+
+    // Spin waypoint crowns
+    this.beaconCrowns.forEach((crown) => {
+      crown.rotation.y += dt * 1.4;
     });
   }
 

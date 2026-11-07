@@ -52,6 +52,30 @@ export class LakesideDock {
       this.group.add(plank);
     }
 
+    // 1a. Shoreward Approach Ramp Planks (Z = 4.35 to Z = 5.85 sloping up to Y = 0.85m)
+    for (let r = 0; r < 4; r++) {
+      const rz = 4.4 + r * 0.48;
+      const ry = THREE.MathUtils.lerp(0.22, this.deckElevation, (r + 0.5) / 4.0);
+      const rampPlank = new THREE.Mesh(plankGeom, plankMat);
+      rampPlank.position.set(0, ry, rz);
+      rampPlank.rotation.x = -0.34;
+      rampPlank.castShadow = true;
+      rampPlank.receiveShadow = true;
+      this.group.add(rampPlank);
+    }
+
+    // 1b. Side Catwalk Stringer Planks flanking the Z = 22 Plunge Pit (|X| in [1.6, 2.0])
+    const sideWalkGeom = new THREE.BoxGeometry(0.42, plankDepth, 2.6);
+    const sideLeft = new THREE.Mesh(sideWalkGeom, plankMat);
+    sideLeft.position.set(-1.79, this.deckElevation, 22.0);
+    sideLeft.castShadow = true;
+    sideLeft.receiveShadow = true;
+    const sideRight = new THREE.Mesh(sideWalkGeom, plankMat);
+    sideRight.position.set(1.79, this.deckElevation, 22.0);
+    sideRight.castShadow = true;
+    sideRight.receiveShadow = true;
+    this.group.add(sideLeft, sideRight);
+
     // 2. Heavy Timber Pilings driven into lakebed
     const pilingGeom = new THREE.CylinderGeometry(0.20, 0.24, 5.0, 12);
     for (let z = 7.0; z <= 29.5; z += 3.8) {

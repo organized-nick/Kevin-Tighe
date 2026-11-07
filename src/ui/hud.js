@@ -38,6 +38,15 @@ export class HUDManager {
     this.elSonarPrompt = document.getElementById('sonarPrompt');
     this.elToastContainer = document.getElementById('toastContainer');
 
+    // Live Hole Bearing Compass Elements
+    this.compassEls = {};
+    ['hole_dockside', 'hole_pine_root', 'hole_shoreline', 'hole_bluff_shaft'].forEach((id) => {
+      this.compassEls[id] = {
+        arrow: document.getElementById(`dir_${id}`),
+        dist: document.getElementById(`dist_${id}`)
+      };
+    });
+
     // Internal tracker to animate value changes
     this.lastOranges = 0;
     this.lastScore = 0;
@@ -90,6 +99,70 @@ export class HUDManager {
         this.elSonarPrompt.style.opacity = '0.55';
       } else {
         this.elSonarPrompt.style.opacity = '1.0';
+      }
+    }
+
+    // 6. Live Zone Readout & Camera-Relative Hole Compass Bearings
+    if (gameState.playerPos) {
+      this.updateZoneAndCompass(gameState.playerPos, gameState.cameraYaw || 0, gameState.holes || []);
+    }
+  }
+
+  /**
+   * Updates top zone indicator and relative directional arrows (▲ ↗ ▶ ▼ ◀ ↖) for all 4 holes.
+   */
+  updateZoneAndCompass(playerPos, cameraYaw, holes) {
+    if (this.elZoneName) {
+      const px = playerPos.x;
+      const pz = playerPos.z;
+      const py = playerPos.y;
+      let zone = 'SUNLIT LAKESIDE RETREAT';
+      if (py >= 16.0 || px < -32.0) zone = 'GRANITE BLUFFS OVERLOOK';
+      else if (Math.abs(px) <= 2.4 && pz >= 5.5 && pz <= 30.5) zone = 'WOODEN LAKESIDE PIER';
+      else if (px >= 14.0 && px <= 36.0 && pz >= -24.0 && pz <= -5.0) zone = 'CEDAR LOG CABIN CLEARING';
+      else if (px > 36.0 || pz < -26.0) zone = 'NORTHERN PINE HIGHLANDS';
+      else if (pz > 5.0 && px >= 6.0 && px <= 18.0) zone = 'GOLDEN SANDBAR SPIT';
+      if (this.elZoneName.textContent !== zone) {
+        this.elZoneName.textContent = zone;
+      }
+    }
+
+    if (!Array.isArray(holes) || holes.length === 0) return;
+
+    // Camera Forward in (X, Z) is (-sin(yaw), -cos(yaw)); Camera Right is (+cos(yaw), -sin(yaw))
+    const fwdX = -Math.sin(cameraYaw);
+    const fwdZ = -Math.cos(cameraYaw);
+    const rightX = Math.cos(cameraYaw);
+    const rightZ = -Math.sin(cameraYaw);
+
+    for (const h of holes) {
+      const els = this.compassEls[h.id];
+      if (!els || !h.position) continue;
+
+      const dx = h.position.x - playerPos.x;
+      const dz = h.position.z - playerPos.z;
+      const dist = Math.round(Math.hypot(dx, dz));
+
+      if (els.dist) {
+        els.dist.textContent = `${dist}m`;
+      }
+
+      if (els.arrow) {
+        if (dist <= 2) {
+          els.arrow.textContent = '●';
+        } else {
+          const fDot = dx * fwdX + dz * fwdZ;
+          const rDot = dx * rightX + dz * rightZ;
+          const deg = (Math.atan2(rDot, fDot) * 180) / Math.PI;
+          let arrow = '▲';
+          if (deg > -22.5 && deg <= 22.5) arrow = '▲';
+          else if (deg > 22.5 && deg <= 67.5) arrow = '↗';
+          else if (deg > 67.5 && deg <= 112.5) arrow = '▶';
+          else if (deg >= -67.5 && deg <= -22.5) arrow = '↖';
+          else if (deg >= -112.5 && deg < -67.5) arrow = '◀';
+          else arrow = '▼';
+          els.arrow.textContent = arrow;
+        }
       }
     }
   }

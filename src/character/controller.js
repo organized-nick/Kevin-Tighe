@@ -4,14 +4,12 @@
  *
  * Implements:
  * - Full character state machine: 'idle', 'walking', 'running', 'jumping', 'flying', 'pondering', 'falling', 'in_hole'
- * - WASD locomotion with camera-relative movement and normalized diagonal vectors
- * - Jump physics with gravity (-19.6 m/s^2), jump impulse (vy = 9.5 m/s), and terminal fall clamp (-25.0 m/s)
- * - Multi-elevation compound ground collision: Terrain heightmap + Wooden Dock (Y=0.85) + Cabin Porch (Y=2.35)
- * - Steep slope sliding for angles > 50 degrees (T2-BND-18)
- * - Peter Pan Pixie Dust flight integration with mid-jump fall arrest and trailing particles
- * - Tinker-Tang fairy companion in 3D Lissajous orbit with slipstream lag
- * - Detached runaway loose shadow projected onto surfaces with playful lag
- * - Third-person follow camera with obstacle raycast collision against cabin & bluffs
+ * - Intuitive right-handed WASD / Arrow locomotion aligned with camera forward (-sin(yaw), -cos(yaw)) & right (+cos(yaw), -sin(yaw))
+ * - Responsive jump physics with coyote time (0.12s), jump buffering (0.12s), gravity (-19.6 m/s^2), and terminal fall clamp (-25.0 m/s)
+ * - Automatic Peter Pan glide when holding Space after a jump, plus F-key toggle flight and C/Ctrl flight descent
+ * - Multi-elevation compound ground collision: Terrain + Shore-Dock Ramp + Wooden Pier (Y=0.85) + Cabin Porch & Steps (Y=2.35) + Bluff Plateau (Y=22.0) + Lake Wading (-0.35m)
+ * - Steep slope sliding for cliff angles > 50 degrees (T2-BND-18)
+ * - O(1) trigonometric heading wrap preventing angle-accumulation stalls
  */
 
 import * as THREE from 'three';
@@ -34,19 +32,24 @@ export class CharacterController {
     // 1. Initialize Avatar Rig
     this.avatar = new KevinAvatar(this.scene, this.textures);
 
-    // 2. Position & Physics State
-    this.position = new THREE.Vector3(0.0, 0.85, 10.0);
+    // 2. Spawn on the lakeward pier facing toward the shore & all 4 landmarks (-Z, yaw = 0)
+    this.position = new THREE.Vector3(0.0, 0.85, 27.5);
     this.velocity = new THREE.Vector3(0, 0, 0);
-    this.facingAngle = 0.0;
+    this.facingAngle = Math.PI;
 
     this.isGrounded = true;
     this.isFlying = false;
+    this.flightMode = null; // 'hold' (Space in air) | 'toggle' (F key or API)
     this.oranges = 0;
     this.score = 0;
     this.state = 'idle';
 
     this.ponderTimer = 0.0;
     this.jumpJustPressed = false;
+    this.coyoteTimer = 0.12;
+    this.jumpBufferTimer = 0.0;
+    this.airborneTime = 0.0;
+
     this.sonarSystem = options.sonarSystem || null;
     this.audioSystem = options.audioSystem || null;
     this.subterraneanSystem = options.subterraneanSystem || null;
@@ -69,12 +72,19 @@ export class CharacterController {
     if (worldManager.dock && worldManager.dock.group) collidables.push(worldManager.dock.group);
     if (worldManager.terrain && worldManager.terrain.mesh) collidables.push(worldManager.terrain.mesh);
 
-    // 5. Initialize Orbit Follow Camera
+    // 5. Initialize Orbit Follow Camera & Snap Behind Spawn
     this.thirdPersonCamera = new ThirdPersonCamera(
       this.camera,
       engine.renderer.domElement,
       collidables
     );
+
+    // Sync initial avatar, companions, and camera transform
+    this.avatar.group.position.copy(this.position);
+    this.avatar.group.rotation.y = this.facingAngle;
+    this.fairy.teleportTo(this.position.x, this.position.y, this.position.z);
+    this.shadow.teleportTo(this.position.x, this.position.y, this.position.z, (sx, sz) => this.getGroundElevation(sx, sz));
+    this.thirdPersonCamera.snapToTarget(this.position);
 
     // 6. Input Manager & Keys State
     this.input = options.inputManager || new InputManager({ domElement: engine.renderer.domElement });
@@ -101,14 +111,16 @@ export class CharacterController {
 
     this.input.on('jump', () => {
       this.jumpJustPressed = true;
-      // Space held while airborne activates Peter Pan flight
-      if (!this.isGrounded && this.pixieDust > 0) {
-        this.setFlight(true);
+      this.jumpBufferTimer = 0.12;
+      // Pressing Space while clearly airborne engages Peter Pan Pixie Dust flight
+      if (!this.isGrounded && this.coyoteTimer <= 0.0 && this.pixieDust > 0) {
+        this.setFlight(true, 'hold');
       }
     });
 
     this.input.on('jumpRelease', () => {
-      if (this.isFlying) {
+      // Releasing Space ends hold-glide, while leaving F-toggled/API flight active
+      if (this.isFlying && this.flightMode === 'hold') {
         this.setFlight(false);
       }
     });
@@ -118,13 +130,17 @@ export class CharacterController {
     });
 
     this.input.on('flight', () => {
-      this.setFlight(!this.isFlying);
+      if (this.isFlying) {
+        this.setFlight(false);
+      } else {
+        this.setFlight(true, 'toggle');
+      }
     });
   }
 
   /**
    * Continuous multi-elevation ground detection:
-   * Combines terrain, 24m wooden dock, and cabin porch.
+   * Combines terrain, shore-to-dock ramp, 24m wooden dock, cabin porch + steps, bluff overlook, and lake wading.
    */
   getGroundElevation(x, z) {
     let groundY = -10.0;
@@ -134,31 +150,46 @@ export class CharacterController {
       groundY = this.worldManager.terrain.getElevation(x, z);
     }
 
-    // 2. Wooden Dock Collision
-    // Dock extends at X in [-2.0, 2.0], Z in [6.0, 30.0], Deck elevation = 0.85m
+    // 2a. Shore-to-Dock Approach Ramp (smoothly bridges shoreline Z=4.2 up to pier deck Z=6.0 at Y=0.85m)
+    if (x >= -2.1 && x <= 2.1 && z >= 4.2 && z < 6.0) {
+      const rampT = (z - 4.2) / 1.8;
+      groundY = Math.max(groundY, THREE.MathUtils.lerp(0.18, 0.85, rampT));
+    }
+
+    // 2b. Wooden Dock Collision: X in [-2.0, 2.0], Z in [6.0, 30.0], Deck elevation = 0.85m
     if (x >= -2.0 && x <= 2.0 && z >= 6.0 && z <= 30.0) {
-      // Opening for M3 Dockside Plunge Pit (radius 1.6m centered at Z = 22.0: Z in [20.4, 23.6])
-      const inPlungePitOpening = (z >= 20.4 && z <= 23.6);
+      // Opening for M3 Dockside Plunge Pit (radius 1.6m centered at (0, 22.0): X in [-1.6, 1.6], Z in [20.4, 23.6])
+      const inPlungePitOpening = (z >= 20.4 && z <= 23.6) && (Math.abs(x) <= 1.6);
       if (!inPlungePitOpening) {
         groundY = Math.max(groundY, 0.85);
       }
     }
 
-    // 3. Cabin Porch Collision
-    // Cabin sits at (25.0, 2.0, -15.0). Porch spans X in [20.25, 29.75], Z in [-11.0, -7.8]
-    // Porch deck elevation = 2.35m
+    // 3a. Cabin Porch Front Stairs Ramp (X in [23.3, 26.7], Z in [-7.8, -6.5])
+    if (x >= 23.3 && x <= 26.7 && z > -7.8 && z <= -6.5) {
+      const stepT = 1.0 - ((z - (-7.8)) / 1.3);
+      groundY = Math.max(groundY, THREE.MathUtils.lerp(2.0, 2.35, stepT));
+    }
+
+    // 3b. Cabin Porch Deck Collision: X in [20.25, 29.75], Z in [-11.0, -7.8], Y = 2.35m
     if (x >= 20.25 && x <= 29.75 && z >= -11.0 && z <= -7.8) {
       groundY = Math.max(groundY, 2.35);
     }
 
     // 4. Bluffs Overlook Plateau Collision (+22m elevation)
-    // Modeled in src/world/bluffs.js at (-45.0, 21.1, 0.0), top deck at Y = 22.0m
-    // Bounds: width 10m (X: -50 to -40), depth 12m (Z: -6 to 6)
+    // Only snap to the +22m top deck when approaching from trail/air at plateau altitude (prevents teleporting up from cliff base)
     if (x >= -50.0 && x <= -40.0 && z >= -6.0 && z <= 6.0) {
-      groundY = Math.max(groundY, 22.0);
+      if (!this.position || this.position.y >= 17.5) {
+        groundY = Math.max(groundY, 22.0);
+      }
     }
 
-    // 5. Subterranean Active Hole Shaft Floor Override
+    // 5. Lake Water Buoyant Wading Floor (keep Kevin wading chest-high at -0.35m instead of sinking 4.5m underwater)
+    if (groundY < -0.35) {
+      groundY = -0.35;
+    }
+
+    // 6. Subterranean Active Hole Shaft Floor Override (carves out all 4 hole mouths & shafts cleanly)
     if (this.subterraneanSystem && typeof this.subterraneanSystem.getGroundOverride === 'function') {
       groundY = this.subterraneanSystem.getGroundOverride(x, z, groundY);
     }
@@ -191,7 +222,7 @@ export class CharacterController {
   }
 
   /**
-   * Solid obstacle collision: prevents walking through cabin walls
+   * Solid obstacle collision: prevents walking through cabin walls & enforces 80m perimeter
    */
   resolveObstacles(pos) {
     // Cabin main log structure: X in [19.5, 30.5], Z in [-19.0, -11.0], Y < 6.2
@@ -216,10 +247,12 @@ export class CharacterController {
     }
   }
 
-  setFlight(active) {
+  setFlight(active, mode = 'toggle') {
     if (active && this.pixieDust > 0) {
       this.isFlying = true;
-      this.isGrounded = false; // Disengage ground state to prevent frame-1 cancellation in grounded takeoffs
+      this.flightMode = mode;
+      this.isGrounded = false;
+      this.coyoteTimer = 0.0;
       this.state = 'flying';
       this.flight.setFlight(true);
       // Upward flight arrest if falling (T3-PAIR-01)
@@ -229,6 +262,7 @@ export class CharacterController {
       }
     } else {
       this.isFlying = false;
+      this.flightMode = null;
       this.flight.setFlight(false);
       if (!this.isGrounded && this.state !== 'in_hole') {
         this.state = 'falling';
@@ -247,7 +281,7 @@ export class CharacterController {
         return result;
       }
     } else {
-      this.ponderTimer = 1.5; // 1.5s chin-stroke ponder
+      this.ponderTimer = 1.5;
       if (!this.isFlying) {
         this.state = 'pondering';
       }
@@ -259,10 +293,15 @@ export class CharacterController {
   teleport(x, y, z) {
     this.position.set(x, y, z);
     this.velocity.set(0, 0, 0);
+    this.jumpJustPressed = false;
+    this.jumpBufferTimer = 0.0;
 
     // Immediately latch grounded state if placed at or on ground elevation
     const groundY = this.getGroundElevation(x, z);
     this.isGrounded = Math.abs(y - groundY) < 0.2 || y <= groundY;
+    this.coyoteTimer = this.isGrounded ? 0.12 : 0.0;
+    this.airborneTime = 0.0;
+
     if (this.isGrounded) {
       if (this.isFlying) {
         this.setFlight(false);
@@ -273,7 +312,9 @@ export class CharacterController {
     }
 
     this.avatar.group.position.copy(this.position);
-    this.thirdPersonCamera.update(0.016, this.position);
+    this.thirdPersonCamera.update(0.016, this.position, this.velocity, {
+      getGroundY: (gx, gz) => this.getGroundElevation(gx, gz)
+    });
 
     // Tether companion fairy and loose shadow immediately (T1-R2-05-E)
     if (this.fairy) {
@@ -285,18 +326,29 @@ export class CharacterController {
   }
 
   update(dt) {
+    if (typeof dt !== 'number' || !Number.isFinite(dt) || dt <= 0) {
+      return;
+    }
+
     // 0. Subterranean Hole Checks & Kinetics
     if (this.subterraneanSystem) {
       this.subterraneanSystem.checkHoleEntry(this.position, this.velocity);
       this.subterraneanSystem.update(dt);
     }
 
-    // 1. Process Ponder Sonar Timer
+    // 1. Process Timers (Ponder, Coyote Time, Jump Buffer, Airborne Time)
     if (this.ponderTimer > 0) {
-      this.ponderTimer -= dt;
-      if (this.ponderTimer <= 0) {
-        this.ponderTimer = 0;
-      }
+      this.ponderTimer = Math.max(0, this.ponderTimer - dt);
+    }
+    if (this.jumpBufferTimer > 0) {
+      this.jumpBufferTimer = Math.max(0, this.jumpBufferTimer - dt);
+    }
+    if (this.isGrounded) {
+      this.coyoteTimer = 0.12;
+      this.airborneTime = 0.0;
+    } else {
+      this.coyoteTimer = Math.max(0, this.coyoteTimer - dt);
+      this.airborneTime += dt;
     }
 
     // 2. Process Input Direction & Normalization
@@ -318,13 +370,20 @@ export class CharacterController {
       normFwd = rawFwd / inputLen;
     }
 
-    // 3. Camera-Relative Movement Trajectory
+    // 3. Orthonormal Right-Handed Camera-Relative Movement Basis
+    // Camera sits at (+sin(yaw), +cos(yaw)) behind Kevin and looks along (-sin(yaw), -cos(yaw)):
+    //   Forward (+W / Up)    => (-sin(yaw), -cos(yaw)) (into the scene, away from camera)
+    //   Backward (-S / Down) => (+sin(yaw), +cos(yaw)) (toward camera)
+    //   Right (+D / Right)   => (+cos(yaw), -sin(yaw)) (screen right)
+    //   Left (-A / Left)     => (-cos(yaw), +sin(yaw)) (screen left)
     const camYaw = this.thirdPersonCamera.yaw;
-    const moveX = normStrafe * Math.cos(camYaw) + normFwd * Math.sin(camYaw);
-    const moveZ = -normStrafe * Math.sin(camYaw) + normFwd * Math.cos(camYaw);
+    const moveX = normStrafe * Math.cos(camYaw) - normFwd * Math.sin(camYaw);
+    const moveZ = -normStrafe * Math.sin(camYaw) - normFwd * Math.cos(camYaw);
 
+    const isWading = this.isGrounded && this.position.y < -0.15;
+    const wadeFactor = isWading ? 0.82 : 1.0;
     const baseSpeed = this.keys.sprint ? (CONFIG.PHYSICS.RUN_SPEED || 14.0) : (CONFIG.PHYSICS.WALK_SPEED || 8.5);
-    const speedTier = baseSpeed * (this.speedMultiplier || 1.0);
+    const speedTier = baseSpeed * (this.speedMultiplier || 1.0) * wadeFactor;
     const planarSpeed = inputLen > 0 ? speedTier : 0;
 
     this.velocity.x = moveX * planarSpeed;
@@ -333,7 +392,7 @@ export class CharacterController {
     // Check steep slope sliding (T2-BND-18: steep bluff slopes > 50 deg trigger downward sliding)
     const currentGroundY = this.getGroundElevation(this.position.x, this.position.z);
     const onGround = this.isGrounded || Math.abs(this.position.y - currentGroundY) < 0.2;
-    if (onGround) {
+    if (onGround && currentGroundY < 21.8) {
       const slope = this.getSlopeAt(this.position.x, this.position.z);
       if (slope.angleDeg > 50.0) {
         const slideForce = (slope.angleDeg / 90.0) * 12.0;
@@ -342,28 +401,42 @@ export class CharacterController {
       }
     }
 
-    // Smooth mesh heading rotation towards movement vector
+    // O(1) trigonometric heading wrap towards movement vector (prevents T5-NUM-03 while-loop hang)
     if (inputLen > 0.05) {
       const targetAngle = Math.atan2(this.velocity.x, this.velocity.z);
-      let angleDiff = targetAngle - this.facingAngle;
-      while (angleDiff > Math.PI) angleDiff -= Math.PI * 2;
-      while (angleDiff < -Math.PI) angleDiff += Math.PI * 2;
-      this.facingAngle += angleDiff * Math.min(1.0, dt * 12.0);
+      const angleDiff = Math.atan2(
+        Math.sin(targetAngle - this.facingAngle),
+        Math.cos(targetAngle - this.facingAngle)
+      );
+      const nextAngle = this.facingAngle + angleDiff * Math.min(1.0, dt * 14.0);
+      this.facingAngle = Math.atan2(Math.sin(nextAngle), Math.cos(nextAngle));
       this.avatar.group.rotation.y = this.facingAngle;
     }
 
-    // 4. Vertical Physics, Jump & Pixie Dust Flight
-    const isInHole = this.state === 'in_hole' || (this.subterraneanSystem && this.subterraneanSystem.phase !== 'inactive' && this.subterraneanSystem.phase !== 'rejected');
+    // 4. Vertical Physics, Jump, Coyote Time & Pixie Dust Flight
+    const isInHole = this.state === 'in_hole' || (
+      this.subterraneanSystem &&
+      this.subterraneanSystem.phase !== 'inactive' &&
+      this.subterraneanSystem.phase !== 'rejected'
+    );
 
     if (isInHole) {
-      // Subterranean vertical kinetics already integrated in subterraneanSystem.update(dt)
+      // Subterranean vertical kinetics integrated in subterraneanSystem.update(dt)
+      this.jumpJustPressed = false;
+      this.jumpBufferTimer = 0.0;
     } else if (this.isFlying) {
-      this.flight.update(dt, this.isGrounded, (this.keys.jump || this.isFlying), this.velocity, this.position);
+      const keepFlying = (this.flightMode === 'hold') ? Boolean(this.keys.jump) : true;
+      this.flight.update(dt, this.isGrounded, keepFlying, this.velocity, this.position, {
+        descend: Boolean(this.keys.descend)
+      });
       this.isFlying = this.flight.isFlying;
-
-      if (!this.isFlying && !this.isGrounded) {
-        this.state = 'falling';
+      if (!this.isFlying) {
+        this.flightMode = null;
+        if (!this.isGrounded) {
+          this.state = 'falling';
+        }
       }
+      this.jumpJustPressed = false;
     } else {
       // Normal Gravitational Acceleration
       const gravity = (CONFIG.PHYSICS && CONFIG.PHYSICS.GRAVITY) || -19.6;
@@ -372,19 +445,37 @@ export class CharacterController {
       // Terminal Velocity Clamp (-25.0 m/s per Tier 2 spec T2-BND-19)
       this.velocity.y = Math.max(-25.0, this.velocity.y);
 
-      // Jump impulse (vy = 9.0 m/s >= 7.0 required by T1-R2-03-B)
-      if (this.isGrounded && this.jumpJustPressed) {
+      // Jump impulse with coyote time & jump buffer
+      const wantsJump = this.jumpJustPressed || this.jumpBufferTimer > 0.0;
+      const canJump = this.isGrounded || this.coyoteTimer > 0.0;
+
+      if (canJump && wantsJump) {
         const impulse = (CONFIG.PHYSICS && CONFIG.PHYSICS.JUMP_IMPULSE) || 9.0;
         this.velocity.y = impulse;
         this.isGrounded = false;
+        this.coyoteTimer = 0.0;
+        this.jumpBufferTimer = 0.0;
+        this.airborneTime = 0.0;
         if (this.audioSystem) {
           this.audioSystem.playJumpSound();
         }
+      } else if (
+        !this.isGrounded &&
+        this.keys.jump &&
+        this.airborneTime >= 0.24 &&
+        this.velocity.y <= 4.5 &&
+        this.pixieDust > 0
+      ) {
+        // Holding Space past jump ascent automatically transitions into Peter Pan Pixie Dust glide!
+        this.setFlight(true, 'hold');
       }
+
       this.jumpJustPressed = false;
 
       // Ground Pixie Dust Recharge
-      this.flight.update(dt, this.isGrounded, false, this.velocity, this.position);
+      if (!this.isFlying) {
+        this.flight.update(dt, this.isGrounded, false, this.velocity, this.position);
+      }
     }
 
     // 5. Integrate Position
@@ -399,8 +490,14 @@ export class CharacterController {
     if (!isInHole) {
       const groundElevation = this.getGroundElevation(this.position.x, this.position.z);
 
-      // Continuous slope stepping: snap small ground drops (<= 0.15m) when grounded and moving downward
-      if (this.isGrounded && !this.isFlying && this.velocity.y <= 0 && this.position.y > groundElevation && (this.position.y - groundElevation) <= 0.15) {
+      // Continuous slope stepping: snap small downward slope drops (<= 0.25m) without micro-bouncing
+      if (
+        this.isGrounded &&
+        !this.isFlying &&
+        this.velocity.y <= 0 &&
+        this.position.y > groundElevation &&
+        (this.position.y - groundElevation) <= 0.25
+      ) {
         this.position.y = groundElevation;
       }
 
@@ -453,7 +550,12 @@ export class CharacterController {
       this.shadow.update(dt, this.position, (sx, sz) => this.getGroundElevation(sx, sz));
     }
 
-    // 9. Update Third-Person Follow/Orbit Camera
-    this.thirdPersonCamera.update(dt, this.position, this.velocity);
+    // 9. Update Third-Person Follow/Orbit Camera with keyboard orbit, chase turn & ground clearance
+    this.thirdPersonCamera.update(dt, this.position, this.velocity, {
+      keys: this.keys,
+      strafeInput: normStrafe,
+      fwdInput: normFwd,
+      getGroundY: (gx, gz) => this.getGroundElevation(gx, gz)
+    });
   }
 }

@@ -295,6 +295,13 @@ kbd {
   display: none;
 }
 
+/* HUD Top Cluster */
+.hud-top-cluster {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
 /* HUD Top Bar */
 .hud-top-bar {
   display: flex;
@@ -363,15 +370,107 @@ kbd {
   border-color: #ffd800;
 }
 
-/* Pixie Dust Energy Bar */
+/* Top Sub-Row: Pixie Dust Energy Bar + Live Hole Compass */
+.hud-sub-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
 .hud-dust-wrap {
-  width: 280px;
+  width: 315px;
   background: rgba(15, 23, 42, 0.82);
   border: 1px solid rgba(251, 191, 36, 0.5);
   backdrop-filter: blur(6px);
   padding: 8px 12px;
   border-radius: 10px;
-  margin-top: 10px;
+}
+
+.hole-compass-bar {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.compass-pill {
+  background: rgba(15, 23, 42, 0.84);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  backdrop-filter: blur(6px);
+  padding: 6px 10px;
+  border-radius: 9px;
+  font-size: 11px;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.35);
+}
+
+.compass-pill.sweet   { border-color: rgba(255, 122, 24, 0.7); color: #fed7aa; }
+.compass-pill.grail   { border-color: rgba(255, 215, 0, 0.85); color: #fef08a; }
+.compass-pill.shallow { border-color: rgba(148, 163, 184, 0.55); color: #cbd5e1; }
+.compass-pill.deep    { border-color: rgba(239, 68, 68, 0.7); color: #fecaca; }
+
+.compass-arrow {
+  font-size: 13px;
+  color: #ffd800;
+  min-width: 14px;
+  text-align: center;
+}
+
+.compass-dist {
+  font-family: monospace;
+  font-size: 11px;
+  color: #94a3b8;
+}
+
+.help-popover {
+  position: absolute;
+  top: 72px;
+  right: 20px;
+  width: 340px;
+  background: rgba(15, 23, 42, 0.96);
+  border: 1px solid #f97316;
+  border-radius: 14px;
+  padding: 14px 16px;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.7);
+  pointer-events: auto;
+  z-index: 60;
+}
+
+.help-popover.hidden {
+  display: none;
+}
+
+.help-popover-title {
+  font-size: 13px;
+  font-weight: 900;
+  color: #ffd800;
+  margin-bottom: 8px;
+  letter-spacing: 0.5px;
+}
+
+.help-popover-row {
+  font-size: 12px;
+  color: #e2e8f0;
+  line-height: 1.45;
+  margin-bottom: 6px;
+}
+
+.help-popover-row strong {
+  color: #fb923c;
+}
+
+.help-popover-note {
+  font-size: 11px;
+  color: #94a3b8;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  padding-top: 8px;
+  margin-top: 6px;
+  line-height: 1.4;
 }
 
 .dust-label {
