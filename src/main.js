@@ -7,23 +7,35 @@ import * as THREE from 'three';
 import { CONFIG } from './config.js';
 import { Engine } from './core/engine.js';
 import { TextureManager } from './core/textures.js';
+import { AudioSystem } from './core/audio.js';
 import { LightingSystem } from './world/lighting.js';
 import { WorldManager } from './world/landmarks.js';
+import { CharacterController } from './character/controller.js';
+import { SonarSystem } from './character/sonar.js';
+import { PickupManager } from './items/pickups.js';
+import { HUDManager } from './ui/hud.js';
 
 class Game {
   constructor() {
     this.container = document.getElementById('webglContainer') || document.body;
     this.clock = new THREE.Clock();
 
-    // Telemetry state
+    // Telemetry state with corrected context scoping
+    const self = this;
     this.telemetry = {
       fps: 60,
       frameCount: 0,
       lastTime: performance.now(),
       errorCount: 0,
       lastError: null,
-      get drawCalls() { return this.engine && this.engine.renderer ? this.engine.renderer.info.render.calls : 0; },
-      get triangles() { return this.engine && this.engine.renderer ? this.engine.renderer.info.render.triangles : 0; }
+      get drawCalls() {
+        const eng = self.engine || (self.telemetry && self.telemetry._engine);
+        return eng && eng.renderer ? eng.renderer.info.render.calls : 0;
+      },
+      get triangles() {
+        const eng = self.engine || (self.telemetry && self.telemetry._engine);
+        return eng && eng.renderer ? eng.renderer.info.render.triangles : 0;
+      }
     };
 
     // Attach global error traps
@@ -31,17 +43,21 @@ class Game {
 
     // 1. Initialize Core Three.js Engine
     this.engine = new Engine(this.container);
+    this.telemetry._engine = this.engine;
 
     // 2. Initialize Texture Manager
     this.textures = new TextureManager();
 
-    // 3. Initialize Dynamic Lighting & Shadows
+    // 3. Initialize Audio System
+    this.audio = new AudioSystem();
+
+    // 4. Initialize Dynamic Lighting & Shadows
     this.lighting = new LightingSystem(this.engine.scene);
 
-    // 4. Initialize 4 Distinct World Landmarks & Shoreline
+    // 5. Initialize 4 Distinct World Landmarks & Shoreline
     this.worldManager = new WorldManager(this.engine.scene, this.textures);
 
-    // 5. Game State
+    // 6. Game State
     this.gameState = {
       started: false,
       score: 0,
@@ -52,10 +68,53 @@ class Game {
       playerPos: { x: 0, y: 0.85, z: 10.0 },
       characterState: 'idle',
       fourthObsession: 'Cheddar Cheese Wedges',
-      muted: false
+      muted: false,
+      sonarCooldownRemaining: 0
     };
 
-    // 6. UI & Contract Initialization
+    // 7. Initialize HUD Manager
+    this.hud = new HUDManager();
+
+    // 8. Initialize "Hmm..." Sonar System
+    this.sonar = new SonarSystem({
+      scene: this.engine.scene,
+      camera: this.engine.camera,
+      getOrigin: () => (this.character ? this.character.position : this.gameState.playerPos),
+      isFlying: () => (this.character ? this.character.isFlying : this.gameState.isFlying),
+      setCharacterState: (st) => {
+        if (this.character) this.character.state = st;
+        this.gameState.characterState = st;
+      },
+      triggerChinStroke: () => {
+        if (this.character && this.character.avatar) {
+          this.character.ponderTimer = 1.5;
+        }
+      },
+      holes: CONFIG.HOLES,
+      synth: this.audio.synth,
+      onTrigger: (scan) => {
+        if (this.hud) {
+          this.hud.showSonarPingNotification(scan);
+        }
+      }
+    });
+
+    // 9. Initialize Character Controller (Kevin avatar, locomotion, jump, flight, companion, shadow, camera)
+    this.character = new CharacterController(
+      this.engine,
+      this.worldManager,
+      this.textures,
+      { sonarSystem: this.sonar, audioSystem: this.audio }
+    );
+
+    // 10. Initialize Pickups (22 citrus orbs + 4 landmark bonus items)
+    this.pickupManager = new PickupManager(
+      this.engine.scene,
+      this.textures,
+      this.gameState.fourthObsession
+    );
+
+    // 11. UI & Contract Initialization
     this.initUI();
     this.initTestContract();
 
@@ -65,7 +124,7 @@ class Game {
       this.startGame();
     }
 
-    // 7. Start Animation Loop
+    // 12. Start Animation Loop
     this.animate = this.animate.bind(this);
     requestAnimationFrame(this.animate);
   }
@@ -97,6 +156,14 @@ class Game {
         if (hmmInput) {
           hmmInput.value = btn.dataset.val;
           this.gameState.fourthObsession = btn.dataset.val;
+          if (this.pickupManager) {
+            this.pickupManager.dispose();
+            this.pickupManager = new PickupManager(
+              this.engine.scene,
+              this.textures,
+              this.gameState.fourthObsession
+            );
+          }
         }
       });
     });
@@ -118,6 +185,9 @@ class Game {
     if (muteBtn) {
       muteBtn.addEventListener('click', () => {
         this.gameState.muted = !this.gameState.muted;
+        if (this.audio) {
+          this.audio.setMuted(this.gameState.muted);
+        }
         muteBtn.textContent = this.gameState.muted ? '🔇' : '🔊';
       });
     }
@@ -127,6 +197,10 @@ class Game {
     if (this.gameState.started) return;
     this.gameState.started = true;
 
+    if (this.audio) {
+      this.audio.ensureContext();
+    }
+
     const startOverlay = document.getElementById('startOverlay');
     if (startOverlay) startOverlay.classList.add('hidden');
 
@@ -135,7 +209,18 @@ class Game {
 
     const hmmInput = document.getElementById('hmmInput');
     if (hmmInput && hmmInput.value.trim()) {
-      this.gameState.fourthObsession = hmmInput.value.trim();
+      const val = hmmInput.value.trim();
+      if (val !== this.gameState.fourthObsession) {
+        this.gameState.fourthObsession = val;
+        if (this.pickupManager) {
+          this.pickupManager.dispose();
+          this.pickupManager = new PickupManager(
+            this.engine.scene,
+            this.textures,
+            this.gameState.fourthObsession
+          );
+        }
+      }
     }
 
     console.log('⚡ [KevinGame] 3D Lakeside Retreat started. 4th Obsession:', this.gameState.fourthObsession);
@@ -158,10 +243,58 @@ class Game {
         this.worldManager.update(dt, elapsedTime);
       }
 
-      // 3. Render Three.js Scene via EffectComposer
+      // 3. Update Character Controller, locomotion, flight, camera
+      if (this.character) {
+        this.character.update(dt);
+      }
+
+      // 4. Update Pickups & Proximity Collection
+      if (this.pickupManager) {
+        const playerPos = this.character ? this.character.position : this.gameState.playerPos;
+        this.pickupManager.update(dt, playerPos, (reward) => {
+          if (reward.oranges) {
+            if (this.character) this.character.oranges += reward.oranges;
+            this.gameState.oranges += reward.oranges;
+          }
+          if (reward.score) {
+            if (this.character) this.character.score += reward.score;
+            this.gameState.score += reward.score;
+          }
+          if (this.audio) {
+            if (reward.type === 'bonus') this.audio.synth.playBonusPickupSound();
+            else this.audio.synth.playOrangePickupSound();
+          }
+          if (reward.quip && this.hud) {
+            this.hud.showToast(reward.quip, 'bonus');
+          }
+        });
+      }
+
+      // 5. Update Sonar Wave Rings & Holographic 3D Tags
+      if (this.sonar) {
+        this.sonar.update(dt);
+      }
+
+      // 6. Synchronize Game State & Update HUD
+      if (this.character) {
+        this.gameState.playerPos = this.character.position;
+        this.gameState.characterState = this.character.state;
+        this.gameState.isFlying = this.character.isFlying;
+        this.gameState.pixieDust = this.character.pixieDust;
+        this.gameState.oranges = this.character.oranges;
+        this.gameState.score = this.character.score;
+      }
+      if (this.sonar) {
+        this.gameState.sonarCooldownRemaining = this.sonar.getCooldownRemaining();
+      }
+      if (this.hud) {
+        this.hud.update(this.gameState);
+      }
+
+      // 7. Render Three.js Scene via EffectComposer
       this.engine.render(dt);
 
-      // 4. Update Telemetry
+      // 8. Update Telemetry
       this.telemetry.frameCount++;
       const now = performance.now();
       if (now - this.telemetry.lastTime >= 1000) {
@@ -170,7 +303,7 @@ class Game {
         this.telemetry.lastTime = now;
       }
 
-      // 5. Signal ready state on first rendered frame
+      // 9. Signal ready state on first rendered frame
       if (window.__KEVIN_GAME__ && !window.__KEVIN_GAME__.ready) {
         window.__KEVIN_GAME__.ready = true;
         window.dispatchEvent(new CustomEvent('kevin-game-ready', {
@@ -198,29 +331,75 @@ class Game {
       rim: this.lighting.rimLight
     };
 
+    const self = this;
+
     window.__KEVIN_GAME__ = {
-      version: '1.0.0-m1',
+      version: '1.0.0-m2',
       ready: false,
       scene: this.engine.scene,
       camera: this.engine.camera,
       renderer: this.engine.renderer,
       composer: this.engine.composer,
 
-      // Character API (M1 baseline, ready for M2 character controller)
+      // Character API (M2 Fully Articulated & Reactive)
       character: {
-        position: this.gameState.playerPos,
-        state: this.gameState.characterState,
-        pixieDust: this.gameState.pixieDust,
-        oranges: this.gameState.oranges,
-        score: this.gameState.score,
-        triggerSonar: () => console.log('[Contract Hook] Sonar triggered'),
-        setFlight: (active) => { this.gameState.isFlying = active; },
+        get position() { return self.character ? self.character.position : self.gameState.playerPos; },
+        set position(p) {
+          if (self.character) self.character.teleport(p.x, p.y, p.z);
+          else self.gameState.playerPos = p;
+        },
+        get state() { return self.character ? self.character.state : self.gameState.characterState; },
+        set state(s) {
+          if (self.character) self.character.state = s;
+          self.gameState.characterState = s;
+        },
+        get isFlying() { return self.character ? self.character.isFlying : self.gameState.isFlying; },
+        set isFlying(f) {
+          if (self.character) self.character.setFlight(f);
+          self.gameState.isFlying = f;
+        },
+        get isGrounded() { return self.character ? self.character.isGrounded : true; },
+        set isGrounded(g) {
+          if (self.character) self.character.isGrounded = g;
+        },
+        get pixieDust() { return self.character ? self.character.pixieDust : self.gameState.pixieDust; },
+        set pixieDust(d) {
+          if (self.character) self.character.pixieDust = d;
+          self.gameState.pixieDust = d;
+        },
+        get oranges() { return self.character ? self.character.oranges : self.gameState.oranges; },
+        set oranges(o) {
+          if (self.character) self.character.oranges = o;
+          self.gameState.oranges = o;
+        },
+        get score() { return self.character ? self.character.score : self.gameState.score; },
+        set score(s) {
+          if (self.character) self.character.score = s;
+          self.gameState.score = s;
+        },
+        get flight() {
+          return self.character ? self.character.flight : null;
+        },
+        get particles() {
+          return self.character ? self.character.particles : { active: false, color: 0xffd700, count: 50 };
+        },
+        triggerSonar: () => {
+          if (self.character) return self.character.triggerSonar();
+          return self.sonar.trigger();
+        },
+        setFlight: (active) => {
+          if (self.character) self.character.setFlight(active);
+          self.gameState.isFlying = active;
+        },
         teleport: (x, y, z) => {
-          this.gameState.playerPos.x = x;
-          this.gameState.playerPos.y = y;
-          this.gameState.playerPos.z = z;
-          this.engine.camera.position.set(x, y + 6, z + 16);
-          this.engine.camera.lookAt(x, y + 1, z);
+          if (self.character) self.character.teleport(x, y, z);
+          else {
+            self.gameState.playerPos.x = x;
+            self.gameState.playerPos.y = y;
+            self.gameState.playerPos.z = z;
+            self.engine.camera.position.set(x, y + 6, z + 16);
+            self.engine.camera.lookAt(x, y + 1, z);
+          }
         }
       },
 
@@ -230,15 +409,16 @@ class Game {
         lights: lights
       },
 
-      // Subterranean Holes API (M1 baseline, ready for M3 mechanics)
+      // Subterranean Holes API (Integrated with Holy Grail and Tiers)
       holes: {
         list: CONFIG.HOLES,
         enterHole: async (holeId) => {
           const hole = CONFIG.HOLES.find(h => h.id === holeId) || CONFIG.HOLES[0];
           let status = 'completed';
-          if (hole.tier === 'shallow') status = 'rejected';
-          else if (hole.tier === 'deep') status = 'boundary_breach';
-          return { status, depth: hole.depthFt };
+          let fanfare = (Math.abs(hole.depthFt - 50.0) < 0.001);
+          if (hole.tier === 'shallow' || hole.depthFt < 10.0) status = 'rejected';
+          else if (hole.tier === 'deep' || hole.depthFt > 50.0) status = 'boundary_breach';
+          return { status, depth: hole.depthFt, fanfare };
         }
       },
 

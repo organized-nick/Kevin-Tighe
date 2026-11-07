@@ -1,0 +1,1061 @@
+{
+  "timestamp": "2026-11-07T07:15:02.990Z",
+  "targetUrl": "http://localhost:8097?autostart=1",
+  "landmarks": {
+    "lake": {
+      "found": true,
+      "meshCount": 1,
+      "instancedMeshCount": 0,
+      "totalVertices": 4225,
+      "totalTriangles": 8192,
+      "hasNormalMaps": true,
+      "hasColorMaps": false,
+      "boundingBox": {
+        "min": [
+          -105,
+          -4.286263692880512e-15,
+          5
+        ],
+        "max": [
+          55,
+          4.286263692880512e-15,
+          145
+        ]
+      },
+      "materialsSummary": [
+        {
+          "type": "MeshPhysicalMaterial",
+          "name": "",
+          "roughness": 0.08,
+          "metalness": 0.2,
+          "hasMap": false,
+          "hasNormalMap": true,
+          "transparent": true,
+          "opacity": 0.9
+        }
+      ]
+    },
+    "dock": {
+      "found": true,
+      "meshCount": 74,
+      "instancedMeshCount": 0,
+      "totalVertices": 3037,
+      "totalTriangles": 2124,
+      "hasNormalMaps": true,
+      "hasColorMaps": true,
+      "boundingBox": {
+        "min": [
+          -2.089999994635582,
+          -3.5,
+          5.980000001192093
+        ],
+        "max": [
+          2.089999994635582,
+          2.9000000029802324,
+          30.109999978542326
+        ]
+      },
+      "materialsSummary": [
+        {
+          "type": "MeshStandardMaterial",
+          "name": "",
+          "roughness": 0.74,
+          "metalness": 0.04,
+          "hasMap": true,
+          "hasNormalMap": true,
+          "transparent": false,
+          "opacity": 1
+        },
+        {
+          "type": "MeshStandardMaterial",
+          "name": "",
+          "roughness": 0.74,
+          "metalness": 0.04,
+          "hasMap": true,
+          "hasNormalMap": true,
+          "transparent": false,
+          "opacity": 1
+        },
+        {
+          "type": "MeshStandardMaterial",
+          "name": "",
+          "roughness": 0.74,
+          "metalness": 0.04,
+          "hasMap": true,
+          "hasNormalMap": true,
+          "transparent": false,
+          "opacity": 1
+        },
+        {
+          "type": "MeshStandardMaterial",
+          "name": "",
+          "roughness": 0.74,
+          "metalness": 0.04,
+          "hasMap": true,
+          "hasNormalMap": true,
+          "transparent": false,
+          "opacity": 1
+        },
+        {
+          "type": "MeshStandardMaterial",
+          "name": "",
+          "roughness": 0.74,
+          "metalness": 0.04,
+          "hasMap": true,
+          "hasNormalMap": true,
+          "transparent": false,
+          "opacity": 1
+        },
+        {
+          "type": "MeshStandardMaterial",
+          "name": "",
+          "roughness": 0.74,
+          "metalness": 0.04,
+          "hasMap": true,
+          "hasNormalMap": true,
+          "transparent": false,
+          "opacity": 1
+        },
+        {
+          "type": "MeshStandardMaterial",
+          "name": "",
+          "roughness": 0.74,
+          "metalness": 0.04,
+          "hasMap": true,
+          "hasNormalMap": true,
+          "transparent": false,
+          "opacity": 1
+        },
+        {
+          "type": "MeshStandardMaterial",
+          "name": "",
+          "roughness": 0.74,
+          "metalness": 0.04,
+          "hasMap": true,
+          "hasNormalMap": true,
+          "transparent": false,
+          "opacity": 1
+        },
+        {
+          "type": "MeshStandardMaterial",
+          "name": "",
+          "roughness": 0.74,
+          "metalness": 0.04,
+          "hasMap": true,
+          "hasNormalMap": true,
+          "transparent": false,
+          "opacity": 1
+        },
+        {
+          "type": "MeshStandardMaterial",
+          "name": "",
+          "roughness": 0.74,
+          "metalness": 0.04,
+          "hasMap": true,
+          "hasNormalMap": true,
+          "transparent": false,
+          "opacity": 1
+        }
+      ]
+    },
+    "cabin": {
+      "found": true,
+      "meshCount": 48,
+      "instancedMeshCount": 0,
+      "totalVertices": 2043,
+      "totalTriangles": 1216,
+      "hasNormalMaps": true,
+      "hasColorMaps": true,
+      "boundingBox": {
+        "min": [
+          18.693441199341756,
+          1.8099999964237212,
+          -21.300000047683717
+        ],
+        "max": [
+          32.00000004768371,
+          10.074999997019768,
+          -6.799999997019768
+        ]
+      },
+      "materialsSummary": [
+        {
+          "type": "MeshStandardMaterial",
+          "name": "",
+          "roughness": 0.72,
+          "metalness": 0,
+          "hasMap": true,
+          "hasNormalMap": true,
+          "transparent": false,
+          "opacity": 1
+        },
+        {
+          "type": "MeshStandardMaterial",
+          "name": "",
+          "roughness": 0.72,
+          "metalness": 0,
+          "hasMap": true,
+          "hasNormalMap": true,
+          "transparent": false,
+          "opacity": 1
+        },
+        {
+          "type": "MeshStandardMaterial",
+          "name": "",
+          "roughness": 0.72,
+          "metalness": 0,
+          "hasMap": true,
+          "hasNormalMap": true,
+          "transparent": false,
+          "opacity": 1
+        },
+        {
+          "type": "MeshStandardMaterial",
+          "name": "",
+          "roughness": 0.72,
+          "metalness": 0,
+          "hasMap": true,
+          "hasNormalMap": true,
+          "transparent": false,
+          "opacity": 1
+        },
+        {
+          "type": "MeshStandardMaterial",
+          "name": "",
+          "roughness": 0.72,
+          "metalness": 0,
+          "hasMap": true,
+          "hasNormalMap": true,
+          "transparent": false,
+          "opacity": 1
+        },
+        {
+          "type": "MeshStandardMaterial",
+          "name": "",
+          "roughness": 0.72,
+          "metalness": 0,
+          "hasMap": true,
+          "hasNormalMap": true,
+          "transparent": false,
+          "opacity": 1
+        },
+        {
+          "type": "MeshStandardMaterial",
+          "name": "",
+          "roughness": 0.72,
+          "metalness": 0,
+          "hasMap": true,
+          "hasNormalMap": true,
+          "transparent": false,
+          "opacity": 1
+        },
+        {
+          "type": "MeshStandardMaterial",
+          "name": "",
+          "roughness": 0.72,
+          "metalness": 0,
+          "hasMap": true,
+          "hasNormalMap": true,
+          "transparent": false,
+          "opacity": 1
+        },
+        {
+          "type": "MeshStandardMaterial",
+          "name": "",
+          "roughness": 0.72,
+          "metalness": 0,
+          "hasMap": true,
+          "hasNormalMap": true,
+          "transparent": false,
+          "opacity": 1
+        },
+        {
+          "type": "MeshStandardMaterial",
+          "name": "",
+          "roughness": 0.72,
+          "metalness": 0,
+          "hasMap": true,
+          "hasNormalMap": true,
+          "transparent": false,
+          "opacity": 1
+        }
+      ]
+    },
+    "forest": {
+      "found": true,
+      "meshCount": 5,
+      "instancedMeshCount": 2,
+      "totalVertices": 9726,
+      "totalTriangles": 6256,
+      "hasNormalMaps": false,
+      "hasColorMaps": true,
+      "boundingBox": {
+        "min": [
+          -2.4000000953674316,
+          2.3841858265427618e-8,
+          -45.349999994039536
+        ],
+        "max": [
+          51.34156409624591,
+          7.200000286102295,
+          2.4000000953674316
+        ]
+      },
+      "materialsSummary": [
+        {
+          "type": "MeshStandardMaterial",
+          "name": "",
+          "roughness": 0.85,
+          "metalness": 0,
+          "hasMap": true,
+          "hasNormalMap": false,
+          "transparent": false,
+          "opacity": 1
+        },
+        {
+          "type": "MeshStandardMaterial",
+          "name": "",
+          "roughness": 0.8,
+          "metalness": 0.05,
+          "hasMap": false,
+          "hasNormalMap": false,
+          "transparent": false,
+          "opacity": 1
+        },
+        {
+          "type": "MeshStandardMaterial",
+          "name": "",
+          "roughness": 0.85,
+          "metalness": 0,
+          "hasMap": true,
+          "hasNormalMap": false,
+          "transparent": false,
+          "opacity": 1
+        },
+        {
+          "type": "MeshStandardMaterial",
+          "name": "",
+          "roughness": 0.85,
+          "metalness": 0,
+          "hasMap": true,
+          "hasNormalMap": false,
+          "transparent": false,
+          "opacity": 1
+        },
+        {
+          "type": "MeshStandardMaterial",
+          "name": "",
+          "roughness": 0.85,
+          "metalness": 0,
+          "hasMap": true,
+          "hasNormalMap": false,
+          "transparent": false,
+          "opacity": 1
+        }
+      ]
+    },
+    "bluffs": {
+      "found": true,
+      "meshCount": 15,
+      "instancedMeshCount": 0,
+      "totalVertices": 3129,
+      "totalTriangles": 1148,
+      "hasNormalMaps": true,
+      "hasColorMaps": true,
+      "boundingBox": {
+        "min": [
+          -110.03144610733503,
+          -20.159175140318034,
+          -53.18507389754754
+        ],
+        "max": [
+          -14.5959146262912,
+          44.159175140318034,
+          44.25588719014427
+        ]
+      },
+      "materialsSummary": [
+        {
+          "type": "MeshStandardMaterial",
+          "name": "",
+          "roughness": 0.85,
+          "metalness": 0.08,
+          "hasMap": true,
+          "hasNormalMap": true,
+          "transparent": false,
+          "opacity": 1
+        },
+        {
+          "type": "MeshStandardMaterial",
+          "name": "",
+          "roughness": 0.85,
+          "metalness": 0.08,
+          "hasMap": true,
+          "hasNormalMap": true,
+          "transparent": false,
+          "opacity": 1
+        },
+        {
+          "type": "MeshStandardMaterial",
+          "name": "",
+          "roughness": 0.85,
+          "metalness": 0.08,
+          "hasMap": true,
+          "hasNormalMap": true,
+          "transparent": false,
+          "opacity": 1
+        },
+        {
+          "type": "MeshStandardMaterial",
+          "name": "",
+          "roughness": 0.85,
+          "metalness": 0.08,
+          "hasMap": true,
+          "hasNormalMap": true,
+          "transparent": false,
+          "opacity": 1
+        },
+        {
+          "type": "MeshStandardMaterial",
+          "name": "",
+          "roughness": 0.85,
+          "metalness": 0.08,
+          "hasMap": true,
+          "hasNormalMap": true,
+          "transparent": false,
+          "opacity": 1
+        },
+        {
+          "type": "MeshStandardMaterial",
+          "name": "",
+          "roughness": 0.85,
+          "metalness": 0.08,
+          "hasMap": true,
+          "hasNormalMap": true,
+          "transparent": false,
+          "opacity": 1
+        },
+        {
+          "type": "MeshStandardMaterial",
+          "name": "",
+          "roughness": 0.85,
+          "metalness": 0.08,
+          "hasMap": true,
+          "hasNormalMap": true,
+          "transparent": false,
+          "opacity": 1
+        },
+        {
+          "type": "MeshStandardMaterial",
+          "name": "",
+          "roughness": 0.85,
+          "metalness": 0.08,
+          "hasMap": true,
+          "hasNormalMap": true,
+          "transparent": false,
+          "opacity": 1
+        },
+        {
+          "type": "MeshStandardMaterial",
+          "name": "",
+          "roughness": 0.85,
+          "metalness": 0.08,
+          "hasMap": true,
+          "hasNormalMap": true,
+          "transparent": false,
+          "opacity": 1
+        },
+        {
+          "type": "MeshStandardMaterial",
+          "name": "",
+          "roughness": 0.85,
+          "metalness": 0.08,
+          "hasMap": true,
+          "hasNormalMap": true,
+          "transparent": false,
+          "opacity": 1
+        }
+      ]
+    },
+    "shoreline": {
+      "found": true,
+      "meshCount": 1,
+      "instancedMeshCount": 0,
+      "totalVertices": 9409,
+      "totalTriangles": 18432,
+      "hasNormalMaps": true,
+      "hasColorMaps": true,
+      "boundingBox": {
+        "min": [
+          -130,
+          -4.5,
+          -130
+        ],
+        "max": [
+          130,
+          24.49629783630371,
+          130
+        ]
+      },
+      "materialsSummary": [
+        {
+          "type": "MeshStandardMaterial",
+          "name": "",
+          "roughness": 0.85,
+          "metalness": 0.05,
+          "hasMap": true,
+          "hasNormalMap": true,
+          "transparent": false,
+          "opacity": 1
+        }
+      ]
+    }
+  },
+  "lighting": {
+    "sunPos": {
+      "x": 55,
+      "y": 75,
+      "z": 40
+    },
+    "sunTarget": {
+      "x": 0,
+      "y": 0,
+      "z": 0
+    },
+    "castShadow": true,
+    "mapSize": {
+      "width": 2048,
+      "height": 2048
+    },
+    "frustumParams": {
+      "left": -90,
+      "right": 90,
+      "top": 90,
+      "bottom": -90,
+      "near": 1,
+      "far": 250
+    },
+    "ambient": {
+      "type": "HemisphereLight",
+      "intensity": 0.75
+    },
+    "porchLantern": {
+      "type": "PointLight",
+      "intensity": 1.345042579453862
+    },
+    "dockLantern": {
+      "type": "PointLight",
+      "intensity": 1.0230028249447187
+    },
+    "enclosureResults": {
+      "lake": {
+        "viewBounds": {
+          "x": [
+            -179,
+            28
+          ],
+          "y": [
+            -96,
+            61
+          ],
+          "z": [
+            14,
+            156
+          ]
+        },
+        "xEnclosed": false,
+        "yEnclosed": true,
+        "zEnclosed": true,
+        "fullyEnclosed": false
+      },
+      "lakeWater": {
+        "viewBounds": {
+          "x": [
+            -179,
+            28
+          ],
+          "y": [
+            -96,
+            61
+          ],
+          "z": [
+            14,
+            156
+          ]
+        },
+        "xEnclosed": false,
+        "yEnclosed": true,
+        "zEnclosed": true,
+        "fullyEnclosed": false
+      },
+      "dock": {
+        "viewBounds": {
+          "x": [
+            -25,
+            -4
+          ],
+          "y": [
+            -15,
+            -1
+          ],
+          "z": [
+            88,
+            102
+          ]
+        },
+        "xEnclosed": true,
+        "yEnclosed": true,
+        "zEnclosed": true,
+        "fullyEnclosed": true
+      },
+      "dockPier": {
+        "viewBounds": {
+          "x": [
+            -25,
+            -4
+          ],
+          "y": [
+            -15,
+            -1
+          ],
+          "z": [
+            88,
+            102
+          ]
+        },
+        "xEnclosed": true,
+        "yEnclosed": true,
+        "zEnclosed": true,
+        "fullyEnclosed": true
+      },
+      "cabin": {
+        "viewBounds": {
+          "x": [
+            18,
+            35
+          ],
+          "y": [
+            -13,
+            2
+          ],
+          "z": [
+            82,
+            98
+          ]
+        },
+        "xEnclosed": true,
+        "yEnclosed": true,
+        "zEnclosed": true,
+        "fullyEnclosed": true
+      },
+      "timberCabin": {
+        "viewBounds": {
+          "x": [
+            18,
+            35
+          ],
+          "y": [
+            -13,
+            2
+          ],
+          "z": [
+            82,
+            98
+          ]
+        },
+        "xEnclosed": true,
+        "yEnclosed": true,
+        "zEnclosed": true,
+        "fullyEnclosed": true
+      },
+      "forest": {
+        "viewBounds": {
+          "x": [
+            -3,
+            67
+          ],
+          "y": [
+            -11,
+            7
+          ],
+          "z": [
+            88,
+            102
+          ]
+        },
+        "xEnclosed": true,
+        "yEnclosed": true,
+        "zEnclosed": true,
+        "fullyEnclosed": true
+      },
+      "pineForest": {
+        "viewBounds": {
+          "x": [
+            -3,
+            67
+          ],
+          "y": [
+            -11,
+            7
+          ],
+          "z": [
+            88,
+            102
+          ]
+        },
+        "xEnclosed": true,
+        "yEnclosed": true,
+        "zEnclosed": true,
+        "fullyEnclosed": true
+      },
+      "bluffs": {
+        "viewBounds": {
+          "x": [
+            -75,
+            26
+          ],
+          "y": [
+            -6,
+            104
+          ],
+          "z": [
+            85,
+            179
+          ]
+        },
+        "xEnclosed": true,
+        "yEnclosed": true,
+        "zEnclosed": true,
+        "fullyEnclosed": true
+      },
+      "shoreline": {
+        "viewBounds": {
+          "x": [
+            -182,
+            182
+          ],
+          "y": [
+            -138,
+            151
+          ],
+          "z": [
+            -39,
+            227
+          ]
+        },
+        "xEnclosed": false,
+        "yEnclosed": false,
+        "zEnclosed": false,
+        "fullyEnclosed": false
+      }
+    }
+  },
+  "pbrAudit": {
+    "totalMeshes": 248,
+    "pbrMeshes": 248,
+    "basicMeshes": [],
+    "untexturedPrimitives": []
+  },
+  "shadowEnclosure": {
+    "lake": {
+      "viewBounds": {
+        "x": [
+          -179,
+          28
+        ],
+        "y": [
+          -96,
+          61
+        ],
+        "z": [
+          14,
+          156
+        ]
+      },
+      "xEnclosed": false,
+      "yEnclosed": true,
+      "zEnclosed": true,
+      "fullyEnclosed": false
+    },
+    "lakeWater": {
+      "viewBounds": {
+        "x": [
+          -179,
+          28
+        ],
+        "y": [
+          -96,
+          61
+        ],
+        "z": [
+          14,
+          156
+        ]
+      },
+      "xEnclosed": false,
+      "yEnclosed": true,
+      "zEnclosed": true,
+      "fullyEnclosed": false
+    },
+    "dock": {
+      "viewBounds": {
+        "x": [
+          -25,
+          -4
+        ],
+        "y": [
+          -15,
+          -1
+        ],
+        "z": [
+          88,
+          102
+        ]
+      },
+      "xEnclosed": true,
+      "yEnclosed": true,
+      "zEnclosed": true,
+      "fullyEnclosed": true
+    },
+    "dockPier": {
+      "viewBounds": {
+        "x": [
+          -25,
+          -4
+        ],
+        "y": [
+          -15,
+          -1
+        ],
+        "z": [
+          88,
+          102
+        ]
+      },
+      "xEnclosed": true,
+      "yEnclosed": true,
+      "zEnclosed": true,
+      "fullyEnclosed": true
+    },
+    "cabin": {
+      "viewBounds": {
+        "x": [
+          18,
+          35
+        ],
+        "y": [
+          -13,
+          2
+        ],
+        "z": [
+          82,
+          98
+        ]
+      },
+      "xEnclosed": true,
+      "yEnclosed": true,
+      "zEnclosed": true,
+      "fullyEnclosed": true
+    },
+    "timberCabin": {
+      "viewBounds": {
+        "x": [
+          18,
+          35
+        ],
+        "y": [
+          -13,
+          2
+        ],
+        "z": [
+          82,
+          98
+        ]
+      },
+      "xEnclosed": true,
+      "yEnclosed": true,
+      "zEnclosed": true,
+      "fullyEnclosed": true
+    },
+    "forest": {
+      "viewBounds": {
+        "x": [
+          -3,
+          67
+        ],
+        "y": [
+          -11,
+          7
+        ],
+        "z": [
+          88,
+          102
+        ]
+      },
+      "xEnclosed": true,
+      "yEnclosed": true,
+      "zEnclosed": true,
+      "fullyEnclosed": true
+    },
+    "pineForest": {
+      "viewBounds": {
+        "x": [
+          -3,
+          67
+        ],
+        "y": [
+          -11,
+          7
+        ],
+        "z": [
+          88,
+          102
+        ]
+      },
+      "xEnclosed": true,
+      "yEnclosed": true,
+      "zEnclosed": true,
+      "fullyEnclosed": true
+    },
+    "bluffs": {
+      "viewBounds": {
+        "x": [
+          -75,
+          26
+        ],
+        "y": [
+          -6,
+          104
+        ],
+        "z": [
+          85,
+          179
+        ]
+      },
+      "xEnclosed": true,
+      "yEnclosed": true,
+      "zEnclosed": true,
+      "fullyEnclosed": true
+    },
+    "shoreline": {
+      "viewBounds": {
+        "x": [
+          -182,
+          182
+        ],
+        "y": [
+          -138,
+          151
+        ],
+        "z": [
+          -39,
+          227
+        ]
+      },
+      "xEnclosed": false,
+      "yEnclosed": false,
+      "zEnclosed": false,
+      "fullyEnclosed": false
+    }
+  },
+  "resizeStress": [
+    {
+      "width": 1920,
+      "height": 1080,
+      "label": "Desktop FHD",
+      "rendererWidth": 1920,
+      "rendererHeight": 1080,
+      "bloomResWidth": 1920,
+      "bloomResHeight": 1080,
+      "aspectDiff": 0,
+      "errorCount": 0
+    },
+    {
+      "width": 800,
+      "height": 600,
+      "label": "Legacy SVGA",
+      "rendererWidth": 800,
+      "rendererHeight": 600,
+      "bloomResWidth": 800,
+      "bloomResHeight": 600,
+      "aspectDiff": 0,
+      "errorCount": 0
+    },
+    {
+      "width": 3840,
+      "height": 2160,
+      "label": "4K UHD",
+      "rendererWidth": 3840,
+      "rendererHeight": 2160,
+      "bloomResWidth": 3840,
+      "bloomResHeight": 2160,
+      "aspectDiff": 0,
+      "errorCount": 0
+    },
+    {
+      "width": 375,
+      "height": 667,
+      "label": "Mobile Portrait",
+      "rendererWidth": 375,
+      "rendererHeight": 667,
+      "bloomResWidth": 375,
+      "bloomResHeight": 667,
+      "aspectDiff": 0,
+      "errorCount": 0
+    },
+    {
+      "width": 2560,
+      "height": 1440,
+      "label": "QHD 1440p",
+      "rendererWidth": 2560,
+      "rendererHeight": 1440,
+      "bloomResWidth": 2560,
+      "bloomResHeight": 1440,
+      "aspectDiff": 0,
+      "errorCount": 0
+    },
+    {
+      "width": 1024,
+      "height": 768,
+      "label": "iPad 4:3",
+      "rendererWidth": 1024,
+      "rendererHeight": 768,
+      "bloomResWidth": 1024,
+      "bloomResHeight": 768,
+      "aspectDiff": 0,
+      "errorCount": 0
+    },
+    {
+      "width": 1280,
+      "height": 720,
+      "label": "Restored HD",
+      "rendererWidth": 1280,
+      "rendererHeight": 720,
+      "bloomResWidth": 1280,
+      "bloomResHeight": 720,
+      "aspectDiff": 0,
+      "errorCount": 0
+    }
+  ],
+  "orbitStress": {
+    "positionsTested": 13,
+    "nanOrInfCount": 0,
+    "stepErrors": 0
+  },
+  "webglStability": {
+    "isContextLost": false,
+    "glErrorCode": 0,
+    "drawCalls": 1,
+    "triangles": 1,
+    "texturesInMemory": 33,
+    "geometriesInMemory": 137,
+    "telemetryFps": 0,
+    "telemetryErrors": 0,
+    "lastError": null
+  },
+  "verdict": "APPROVE",
+  "failures": [],
+  "shadowChallenges": [
+    "Landmark [lake] extends partially outside orthographic shadow camera bounds [-90, 90]: View X [-179,28], View Y [-96,61]"
+  ]
+}
