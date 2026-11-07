@@ -1,0 +1,12 @@
+{
+  "name": "kevin-tighe-lakeside",
+  "version": "1.0.0",
+  "description": "Kevin Tighe: 3D Lakeside Retreat",
+  "type": "module",
+  "scripts": {
+    "test": "node tests/verify_m1_lighting_contract.mjs"
+  },
+  "devDependencies": {
+    "playwright": "^1.40.0"
+  }
+}
